@@ -4,12 +4,16 @@
 <head><meta name="generator" content="Hexo 3.9.0">
   <meta charset="UTF-8">
   
-    <title>Hello World | Zong&#39;s blog</title>
+    <title>Airtest自动化测试初探 | Zong&#39;s blog</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
     <meta name="author" content="Zong">
     
-    <meta name="description" content="Welcome to Hexo! This is your very first post. Check documentation for more info. If you get any problems when using Hexo, you can find the answer in ">
+    <meta name="description" content="Airtest是网易游戏内部工具团队开放出来的一个自动化测试工具，AirtestIDE 是一个跨平台的UI自动化测试编辑器，适用于游戏和App。
+
+自动化脚本录制、一键回放、报告查看，轻而易举实现自动化测试流程
+支持基于图像识别的Airtest框架，适用于所有Android和Windows游戏
+支持">
     
     
     
@@ -73,14 +77,14 @@
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2016/07/26/hello-world/" title="Hello World" itemprop="url">Hello World</a>
+      <a href="/2019/06/27/Airtest自动化测试初探/" title="Airtest自动化测试初探" itemprop="url">Airtest自动化测试初探</a>
   </h1>
   <p class="article-author">By
     
       <a href="http://www.lstop.pub" title="Zong">Zong</a>
     </p>
   <p class="article-time">
-    <time datetime="2016-07-26T05:45:35.000Z" itemprop="datePublished">2016-07-26</time>
+    <time datetime="2019-06-27T08:27:27.000Z" itemprop="datePublished">2019-06-27</time>
     
   </p>
 </header>
@@ -90,32 +94,51 @@
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Quick-Start"><span class="toc-number">1.</span> <span class="toc-text">Quick Start</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Create-a-new-post"><span class="toc-number">1.1.</span> <span class="toc-text">Create a new post</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Run-server"><span class="toc-number">1.2.</span> <span class="toc-text">Run server</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Generate-static-files"><span class="toc-number">1.3.</span> <span class="toc-text">Generate static files</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Deploy-to-remote-sites"><span class="toc-number">1.4.</span> <span class="toc-text">Deploy to remote sites</span></a></li></ol></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#安装和配置手机"><span class="toc-number">1.</span> <span class="toc-text">安装和配置手机</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#界面"><span class="toc-number">2.</span> <span class="toc-text">界面</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#touch"><span class="toc-number">2.1.</span> <span class="toc-text">touch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#swipe"><span class="toc-number">2.2.</span> <span class="toc-text">swipe</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#实际测试"><span class="toc-number">3.</span> <span class="toc-text">实际测试</span></a></li></ol>
 		</div>
 		
-		<p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/deployment.html" target="_blank" rel="noopener">Deployment</a></p>
+		<p>Airtest是网易游戏内部工具团队开放出来的一个自动化测试工具，AirtestIDE 是一个跨平台的UI自动化测试编辑器，适用于游戏和App。</p>
+<ul>
+<li>自动化脚本录制、一键回放、报告查看，轻而易举实现自动化测试流程</li>
+<li>支持基于图像识别的Airtest框架，适用于所有Android和Windows游戏</li>
+<li>支持基于UI控件搜索的Poco框架，适用于Unity3d，Cocos2d与Android App</li>
+<li>访问官网通过视频查看更多特性</li>
+</ul>
+<p>这里是<a href="https://airtest.netease.com/docs/docs_AirtestIDE-zh_CN/index.html" target="_blank" rel="noopener">官方doc</a><br>最近接触了一下测试工作，所以对自动化测试这个领域有点好奇，就上网找了一下，发现这个貌似不错，接下来试用一下。</p>
+<h1 id="安装和配置手机"><a href="#安装和配置手机" class="headerlink" title="安装和配置手机"></a>安装和配置手机</h1><p>软件是绿色版，解压就能用，这个点赞<br>配置手机比较复杂一点，大致分几步：</p>
+<ol>
+<li>安卓需要打开USB调试，这个各个品牌不一样，自己上网搜一下。</li>
+<li>电脑上安卓手机驱动和adb</li>
+<li>手机用USB线连电脑并确认授权</li>
+<li>Airtest会在手机上安装一些软件，poco和输入法</li>
+</ol>
+<p>详细步骤看<a href="https://airtest.netease.com/docs/docs_AirtestIDE-zh_CN/2_device_connection/1_android_phone_connection.html" target="_blank" rel="noopener">这里</a></p>
+<h1 id="界面"><a href="#界面" class="headerlink" title="界面"></a>界面</h1><p>左侧这里是Airtest辅助窗，上面是动作按钮，基本上就靠这些动作组合完成自动化测试，比如点击、拖拉、对比等。<br><img src="http://qnimg.banxiaoer.net/yw/airtest/airtest%E8%BE%85%E5%8A%A9%E7%AA%97.jpg_blog640.jpg" alt="airtest辅助窗"></p>
+<h2 id="touch"><a href="#touch" class="headerlink" title="touch"></a>touch</h2><p>点击动作，平常的点按钮，点APP<br>方法参数可以是个图片，代码长这样：<br><img src="http://qnimg.banxiaoer.net/yw/airtest/touch.jpg_blog640.jpg" alt="touch"></p>
+<h2 id="swipe"><a href="#swipe" class="headerlink" title="swipe"></a>swipe</h2><p>拖放操作，可以利用截图或者坐标轴定位</p>
+<p>还有其他动作没细测。</p>
+<h1 id="实际测试"><a href="#实际测试" class="headerlink" title="实际测试"></a>实际测试</h1><p>打开一个微信小程序，进行一定操作<br><img src="http://qnimg.banxiaoer.net/yw/airtest/bate1.gifairtest%E6%B5%8B%E8%AF%95.gif" alt="wx"></p>
+<p>输入文本那里有点小问题，不过这个自动化测试体验还算顺利，脚本类似python形式，以后可以深入研究一下。</p>
   
 	</div>
 		<footer class="article-footer clearfix">
 
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Airtest/">Airtest</a><a href="/tags/自动化测试/">自动化测试</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/测试/">测试</a>
+</div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://www.lstop.pub/2016/07/26/hello-world/" data-title="Hello World | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  <div data-url="http://www.lstop.pub/2019/06/27/Airtest自动化测试初探/" data-title="Airtest自动化测试初探 | Zong&#39;s blog" data-tsina="" class="share clearfix">
   </div>
 
 </div>
@@ -124,14 +147,14 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
- <a href="/2016/07/27/Tomcat7线程优化及压力测试/" title="Tomcat7线程优化及压力测试">
-  <strong>PREVIOUS:</strong><br/>
-  <span>
-  Tomcat7线程优化及压力测试</span>
+
+<div class="next">
+<a href="/2019/05/07/使用cAdvisor监控节点中的容器资源/"  title="使用cAdvisor监控节点中的容器资源">
+ <strong>NEXT:</strong><br/> 
+ <span>使用cAdvisor监控节点中的容器资源
+</span>
 </a>
 </div>
-
 
 </nav>
 
@@ -141,7 +164,7 @@
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Quick-Start"><span class="toc-number">1.</span> <span class="toc-text">Quick Start</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Create-a-new-post"><span class="toc-number">1.1.</span> <span class="toc-text">Create a new post</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Run-server"><span class="toc-number">1.2.</span> <span class="toc-text">Run server</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Generate-static-files"><span class="toc-number">1.3.</span> <span class="toc-text">Generate static files</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Deploy-to-remote-sites"><span class="toc-number">1.4.</span> <span class="toc-text">Deploy to remote sites</span></a></li></ol></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#安装和配置手机"><span class="toc-number">1.</span> <span class="toc-text">安装和配置手机</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#界面"><span class="toc-number">2.</span> <span class="toc-text">界面</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#touch"><span class="toc-number">2.1.</span> <span class="toc-text">touch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#swipe"><span class="toc-number">2.2.</span> <span class="toc-text">swipe</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#实际测试"><span class="toc-number">3.</span> <span class="toc-text">实际测试</span></a></li></ol>
   </div>
 
 <div id="asidepart">
