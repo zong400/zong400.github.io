@@ -1,0 +1,852 @@
+
+ <!DOCTYPE HTML>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+  
+    <title>Tomcat7线程优化及压力测试 | Zong&#39;s blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Zong">
+    
+    <meta name="description" content="一、测试内容本次测试是针对业务微信端通知消息模块进行的压力测试，测试用例是模拟用户点击推送消息查看通知详情。
+二、测试方法及数据准备本次采用开源测试工具jmeter采用多线程的方式模拟大量客户端向服务器方发送业务请求，达到压力测试的目的。数据准备：5万个虚拟用户(uic_account_info表导">
+    
+    
+    
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/pacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+</html>
+  <body>
+    <header>
+      <div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.svg" alt="Zong&#39;s blog" title="Zong&#39;s blog"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="Zong&#39;s blog">Zong&#39;s blog</a></h1>
+				<h2 class="blog-motto">日常积累，技术分享</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+						<li><a href="/categories/运维">运维</a></li>
+					
+						<li><a href="/categories/容器架构">容器架构</a></li>
+					
+					<li>
+					
+					<form class="search" action="//baidu.com/s" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="text" id="search" name="wd" autocomplete="off" maxlength="20" placeholder="Search" />
+                        <input name=tn type=hidden value="bds">
+                        <input name=cl type=hidden value="3">
+                        <input name=ct type=hidden value="2097152">
+						<input type="hidden" name="si" value="www.lstop.pub">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2016/07/27/Tomcat7线程优化及压力测试/" title="Tomcat7线程优化及压力测试" itemprop="url">Tomcat7线程优化及压力测试</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://www.lstop.pub" title="Zong">Zong</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2016-07-27T05:45:35.000Z" itemprop="datePublished">2016-07-27</time>
+    
+  </p>
+</header>
+
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">Contents</strong>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#一、测试内容"><span class="toc-number">1.</span> <span class="toc-text">一、测试内容</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#二、测试方法及数据准备"><span class="toc-number">2.</span> <span class="toc-text">二、测试方法及数据准备</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#三、测试环境"><span class="toc-number">3.</span> <span class="toc-text">三、测试环境</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#四、jmeter设置"><span class="toc-number">4.</span> <span class="toc-text">四、jmeter设置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#五、测试数据"><span class="toc-number">5.</span> <span class="toc-text">五、测试数据</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-测试一"><span class="toc-number">5.1.</span> <span class="toc-text">1 测试一</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-测试二"><span class="toc-number">5.2.</span> <span class="toc-text">2 测试二</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-测试三"><span class="toc-number">5.3.</span> <span class="toc-text">3 测试三</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#测试四"><span class="toc-number">5.4.</span> <span class="toc-text">测试四</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#测试五"><span class="toc-number">5.5.</span> <span class="toc-text">测试五</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#六、结论"><span class="toc-number">6.</span> <span class="toc-text">六、结论</span></a></li></ol>
+		</div>
+		
+		<h1 id="一、测试内容"><a href="#一、测试内容" class="headerlink" title="一、测试内容"></a>一、测试内容</h1><p>本次测试是针对业务微信端通知消息模块进行的压力测试，<br>测试用例是模拟用户点击推送消息查看通知详情。</p>
+<h1 id="二、测试方法及数据准备"><a href="#二、测试方法及数据准备" class="headerlink" title="二、测试方法及数据准备"></a>二、测试方法及数据准备</h1><p>本次采用开源测试工具jmeter采用多线程的方式模拟大量客户端向服务器方发送业务请求，达到压力测试的目的。<br>数据准备：5万个虚拟用户(uic_account_info表导入5万记录)<br>          50万条通知明细（notice表10条、notice_subscr表导入50万记录）。</p>
+<h1 id="三、测试环境"><a href="#三、测试环境" class="headerlink" title="三、测试环境"></a>三、测试环境</h1><p>Tomcat服务器：wx-dev-web，2核cpu，4g内存<br>Jmeter服务器：wx-dev-test02，2核cpu，4g内存<br>带宽：金山云内网带宽    </p>
+<h1 id="四、jmeter设置"><a href="#四、jmeter设置" class="headerlink" title="四、jmeter设置"></a>四、jmeter设置</h1><p>测试url：内部链接<br>Jmeter线程200，单线程循环100次<br>测试脚本：内部脚本<br>参数化文件：内部数据</p>
+<p>名词定义（时间的单位均为ms）：<br>Samples – 本次场景中一共完成了多少个线程<br>Average – 平均响应时间<br>Median – 统计意义上面的响应时间的中值<br>90% Line – 所有线程中90%的线程的响应时间都小于xx<br>Min – 最小响应时间<br>Max – 最大响应时间<br>Error – 出错率<br>Troughput – 吞吐量<br>KB/sec – 以流量做衡量的吞吐量</p>
+<h1 id="五、测试数据"><a href="#五、测试数据" class="headerlink" title="五、测试数据"></a>五、测试数据</h1><h2 id="1-测试一"><a href="#1-测试一" class="headerlink" title="1 测试一"></a>1 测试一</h2><p>基础参数，只有JVM内存修改为1000M。<br>吞吐量基本稳定在900以上，出错率较高基本&gt;1%</p>
+<p>Java参数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-Xms1000M -Xmx1000M -Xss512k</span><br></pre></td></tr></table></figure>
+
+<p>Tomcat参数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;Connector port=&quot;8090&quot; protocol=&quot;HTTP/1.1&quot;</span><br><span class="line">               connectionTimeout=&quot;20000&quot;</span><br><span class="line">               redirectPort=&quot;8443&quot; /&gt;</span><br></pre></td></tr></table></figure>
+
+<p>数据样本：</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th># Samples</th>
+<th>Average</th>
+<th>Median</th>
+<th>90% Line</th>
+<th>95% Line</th>
+<th>99% Line</th>
+<th>Min</th>
+<th>Max</th>
+<th>Error %</th>
+<th>Throughput</th>
+<th>KB/sec</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>20000</td>
+<td>172</td>
+<td>111</td>
+<td>190</td>
+<td>239</td>
+<td>3000</td>
+<td>2</td>
+<td>3242</td>
+<td>1.38%</td>
+<td>945.7</td>
+<td>195.3</td>
+</tr>
+<tr>
+<td>2</td>
+<td>20000</td>
+<td>181</td>
+<td>112</td>
+<td>204</td>
+<td>343</td>
+<td>3001</td>
+<td>2</td>
+<td>3574</td>
+<td>1.26%</td>
+<td>938.5</td>
+<td>193.7</td>
+</tr>
+<tr>
+<td>3</td>
+<td>20000</td>
+<td>178</td>
+<td>110</td>
+<td>215</td>
+<td>278</td>
+<td>3001</td>
+<td>3</td>
+<td>3374</td>
+<td>1.42%</td>
+<td>947.5</td>
+<td>195.7</td>
+</tr>
+<tr>
+<td>4</td>
+<td>20000</td>
+<td>171</td>
+<td>110</td>
+<td>210</td>
+<td>262</td>
+<td>3001</td>
+<td>3</td>
+<td>3280</td>
+<td>1.23%</td>
+<td>987.5</td>
+<td>203.8</td>
+</tr>
+<tr>
+<td>5</td>
+<td>20000</td>
+<td>176</td>
+<td>112</td>
+<td>206</td>
+<td>257</td>
+<td>3001</td>
+<td>3</td>
+<td>3302</td>
+<td>1.44%</td>
+<td>985</td>
+<td>203.5</td>
+</tr>
+</tbody></table>
+<h2 id="2-测试二"><a href="#2-测试二" class="headerlink" title="2 测试二"></a>2 测试二</h2><p>JVM参数不变，Tomcat线程数调到30000，测试tomcat线程过高的情况。<br>从压测结果看起到了反效果，吞吐量大部分只能在400左右。此时CPU达到瓶颈，吞吐量不稳定，tomcat不能线性处理请求，会出现卡顿并反映在cpu及jvm上</p>
+<p>Java参数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-Xms1000M -Xmx1000M -Xss512k</span><br></pre></td></tr></table></figure>
+
+<p>Tomcat参数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;Connector port=&quot;8090&quot; protocol=&quot;org.apache.coyote.http11.Http11NioProtocol&quot;</span><br><span class="line">               connectionTimeout=&quot;20000&quot;</span><br><span class="line">                               enableLookups=&quot;false&quot;</span><br><span class="line">                               maxThreads=&quot;30000&quot;</span><br><span class="line">                               minSpareThreads=&quot;512&quot;</span><br><span class="line">                               maxSpareThreads=&quot;2048&quot;</span><br><span class="line">                               acceptCount=&quot;35000&quot;</span><br><span class="line">                               debug=&quot;0&quot;</span><br><span class="line">                               disableUploadTimeout=&quot;true&quot;</span><br><span class="line">               redirectPort=&quot;8443&quot; /&gt;</span><br></pre></td></tr></table></figure>
+
+<p>数据样本：</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th># Samples</th>
+<th>Average</th>
+<th>Median</th>
+<th>90% Line</th>
+<th>95% Line</th>
+<th>99% Line</th>
+<th>Min</th>
+<th>Max</th>
+<th>Error %</th>
+<th>Throughput</th>
+<th>KB/sec</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>20000</td>
+<td>336</td>
+<td>136</td>
+<td>288</td>
+<td>456</td>
+<td>3000</td>
+<td>2</td>
+<td>30003</td>
+<td>1.25%</td>
+<td>401.8</td>
+<td>82.9</td>
+</tr>
+<tr>
+<td>2</td>
+<td>20000</td>
+<td>391</td>
+<td>294</td>
+<td>483</td>
+<td>627</td>
+<td>2223</td>
+<td>3</td>
+<td>31000</td>
+<td>0.60%</td>
+<td>327.3</td>
+<td>67.3</td>
+</tr>
+<tr>
+<td>3</td>
+<td>20000</td>
+<td>217</td>
+<td>162</td>
+<td>341</td>
+<td>428</td>
+<td>1224</td>
+<td>3</td>
+<td>30005</td>
+<td>0.68%</td>
+<td>431.1</td>
+<td>88.7</td>
+</tr>
+<tr>
+<td>4</td>
+<td>20000</td>
+<td>188</td>
+<td>148</td>
+<td>268</td>
+<td>340</td>
+<td>1176</td>
+<td>3</td>
+<td>3714</td>
+<td>0.50%</td>
+<td>939.5</td>
+<td>193.2</td>
+</tr>
+<tr>
+<td>5</td>
+<td>20000</td>
+<td>374</td>
+<td>135</td>
+<td>254</td>
+<td>317</td>
+<td>3000</td>
+<td>2</td>
+<td>30007</td>
+<td>1.04%</td>
+<td>414.9</td>
+<td>85.5</td>
+</tr>
+</tbody></table>
+<h2 id="3-测试三"><a href="#3-测试三" class="headerlink" title="3 测试三"></a>3 测试三</h2><p>把Tomcat线程数减少到1000，结果与测试二类似</p>
+<p>Java参数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-Xms1000M -Xmx1000M -Xss512k</span><br></pre></td></tr></table></figure>
+
+<p>Tomcat参数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;Connector port=&quot;8090&quot; protocol=&quot;org.apache.coyote.http11.Http11NioProtocol&quot;</span><br><span class="line">               connectionTimeout=&quot;20000&quot;</span><br><span class="line">                               enableLookups=&quot;false&quot;</span><br><span class="line">                               maxThreads=&quot;1000&quot;</span><br><span class="line">                               minSpareThreads=&quot;128&quot;</span><br><span class="line">                               maxSpareThreads=&quot;512&quot;</span><br><span class="line">                               acceptCount=&quot;3000&quot;</span><br><span class="line">                               debug=&quot;0&quot;</span><br><span class="line">                               disableUploadTimeout=&quot;true&quot;</span><br><span class="line">               redirectPort=&quot;8443&quot; /&gt;</span><br></pre></td></tr></table></figure>
+
+<p>数据样本：</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th># Samples</th>
+<th>Average</th>
+<th>Median</th>
+<th>90% Line</th>
+<th>95% Line</th>
+<th>99% Line</th>
+<th>Min</th>
+<th>Max</th>
+<th>Error %</th>
+<th>Throughput</th>
+<th>KB/sec</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>20000</td>
+<td>25</td>
+<td>22</td>
+<td>40</td>
+<td>51</td>
+<td>71</td>
+<td>3</td>
+<td>143</td>
+<td>0.00%</td>
+<td>767.5</td>
+<td>157.4</td>
+</tr>
+<tr>
+<td>2</td>
+<td>20000</td>
+<td>270</td>
+<td>197</td>
+<td>466</td>
+<td>625</td>
+<td>1711</td>
+<td>3</td>
+<td>4063</td>
+<td>0.90%</td>
+<td>672.2</td>
+<td>138.5</td>
+</tr>
+<tr>
+<td>3</td>
+<td>20000</td>
+<td>335</td>
+<td>133</td>
+<td>327</td>
+<td>425</td>
+<td>1239</td>
+<td>3</td>
+<td>30011</td>
+<td>0.94%</td>
+<td>411.1</td>
+<td>84.7</td>
+</tr>
+<tr>
+<td>4</td>
+<td>20000</td>
+<td>254</td>
+<td>112</td>
+<td>258</td>
+<td>308</td>
+<td>1093</td>
+<td>3</td>
+<td>30010</td>
+<td>0.76%</td>
+<td>458.2</td>
+<td>94.3</td>
+</tr>
+<tr>
+<td>5</td>
+<td>20000</td>
+<td>265</td>
+<td>146</td>
+<td>298</td>
+<td>387</td>
+<td>1185</td>
+<td>3</td>
+<td>30003</td>
+<td>0.71%</td>
+<td>373.8</td>
+<td>71.8</td>
+</tr>
+</tbody></table>
+<h2 id="测试四"><a href="#测试四" class="headerlink" title="测试四"></a>测试四</h2><p>继续调小tomcat线程，测试结果比之前稳定，吞吐量保持在高水平，并且出错率比默认参数低一倍左右，基本&lt;1%。</p>
+<p>Java参数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-Xms1000M -Xmx1000M -Xss512k</span><br></pre></td></tr></table></figure>
+
+<p>Tomcat参数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;Connector port=&quot;8090&quot; protocol=&quot;org.apache.coyote.http11.Http11NioProtocol&quot;</span><br><span class="line">               connectionTimeout=&quot;20000&quot;</span><br><span class="line">                               enableLookups=&quot;false&quot;</span><br><span class="line">                               maxThreads=&quot;256&quot;</span><br><span class="line">                               minSpareThreads=&quot;32&quot;</span><br><span class="line">                               maxSpareThreads=&quot;128&quot;</span><br><span class="line">                               acceptCount=&quot;300&quot;</span><br><span class="line">                               debug=&quot;0&quot;</span><br><span class="line">                               disableUploadTimeout=&quot;true&quot;</span><br><span class="line">               redirectPort=&quot;8443&quot; /&gt;</span><br></pre></td></tr></table></figure>
+
+<p>数据样本：</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th># Samples</th>
+<th>Average</th>
+<th>Median</th>
+<th>90% Line</th>
+<th>95% Line</th>
+<th>99% Line</th>
+<th>Min</th>
+<th>Max</th>
+<th>Error %</th>
+<th>Throughput</th>
+<th>KB/sec</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>20000</td>
+<td>172</td>
+<td>134</td>
+<td>255</td>
+<td>297</td>
+<td>1151</td>
+<td>2</td>
+<td>3245</td>
+<td>0.64%</td>
+<td>1005.7</td>
+<td>206.9</td>
+</tr>
+<tr>
+<td>2</td>
+<td>20000</td>
+<td>202</td>
+<td>188</td>
+<td>302</td>
+<td>346</td>
+<td>436</td>
+<td>3</td>
+<td>3261</td>
+<td>0.25%</td>
+<td>898</td>
+<td>184.4</td>
+</tr>
+<tr>
+<td>3</td>
+<td>20000</td>
+<td>188</td>
+<td>162</td>
+<td>271</td>
+<td>313</td>
+<td>1105</td>
+<td>2</td>
+<td>3347</td>
+<td>0.31%</td>
+<td>940.4</td>
+<td>193.2</td>
+</tr>
+<tr>
+<td>4</td>
+<td>20000</td>
+<td>194</td>
+<td>160</td>
+<td>278</td>
+<td>331</td>
+<td>1216</td>
+<td>2</td>
+<td>3153</td>
+<td>0.74%</td>
+<td>921.6</td>
+<td>189.7</td>
+</tr>
+<tr>
+<td>5</td>
+<td>20000</td>
+<td>182</td>
+<td>164</td>
+<td>253</td>
+<td>291</td>
+<td>487</td>
+<td>4</td>
+<td>3240</td>
+<td>0.50%</td>
+<td>984.8</td>
+<td>202.5</td>
+</tr>
+</tbody></table>
+<h2 id="测试五"><a href="#测试五" class="headerlink" title="测试五"></a>测试五</h2><p>继续调小tomcat线程，测试取得了最理想的结果，吞吐量稳定保持在高水平，比之前测试都要高，其他各项结果均有不同程度提升，关键是出错率为0%。</p>
+<p>Java参数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-Xms1000M -Xmx1000M -Xss512k</span><br></pre></td></tr></table></figure>
+
+<p>Tomcat参数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;Connector port=&quot;8090&quot; protocol=&quot;org.apache.coyote.http11.Http11NioProtocol&quot;</span><br><span class="line">               connectionTimeout=&quot;20000&quot;</span><br><span class="line">                               enableLookups=&quot;false&quot;</span><br><span class="line">                               maxThreads=&quot;128&quot;</span><br><span class="line">                               minSpareThreads=&quot;32&quot;</span><br><span class="line">                               maxSpareThreads=&quot;64&quot;</span><br><span class="line">                               acceptCount=&quot;300&quot;</span><br><span class="line">                               debug=&quot;0&quot;</span><br><span class="line">                               disableUploadTimeout=&quot;true&quot;</span><br><span class="line">               redirectPort=&quot;8443&quot; /&gt;</span><br></pre></td></tr></table></figure>
+
+<p>数据样本：</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th># Samples</th>
+<th>Average</th>
+<th>Median</th>
+<th>90% Line</th>
+<th>95% Line</th>
+<th>99% Line</th>
+<th>Min</th>
+<th>Max</th>
+<th>Error %</th>
+<th>Throughput</th>
+<th>KB/sec</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>20000</td>
+<td>176</td>
+<td>179</td>
+<td>222</td>
+<td>234</td>
+<td>262</td>
+<td>5</td>
+<td>333</td>
+<td>0.00%</td>
+<td>1069.9</td>
+<td>219.4</td>
+</tr>
+<tr>
+<td>2</td>
+<td>20000</td>
+<td>208</td>
+<td>204</td>
+<td>272</td>
+<td>299</td>
+<td>348</td>
+<td>6</td>
+<td>494</td>
+<td>0.00%</td>
+<td>920.5</td>
+<td>188.8</td>
+</tr>
+<tr>
+<td>3</td>
+<td>20000</td>
+<td>182</td>
+<td>183</td>
+<td>230</td>
+<td>243</td>
+<td>267</td>
+<td>9</td>
+<td>323</td>
+<td>0.00%</td>
+<td>1036.8</td>
+<td>212.6</td>
+</tr>
+<tr>
+<td>4</td>
+<td>20000</td>
+<td>178</td>
+<td>180</td>
+<td>230</td>
+<td>244</td>
+<td>276</td>
+<td>3</td>
+<td>3004</td>
+<td>0.00%</td>
+<td>1036.8</td>
+<td>212.6</td>
+</tr>
+<tr>
+<td>5</td>
+<td>20000</td>
+<td>181</td>
+<td>183</td>
+<td>234</td>
+<td>248</td>
+<td>277</td>
+<td>5</td>
+<td>387</td>
+<td>0.00%</td>
+<td>1039.3</td>
+<td>213.1</td>
+</tr>
+</tbody></table>
+<h1 id="六、结论"><a href="#六、结论" class="headerlink" title="六、结论"></a>六、结论</h1><ol>
+<li><p>当前最大瓶颈在服务器配置，主要受cpu限制，不能承载大并发请求。</p>
+</li>
+<li><p>此项压测对数据库无明显依赖，测试过程中数据库指标健康。</p>
+</li>
+<li><p>Tomcat线程按测试五参数调整能达到最优性能，吞吐率稳定而且出错率为0。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;Connector port=&quot;8090&quot; protocol=&quot;org.apache.coyote.http11.Http11NioProtocol&quot;</span><br><span class="line">            connectionTimeout=&quot;20000&quot;</span><br><span class="line">                            enableLookups=&quot;false&quot;</span><br><span class="line">                            maxThreads=&quot;128&quot;</span><br><span class="line">                            minSpareThreads=&quot;32&quot;</span><br><span class="line">                            maxSpareThreads=&quot;64&quot;</span><br><span class="line">                            acceptCount=&quot;300&quot;</span><br><span class="line">                            debug=&quot;0&quot;</span><br><span class="line">                            disableUploadTimeout=&quot;true&quot;</span><br><span class="line">            redirectPort=&quot;8443&quot; /&gt;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>按当前服务器配置，tomcat参数调优对整体吞吐性能影响不算明显，大概提升10%左右，但是对出错率有较好提升。</p>
+</li>
+</ol>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/压力测试/">压力测试</a><a href="/tags/tomcat/">tomcat</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/运维/">运维</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://www.lstop.pub/2016/07/27/Tomcat7线程优化及压力测试/" data-title="Tomcat7线程优化及压力测试 | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/07/27/MongoDB-3-2-压力测试/" title="MongoDB 3.2 压力测试">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  MongoDB 3.2 压力测试</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/07/26/hello-world/"  title="Hello World">
+ <strong>NEXT:</strong><br/> 
+ <span>Hello World
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#一、测试内容"><span class="toc-number">1.</span> <span class="toc-text">一、测试内容</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#二、测试方法及数据准备"><span class="toc-number">2.</span> <span class="toc-text">二、测试方法及数据准备</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#三、测试环境"><span class="toc-number">3.</span> <span class="toc-text">三、测试环境</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#四、jmeter设置"><span class="toc-number">4.</span> <span class="toc-text">四、jmeter设置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#五、测试数据"><span class="toc-number">5.</span> <span class="toc-text">五、测试数据</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-测试一"><span class="toc-number">5.1.</span> <span class="toc-text">1 测试一</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-测试二"><span class="toc-number">5.2.</span> <span class="toc-text">2 测试二</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-测试三"><span class="toc-number">5.3.</span> <span class="toc-text">3 测试三</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#测试四"><span class="toc-number">5.4.</span> <span class="toc-text">测试四</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#测试五"><span class="toc-number">5.5.</span> <span class="toc-text">测试五</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#六、结论"><span class="toc-number">6.</span> <span class="toc-text">六、结论</span></a></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+
+  
+<div class="tagslist">
+	<p class="asidetitle">Tags</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/DNS/" title="DNS">DNS<sup>1</sup></a></li>
+		
+			<li><a href="/tags/GitLab/" title="GitLab">GitLab<sup>1</sup></a></li>
+		
+			<li><a href="/tags/K8s/" title="K8s">K8s<sup>5</sup></a></li>
+		
+			<li><a href="/tags/Linux/" title="Linux">Linux<sup>1</sup></a></li>
+		
+			<li><a href="/tags/MongoDB/" title="MongoDB">MongoDB<sup>2</sup></a></li>
+		
+			<li><a href="/tags/OpenWrt/" title="OpenWrt">OpenWrt<sup>1</sup></a></li>
+		
+			<li><a href="/tags/Python/" title="Python">Python<sup>2</sup></a></li>
+		
+			<li><a href="/tags/RabbitMQ/" title="RabbitMQ">RabbitMQ<sup>1</sup></a></li>
+		
+			<li><a href="/tags/cdn/" title="cdn">cdn<sup>1</sup></a></li>
+		
+			<li><a href="/tags/docker/" title="docker">docker<sup>2</sup></a></li>
+		
+			<li><a href="/tags/elk/" title="elk">elk<sup>3</sup></a></li>
+		
+			<li><a href="/tags/nginx/" title="nginx">nginx<sup>1</sup></a></li>
+		
+			<li><a href="/tags/tomcat/" title="tomcat">tomcat<sup>1</sup></a></li>
+		
+			<li><a href="/tags/traefik/" title="traefik">traefik<sup>1</sup></a></li>
+		
+			<li><a href="/tags/zabbix/" title="zabbix">zabbix<sup>1</sup></a></li>
+		
+			<li><a href="/tags/中间人攻击/" title="中间人攻击">中间人攻击<sup>1</sup></a></li>
+		
+			<li><a href="/tags/压力测试/" title="压力测试">压力测试<sup>3</sup></a></li>
+		
+			<li><a href="/tags/安全/" title="安全">安全<sup>1</sup></a></li>
+		
+			<li><a href="/tags/微信企业号/" title="微信企业号">微信企业号<sup>1</sup></a></li>
+		
+			<li><a href="/tags/监控/" title="监控">监控<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">Links</p>
+    <ul>
+      <li><a href="http://www.v2ex.com/?r=zong400" target="_blank" title="V2EX">V2EX</a></li>
+      <li><a href="http://hexo.io" target="_blank" title="Hexo">Hexo</a></li>
+	  <li><a href="https://promotion.aliyun.com/ntms/yunparter/invite.html?userCode=s0bh6uzq" target="_blank" title="阿里云">阿里云</a></li>
+	  <li><a href="https://cloud.tencent.com/redirect.php?redirect=1014&cps_key=5bd9deb84d4d9f34b65fb934e12d03e3&from=console" target="_blank" title="腾讯云">腾讯云</a></li>
+    </ul>
+</div>
+
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+	</div>
+		<p class="copyright">Hosted by <a href="https://pages.coding.me/" target="_blank" title="Coding Pages">Coding Pages</a></p>
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wizicer/iceman" target="_blank" title="Iceman">Iceman</a> © 2019 
+		
+		<a href="http://www.lstop.pub" target="_blank" title="Zong">Zong</a>
+		
+		</p>
+</div>
+</footer>
+    <script src="//cdn.staticfile.org/jquery/2.1.0/jquery.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+
+
+
+  </body>
+</html>
+

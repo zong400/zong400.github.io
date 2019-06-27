@@ -1,0 +1,923 @@
+
+ <!DOCTYPE HTML>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+  
+    <title>MongoDB 3.2 压力测试 | Zong&#39;s blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Zong">
+    
+    <meta name="description" content="一、测试内容本次测试目的是衡量MongoDB单机环境的CRUD性能，包括单独及混合CRUD测试。
+
+C 创建数据，insert操作
+R 读数据，find操作
+U 更新数据，update操作
+D 删除数据，remove操作
+
+二、测试方法及数据准备本次测试采用开源测试工具Jmeter 3.0进行测试，">
+    
+    
+    
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/pacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+</html>
+  <body>
+    <header>
+      <div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.svg" alt="Zong&#39;s blog" title="Zong&#39;s blog"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="Zong&#39;s blog">Zong&#39;s blog</a></h1>
+				<h2 class="blog-motto">日常积累，技术分享</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+						<li><a href="/categories/运维">运维</a></li>
+					
+						<li><a href="/categories/容器架构">容器架构</a></li>
+					
+					<li>
+					
+					<form class="search" action="//baidu.com/s" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="text" id="search" name="wd" autocomplete="off" maxlength="20" placeholder="Search" />
+                        <input name=tn type=hidden value="bds">
+                        <input name=cl type=hidden value="3">
+                        <input name=ct type=hidden value="2097152">
+						<input type="hidden" name="si" value="www.lstop.pub">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2016/07/27/MongoDB-3-2-压力测试/" title="MongoDB 3.2 压力测试" itemprop="url">MongoDB 3.2 压力测试</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://www.lstop.pub" title="Zong">Zong</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2016-07-27T06:07:39.000Z" itemprop="datePublished">2016-07-27</time>
+    
+  </p>
+</header>
+
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">Contents</strong>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#一、测试内容"><span class="toc-number">1.</span> <span class="toc-text">一、测试内容</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#二、测试方法及数据准备"><span class="toc-number">2.</span> <span class="toc-text">二、测试方法及数据准备</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#三、测试环境"><span class="toc-number">3.</span> <span class="toc-text">三、测试环境</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#四、Jmeter设置"><span class="toc-number">4.</span> <span class="toc-text">四、Jmeter设置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#五、测试数据"><span class="toc-number">5.</span> <span class="toc-text">五、测试数据</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-插入数据压测"><span class="toc-number">5.1.</span> <span class="toc-text">1 插入数据压测</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-查询数据压测"><span class="toc-number">5.2.</span> <span class="toc-text">2 查询数据压测</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-更新数据压测"><span class="toc-number">5.3.</span> <span class="toc-text">3 更新数据压测</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-删除数据压测"><span class="toc-number">5.4.</span> <span class="toc-text">4 删除数据压测</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-CRUD混合测试"><span class="toc-number">5.5.</span> <span class="toc-text">5 CRUD混合测试</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#六、总结"><span class="toc-number">6.</span> <span class="toc-text">六、总结</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#附录"><span class="toc-number">7.</span> <span class="toc-text">附录</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#压测过程使用的代码"><span class="toc-number">7.1.</span> <span class="toc-text">压测过程使用的代码</span></a></li></ol></li></ol>
+		</div>
+		
+		<h1 id="一、测试内容"><a href="#一、测试内容" class="headerlink" title="一、测试内容"></a>一、测试内容</h1><p>本次测试目的是衡量MongoDB单机环境的CRUD性能，包括单独及混合CRUD测试。</p>
+<ul>
+<li>C 创建数据，insert操作</li>
+<li>R 读数据，find操作</li>
+<li>U 更新数据，update操作</li>
+<li>D 删除数据，remove操作</li>
+</ul>
+<h1 id="二、测试方法及数据准备"><a href="#二、测试方法及数据准备" class="headerlink" title="二、测试方法及数据准备"></a>二、测试方法及数据准备</h1><p>本次测试采用开源测试工具Jmeter 3.0进行测试，模拟大用户并发对MongoDB发起请求，达到压力测试的目的。<br>每单元测试进行5次，观察数据结果的稳定性。<br>测试数据使用地市结构，city及pop数据为程序随机，模型如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;_id&quot; : ObjectId(&quot;5791df26e4b0a6cf3fa35e14&quot;), </span><br><span class="line">  &quot;city&quot; : &quot;Zhongshan&quot;, </span><br><span class="line">  &quot;loc&quot; : &#123; &quot;x&quot; : 203, &quot;y&quot; : 102 &#125;, </span><br><span class="line">  &quot;pop&quot; : 524800, </span><br><span class="line">  &quot;state&quot; : &quot;GD&quot; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="三、测试环境"><a href="#三、测试环境" class="headerlink" title="三、测试环境"></a>三、测试环境</h1><p>MongoDB服务器：wx-dev-com，2核cpu，4g内存，MongoDB version v3.2.7<br>Jmeter服务器：wx-dev-test02，2核cpu，4g内存<br>带宽：金山云内网带宽</p>
+<p>MongoDB配置文件：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"># mongod.conf</span><br><span class="line"># for documentation of all options, see:</span><br><span class="line">#   http://docs.mongodb.org/manual/reference/configuration-options/</span><br><span class="line"># Where and how to store data.</span><br><span class="line">storage:</span><br><span class="line">  dbPath: /var/lib/mongodb</span><br><span class="line">  journal:</span><br><span class="line">    enabled: true</span><br><span class="line"># where to write logging data.</span><br><span class="line">systemLog:</span><br><span class="line">  destination: file</span><br><span class="line">  logAppend: true</span><br><span class="line">  path: /var/log/mongodb/mongod.log</span><br><span class="line"># network interfaces</span><br><span class="line">net:</span><br><span class="line">  port: 27017</span><br><span class="line">  bindIp: 127.0.0.1</span><br></pre></td></tr></table></figure>
+
+<h1 id="四、Jmeter设置"><a href="#四、Jmeter设置" class="headerlink" title="四、Jmeter设置"></a>四、Jmeter设置</h1><p>测试url：内部链接<br>Jmeter线程1000，单线程循环200次<br>测试脚本：内部脚本<br>参数化文件：内部数据</p>
+<p>名词定义（时间的单位均为ms）：<br>Samples – 本次场景中一共完成了多少个线程<br>Average – 平均响应时间<br>Median – 统计意义上面的响应时间的中值<br>90% Line – 所有线程中90%的线程的响应时间都小于xx<br>Min – 最小响应时间<br>Max – 最大响应时间<br>Error – 出错率<br>Troughput – 吞吐量<br>KB/sec – 以流量做衡量的吞吐量</p>
+<h1 id="五、测试数据"><a href="#五、测试数据" class="headerlink" title="五、测试数据"></a>五、测试数据</h1><h2 id="1-插入数据压测"><a href="#1-插入数据压测" class="headerlink" title="1 插入数据压测"></a>1 插入数据压测</h2><p>从测试结果看，除了样本1，其他样本的QPS基本在8000以上，可以看到MongoDB的插入能力很不错。<br>CPU使用率在65%左右，IO操作在压测过后有一些峰值出现，大概是30M/s，应该是批量数据同步到磁盘。</p>
+<table>
+<thead>
+<tr>
+<th>样本</th>
+<th># Samples</th>
+<th>Average</th>
+<th>Median</th>
+<th>90% Line</th>
+<th>95% Line</th>
+<th>99% Line</th>
+<th>Min</th>
+<th>Max</th>
+<th>Error %</th>
+<th>Throughput</th>
+<th>KB/sec</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>100000</td>
+<td>4</td>
+<td>2</td>
+<td>10</td>
+<td>18</td>
+<td>46</td>
+<td>0</td>
+<td>348</td>
+<td>0.00%</td>
+<td>7509.2</td>
+<td>1078</td>
+</tr>
+<tr>
+<td>2</td>
+<td>100000</td>
+<td>22</td>
+<td>9</td>
+<td>69</td>
+<td>99</td>
+<td>154</td>
+<td>0</td>
+<td>372</td>
+<td>0.00%</td>
+<td>8058.7</td>
+<td>1156.9</td>
+</tr>
+<tr>
+<td>3</td>
+<td>100000</td>
+<td>17</td>
+<td>9</td>
+<td>47</td>
+<td>67</td>
+<td>107</td>
+<td>0</td>
+<td>219</td>
+<td>0.00%</td>
+<td>8392.8</td>
+<td>1204.8</td>
+</tr>
+<tr>
+<td>4</td>
+<td>100000</td>
+<td>12</td>
+<td>8</td>
+<td>31</td>
+<td>44</td>
+<td>80</td>
+<td>0</td>
+<td>182</td>
+<td>0.00%</td>
+<td>8332.6</td>
+<td>1196.2</td>
+</tr>
+<tr>
+<td>5</td>
+<td>100000</td>
+<td>16</td>
+<td>9</td>
+<td>45</td>
+<td>66</td>
+<td>105</td>
+<td>0</td>
+<td>229</td>
+<td>0.00%</td>
+<td>8530.2</td>
+<td>1224.6</td>
+</tr>
+</tbody></table>
+<h2 id="2-查询数据压测"><a href="#2-查询数据压测" class="headerlink" title="2 查询数据压测"></a>2 查询数据压测</h2><p>单独查询数据的性能要比插入数据略好，QPS有3次样本突破9200,最低也有8100。<br>服务器CPU消耗比插入数据低接近50%，<br>IO写只有插入操作的1/4左右，IOPS只有插入1/10左右，<br>磁盘读基本没有，可见数据应该是cache在内存了。<br>每次查询结果集大概是6w数据。</p>
+<table>
+<thead>
+<tr>
+<th>样本</th>
+<th># Samples</th>
+<th>Average</th>
+<th>Median</th>
+<th>90% Line</th>
+<th>95% Line</th>
+<th>99% Line</th>
+<th>Min</th>
+<th>Max</th>
+<th>Error %</th>
+<th>Throughput</th>
+<th>KB/sec</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>100000</td>
+<td>1</td>
+<td>1</td>
+<td>2</td>
+<td>3</td>
+<td>12</td>
+<td>0</td>
+<td>83</td>
+<td>0.00%</td>
+<td>8446.7</td>
+<td>49.5</td>
+</tr>
+<tr>
+<td>2</td>
+<td>100000</td>
+<td>1</td>
+<td>1</td>
+<td>2</td>
+<td>3</td>
+<td>15</td>
+<td>0</td>
+<td>117</td>
+<td>0.00%</td>
+<td>8122.8</td>
+<td>47.6</td>
+</tr>
+<tr>
+<td>3</td>
+<td>100000</td>
+<td>1</td>
+<td>1</td>
+<td>2</td>
+<td>4</td>
+<td>15</td>
+<td>0</td>
+<td>100</td>
+<td>0.00%</td>
+<td>9398.5</td>
+<td>55.1</td>
+</tr>
+<tr>
+<td>4</td>
+<td>100000</td>
+<td>1</td>
+<td>1</td>
+<td>3</td>
+<td>5</td>
+<td>18</td>
+<td>0</td>
+<td>142</td>
+<td>0.00%</td>
+<td>9280.7</td>
+<td>54.4</td>
+</tr>
+<tr>
+<td>5</td>
+<td>100000</td>
+<td>1</td>
+<td>1</td>
+<td>3</td>
+<td>6</td>
+<td>22</td>
+<td>0</td>
+<td>166</td>
+<td>0.00%</td>
+<td>9495.8</td>
+<td>55.6</td>
+</tr>
+</tbody></table>
+<h2 id="3-更新数据压测"><a href="#3-更新数据压测" class="headerlink" title="3 更新数据压测"></a>3 更新数据压测</h2><p>更新数据结果出乎意料的差，Jmeter线程循环降低到10次。<br>QPS只有100左右，与插入查询比相差几百倍。<br>IO资源消耗较高，IOPS达到160左右，写操作峰值1500K/s。<br>怀疑是mongodb的锁机制导致，mongodb只有库级粒度锁。<br>结果存疑，待验证。</p>
+<table>
+<thead>
+<tr>
+<th>样本</th>
+<th># Samples</th>
+<th>Average</th>
+<th>Median</th>
+<th>90% Line</th>
+<th>95% Line</th>
+<th>99% Line</th>
+<th>Min</th>
+<th>Max</th>
+<th>Error %</th>
+<th>Throughput</th>
+<th>KB/sec</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>10000</td>
+<td>8192</td>
+<td>8754</td>
+<td>12116</td>
+<td>12655</td>
+<td>13525</td>
+<td>11</td>
+<td>24492</td>
+<td>0.00%</td>
+<td>104.9</td>
+<td>0.3</td>
+</tr>
+<tr>
+<td>2</td>
+<td>10000</td>
+<td>8622</td>
+<td>9067</td>
+<td>13659</td>
+<td>14660</td>
+<td>16542</td>
+<td>10</td>
+<td>29413</td>
+<td>0.00%</td>
+<td>99.8</td>
+<td>0.3</td>
+</tr>
+<tr>
+<td>3</td>
+<td>10000</td>
+<td>8173</td>
+<td>8694</td>
+<td>12379</td>
+<td>13082</td>
+<td>14103</td>
+<td>8</td>
+<td>27516</td>
+<td>0.00%</td>
+<td>104.8</td>
+<td>0.3</td>
+</tr>
+<tr>
+<td>4</td>
+<td>10000</td>
+<td>8338</td>
+<td>9054</td>
+<td>12167</td>
+<td>12738</td>
+<td>13570</td>
+<td>10</td>
+<td>25689</td>
+<td>0.00%</td>
+<td>103.5</td>
+<td>0.3</td>
+</tr>
+<tr>
+<td>5</td>
+<td>10000</td>
+<td>8123</td>
+<td>8437</td>
+<td>13196</td>
+<td>13857</td>
+<td>15043</td>
+<td>8</td>
+<td>29844</td>
+<td>0.00%</td>
+<td>104.7</td>
+<td>0.3</td>
+</tr>
+</tbody></table>
+<h2 id="4-删除数据压测"><a href="#4-删除数据压测" class="headerlink" title="4 删除数据压测"></a>4 删除数据压测</h2><p>QPS一路走低，比更新数据性能好一点。<br>但是使用1000并发进程压测会出现报错，改成并发500进程。<br>CPU使用率达到了90%以上，已经出现瓶颈了。<br>IO写峰值有6000KB/s，IOPS 200左右，磁盘压力不高。</p>
+<table>
+<thead>
+<tr>
+<th>样本</th>
+<th># Samples</th>
+<th>Average</th>
+<th>Median</th>
+<th>90% Line</th>
+<th>95% Line</th>
+<th>99% Line</th>
+<th>Min</th>
+<th>Max</th>
+<th>Error %</th>
+<th>Throughput</th>
+<th>KB/sec</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>5000</td>
+<td>992</td>
+<td>828</td>
+<td>1955</td>
+<td>2424</td>
+<td>3258</td>
+<td>5</td>
+<td>3625</td>
+<td>0.00%</td>
+<td>229</td>
+<td>0.7</td>
+</tr>
+<tr>
+<td>2</td>
+<td>5000</td>
+<td>1326</td>
+<td>1277</td>
+<td>2578</td>
+<td>3277</td>
+<td>3722</td>
+<td>10</td>
+<td>3992</td>
+<td>0.00%</td>
+<td>212.3</td>
+<td>0.6</td>
+</tr>
+<tr>
+<td>3</td>
+<td>5000</td>
+<td>1403</td>
+<td>1264</td>
+<td>3075</td>
+<td>3400</td>
+<td>3723</td>
+<td>9</td>
+<td>4085</td>
+<td>0.00%</td>
+<td>196.1</td>
+<td>0.6</td>
+</tr>
+<tr>
+<td>4</td>
+<td>5000</td>
+<td>1780</td>
+<td>1589</td>
+<td>3521</td>
+<td>4603</td>
+<td>5081</td>
+<td>12</td>
+<td>5448</td>
+<td>0.00%</td>
+<td>166.5</td>
+<td>0.5</td>
+</tr>
+<tr>
+<td>5</td>
+<td>5000</td>
+<td>2179</td>
+<td>1989</td>
+<td>4021</td>
+<td>5410</td>
+<td>6648</td>
+<td>19</td>
+<td>7273</td>
+<td>0.00%</td>
+<td>146.3</td>
+<td>0.4</td>
+</tr>
+</tbody></table>
+<h2 id="5-CRUD混合测试"><a href="#5-CRUD混合测试" class="headerlink" title="5 CRUD混合测试"></a>5 CRUD混合测试</h2><p>使用之前单项压测的脚本进行混合压测，Jmeter并发500线程，循环10次。<br>因为4个操作并发线程一样，从结果看是遵循木桶原理，单项测试QPS是80左右，总体QPS在323左右。<br>从资源使用率看，瓶颈是CPU，使用率90%，应该是删除数据导致的，与上面单项压测结果一样。<br>IOPS出现了一个峰值，但是大部分时间磁盘写入不算频繁，平均在1.2MB/s左右。</p>
+<table>
+<thead>
+<tr>
+<th align="center">Label</th>
+<th align="center"># Samples</th>
+<th align="center">Average</th>
+<th align="center">Median</th>
+<th align="center">90% Line</th>
+<th align="center">95% Line</th>
+<th align="center">99% Line</th>
+<th align="center">Min</th>
+<th align="center">Max</th>
+<th align="center">Error %</th>
+<th align="center">Throughput</th>
+<th align="center">KB/sec</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">Thread Group:Insert</td>
+<td align="center">5000</td>
+<td align="center">359</td>
+<td align="center">181</td>
+<td align="center">1238</td>
+<td align="center">1417</td>
+<td align="center">1704</td>
+<td align="center">0</td>
+<td align="center">2430</td>
+<td align="center">0.00%</td>
+<td align="center">81.1</td>
+<td align="center">11.6</td>
+</tr>
+<tr>
+<td align="center">Thread Group:Find</td>
+<td align="center">5000</td>
+<td align="center">323</td>
+<td align="center">189</td>
+<td align="center">1072</td>
+<td align="center">1338</td>
+<td align="center">1693</td>
+<td align="center">0</td>
+<td align="center">2415</td>
+<td align="center">0.00%</td>
+<td align="center">81.1</td>
+<td align="center">.5</td>
+</tr>
+<tr>
+<td align="center">Thread Group:Update</td>
+<td align="center">5000</td>
+<td align="center">2636</td>
+<td align="center">2578</td>
+<td align="center">4812</td>
+<td align="center">5226</td>
+<td align="center">6168</td>
+<td align="center">10</td>
+<td align="center">8164</td>
+<td align="center">0.00%</td>
+<td align="center">81.2</td>
+<td align="center">.0</td>
+</tr>
+<tr>
+<td align="center">Thread Group:Remove</td>
+<td align="center">5000</td>
+<td align="center">1457</td>
+<td align="center">1387</td>
+<td align="center">2891</td>
+<td align="center">3121</td>
+<td align="center">3953</td>
+<td align="center">3</td>
+<td align="center">4488</td>
+<td align="center">0.00%</td>
+<td align="center">81.1</td>
+<td align="center">.2</td>
+</tr>
+<tr>
+<td align="center">统计</td>
+<td align="center">20000</td>
+<td align="center">1194</td>
+<td align="center">510</td>
+<td align="center">3250</td>
+<td align="center">4163</td>
+<td align="center">5325</td>
+<td align="center">0</td>
+<td align="center">8164</td>
+<td align="center">0.00%</td>
+<td align="center">323.7</td>
+<td align="center">12.3</td>
+</tr>
+</tbody></table>
+<h1 id="六、总结"><a href="#六、总结" class="headerlink" title="六、总结"></a>六、总结</h1><p>1.MongoDB强项是数据插入及查询，并发性能非常好，如果压测客户端能多几个的话应该成绩还能提升。<br>2.对更新及删除数据的成绩不理想，估计和锁机制有关系，有待进一步验证。<br>3.更新及删除操作超过每秒100次就可以考虑进行分库。</p>
+<p>CRUD操作QPS汇总表：</p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>插入</th>
+<th>查询</th>
+<th>更新</th>
+<th>删除</th>
+<th>95% Line</th>
+<th>99% Line</th>
+<th>Min</th>
+<th>Max</th>
+<th>Error %</th>
+<th>Throughput</th>
+<th>KB/sec</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CPU</td>
+<td>60%</td>
+<td>40%</td>
+<td>5%</td>
+<td>90%</td>
+<td>1417</td>
+<td>1704</td>
+<td>0</td>
+<td>2430</td>
+<td>0.00%</td>
+<td>81.1</td>
+<td>11.6</td>
+</tr>
+<tr>
+<td>IOPS</td>
+<td>200</td>
+<td>60</td>
+<td>170</td>
+<td>220</td>
+<td>1338</td>
+<td>1693</td>
+<td>0</td>
+<td>2415</td>
+<td>0.00%</td>
+<td>81.1</td>
+<td>.5</td>
+</tr>
+<tr>
+<td>QPS</td>
+<td>8300</td>
+<td>9000</td>
+<td>100</td>
+<td>180</td>
+<td>5226</td>
+<td>6168</td>
+<td>10</td>
+<td>8164</td>
+<td>0.00%</td>
+<td>81.2</td>
+<td>.0</td>
+</tr>
+<tr>
+<td>Thread Group:Remove</td>
+<td>5000</td>
+<td>1457</td>
+<td>1387</td>
+<td>2891</td>
+<td>3121</td>
+<td>3953</td>
+<td>3</td>
+<td>4488</td>
+<td>0.00%</td>
+<td>81.1</td>
+<td>.2</td>
+</tr>
+<tr>
+<td>统计</td>
+<td>20000</td>
+<td>1194</td>
+<td>510</td>
+<td>3250</td>
+<td>4163</td>
+<td>5325</td>
+<td>0</td>
+<td>8164</td>
+<td>0.00%</td>
+<td>323.7</td>
+<td>12.3</td>
+</tr>
+</tbody></table>
+<h1 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h1><h2 id="压测过程使用的代码"><a href="#压测过程使用的代码" class="headerlink" title="压测过程使用的代码"></a>压测过程使用的代码</h2><p>以下代码都是Jmeter的JSR223 sampler使用的代码，并非标准java代码。<br>插入数据：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> com.mongodb.DB;</span><br><span class="line"><span class="keyword">import</span> org.apache.jmeter.protocol.mongodb.config.MongoDBHolder;</span><br><span class="line"><span class="keyword">import</span> com.mongodb.BasicDBObject;</span><br><span class="line"><span class="keyword">import</span> com.mongodb.DBCollection;</span><br><span class="line"><span class="keyword">import</span> com.mongodb.WriteConcern;</span><br><span class="line"><span class="keyword">import</span> com.mongodb.WriteResult;</span><br><span class="line"><span class="comment">// 随机选择city和pop数据</span></span><br><span class="line">def citys = [<span class="string">"Zhongshan"</span>,<span class="string">"Zhuhai"</span>,<span class="string">"Shenzhen"</span>,<span class="string">"Guangzhou"</span>,<span class="string">"Meizhou"</span>,<span class="string">"Qingyuan"</span>,<span class="string">"Shaoguang"</span>,<span class="string">"Zhaoqing"</span>];</span><br><span class="line">def pops = [<span class="string">"528400"</span>,<span class="string">"528401"</span>,<span class="string">"528402"</span>,<span class="string">"528403"</span>,<span class="string">"528404"</span>,<span class="string">"528405"</span>,<span class="string">"528406"</span>,<span class="string">"528407"</span>];</span><br><span class="line">def citynum = <span class="keyword">new</span> Random().nextInt(citys.size);</span><br><span class="line"><span class="comment">// Get DB</span></span><br><span class="line">DB db = MongoDBHolder.getDBFromSource(<span class="string">"dbjmeter"</span>, <span class="string">"dbjmeter"</span>);</span><br><span class="line"><span class="comment">// Get collection to insert</span></span><br><span class="line">DBCollection coll = db.getCollection(<span class="string">"zips"</span>);</span><br><span class="line">BasicDBObject doc = <span class="keyword">new</span> BasicDBObject(<span class="string">"city"</span>, citys[citynum]).</span><br><span class="line">                              append(<span class="string">"loc"</span>, <span class="keyword">new</span> BasicDBObject(<span class="string">"x"</span>, <span class="number">203</span>).append(<span class="string">"y"</span>, <span class="number">102</span>)).</span><br><span class="line">                              append(<span class="string">"pop"</span>, pops[citynum]).</span><br><span class="line">                              append(<span class="string">"state"</span>, <span class="string">"GD"</span>);</span><br><span class="line"><span class="comment">// Insert object</span></span><br><span class="line">WriteResult wr = coll.insert(doc, WriteConcern.ACKNOWLEDGED);</span><br><span class="line"><span class="comment">// Set response data</span></span><br><span class="line">SampleResult.setResponseData(<span class="string">""</span>+wr.toString(),<span class="string">"UTF-8"</span>);</span><br></pre></td></tr></table></figure>
+
+<p>查询数据：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> com.mongodb.DB;</span><br><span class="line"><span class="keyword">import</span> org.apache.jmeter.protocol.mongodb.config.MongoDBHolder;</span><br><span class="line"><span class="keyword">import</span> com.mongodb.BasicDBObject;</span><br><span class="line"><span class="keyword">import</span> com.mongodb.DBObject;</span><br><span class="line"><span class="keyword">import</span> com.mongodb.DBCollection;</span><br><span class="line"><span class="keyword">import</span> com.mongodb.DBCursor;</span><br><span class="line">DB db = MongoDBHolder.getDBFromSource(<span class="string">"dbjmeter"</span>, <span class="string">"dbjmeter"</span>);</span><br><span class="line">DBCollection coll = db.getCollection(<span class="string">"zips"</span>);</span><br><span class="line"><span class="comment">// 统计collection总数</span></span><br><span class="line"><span class="keyword">int</span> size = coll.count();</span><br><span class="line">BasicDBObject searchQuery = <span class="keyword">new</span> BasicDBObject(<span class="string">"city"</span>, <span class="string">"Zhongshan"</span>);</span><br><span class="line"><span class="comment">// 查找Zhongshan的数据，压力测试不写结果显示代码</span></span><br><span class="line">DBCursor cursor = coll.find(searchQuery);</span><br><span class="line">SampleResult.setResponseData(<span class="string">""</span>+size,<span class="string">"UTF-8"</span>);</span><br></pre></td></tr></table></figure>
+
+<p>更新数据：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> com.mongodb.DB;</span><br><span class="line"><span class="keyword">import</span> org.apache.jmeter.protocol.mongodb.config.MongoDBHolder;</span><br><span class="line"><span class="keyword">import</span> com.mongodb.BasicDBObject;</span><br><span class="line"><span class="keyword">import</span> com.mongodb.DBObject;</span><br><span class="line"><span class="keyword">import</span> com.mongodb.DBCollection;</span><br><span class="line"><span class="keyword">import</span> com.mongodb.DBCursor;</span><br><span class="line"><span class="keyword">import</span> org.bson.types.ObjectId;</span><br><span class="line"><span class="keyword">import</span> com.mongodb.WriteConcern;</span><br><span class="line"><span class="keyword">import</span> com.mongodb.WriteResult;</span><br><span class="line"><span class="keyword">import</span> java.util.Random;</span><br><span class="line"><span class="keyword">import</span> java.util.Date;</span><br><span class="line">DB db = MongoDBHolder.getDBFromSource(<span class="string">"dbjmeter"</span>, <span class="string">"dbjmeter"</span>);</span><br><span class="line">DBCollection coll = db.getCollection(<span class="string">"zips"</span>);</span><br><span class="line"><span class="comment">// 组装一个后三位随机的 _id</span></span><br><span class="line">String[] hex = <span class="keyword">new</span> String[]&#123;<span class="string">"0"</span>,<span class="string">"1"</span>,<span class="string">"2"</span>,<span class="string">"3"</span>,<span class="string">"4"</span>,<span class="string">"5"</span>,<span class="string">"6"</span>,<span class="string">"7"</span>,<span class="string">"8"</span>,<span class="string">"9"</span>,<span class="string">"a"</span>,<span class="string">"b"</span>,<span class="string">"c"</span>,<span class="string">"d"</span>,<span class="string">"e"</span>,<span class="string">"f"</span>&#125;;</span><br><span class="line">Random r = <span class="keyword">new</span> Random();</span><br><span class="line">String hexid = <span class="string">"5798822de4b0915e330a7"</span> + hex[r.nextInt(<span class="number">16</span>)]+ hex[r.nextInt(<span class="number">16</span>)]+ hex[r.nextInt(<span class="number">16</span>)];</span><br><span class="line"><span class="keyword">int</span> xx = r.nextInt(<span class="number">1000</span>);</span><br><span class="line"><span class="keyword">int</span> yy = r.nextInt(<span class="number">1000</span>);</span><br><span class="line"><span class="comment">// 组装_id、loc等数据</span></span><br><span class="line">BasicDBObject qid = <span class="keyword">new</span> BasicDBObject(<span class="string">"_id"</span>, <span class="keyword">new</span> ObjectId(hexid));</span><br><span class="line">BasicDBObject newLoc = <span class="keyword">new</span> BasicDBObject(<span class="string">"loc"</span>, <span class="keyword">new</span> BasicDBObject(<span class="string">"x"</span>,xx).append(<span class="string">"y"</span>,yy));</span><br><span class="line">BasicDBObject updateObj = <span class="keyword">new</span> BasicDBObject(<span class="string">"$set"</span>, newLoc);</span><br><span class="line"><span class="comment">// 使用随机_id为条件，更新loc字段</span></span><br><span class="line">WriteResult wr = coll.update(qid, updateObj, <span class="keyword">false</span>, <span class="keyword">false</span>);</span><br><span class="line"><span class="comment">// 使用findAndModity方法测试，性能没变化</span></span><br><span class="line"><span class="comment">//WriteResult wr = coll.findAndModify(qid, updateObj);</span></span><br><span class="line"><span class="comment">// Set response data</span></span><br><span class="line">SampleResult.setResponseData(<span class="string">""</span>+wr.toString(),<span class="string">"UTF-8"</span>);</span><br></pre></td></tr></table></figure>
+
+<p>删除数据：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> com.mongodb.DB;</span><br><span class="line"><span class="keyword">import</span> org.apache.jmeter.protocol.mongodb.config.MongoDBHolder;</span><br><span class="line"><span class="keyword">import</span> com.mongodb.BasicDBObject;</span><br><span class="line"><span class="keyword">import</span> com.mongodb.DBObject;</span><br><span class="line"><span class="keyword">import</span> com.mongodb.DBCollection;</span><br><span class="line"><span class="keyword">import</span> com.mongodb.WriteConcern;</span><br><span class="line"><span class="keyword">import</span> com.mongodb.WriteResult;</span><br><span class="line">DB db = MongoDBHolder.getDBFromSource(<span class="string">"dbjmeter"</span>, <span class="string">"dbjmeter"</span>);</span><br><span class="line">DBCollection coll = db.getCollection(<span class="string">"zips"</span>);</span><br><span class="line">BasicDBObject searchQuery = <span class="keyword">new</span> BasicDBObject(<span class="string">"city"</span>, <span class="string">"Zhongshan"</span>);</span><br><span class="line"><span class="comment">// 查找一条数据，返回_id</span></span><br><span class="line">BasicDBObject qid = coll.findOne(searchQuery, <span class="keyword">new</span> BasicDBObject(<span class="string">"_id"</span>, <span class="string">"1"</span>));</span><br><span class="line"><span class="comment">// 根据_id删除doc</span></span><br><span class="line">WriteResult wr = coll.remove(qid);</span><br><span class="line"><span class="comment">// Set response data</span></span><br><span class="line">SampleResult.setResponseData(<span class="string">""</span>+wr.toString(),<span class="string">"UTF-8"</span>);</span><br></pre></td></tr></table></figure>  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/MongoDB/">MongoDB</a><a href="/tags/压力测试/">压力测试</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/运维/">运维</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://www.lstop.pub/2016/07/27/MongoDB-3-2-压力测试/" data-title="MongoDB 3.2 压力测试 | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/08/01/Nginx优化及压力测试/" title="Nginx优化及压力测试">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  Nginx优化及压力测试</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/07/27/Tomcat7线程优化及压力测试/"  title="Tomcat7线程优化及压力测试">
+ <strong>NEXT:</strong><br/> 
+ <span>Tomcat7线程优化及压力测试
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#一、测试内容"><span class="toc-number">1.</span> <span class="toc-text">一、测试内容</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#二、测试方法及数据准备"><span class="toc-number">2.</span> <span class="toc-text">二、测试方法及数据准备</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#三、测试环境"><span class="toc-number">3.</span> <span class="toc-text">三、测试环境</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#四、Jmeter设置"><span class="toc-number">4.</span> <span class="toc-text">四、Jmeter设置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#五、测试数据"><span class="toc-number">5.</span> <span class="toc-text">五、测试数据</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-插入数据压测"><span class="toc-number">5.1.</span> <span class="toc-text">1 插入数据压测</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-查询数据压测"><span class="toc-number">5.2.</span> <span class="toc-text">2 查询数据压测</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-更新数据压测"><span class="toc-number">5.3.</span> <span class="toc-text">3 更新数据压测</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-删除数据压测"><span class="toc-number">5.4.</span> <span class="toc-text">4 删除数据压测</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-CRUD混合测试"><span class="toc-number">5.5.</span> <span class="toc-text">5 CRUD混合测试</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#六、总结"><span class="toc-number">6.</span> <span class="toc-text">六、总结</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#附录"><span class="toc-number">7.</span> <span class="toc-text">附录</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#压测过程使用的代码"><span class="toc-number">7.1.</span> <span class="toc-text">压测过程使用的代码</span></a></li></ol></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+
+  
+<div class="tagslist">
+	<p class="asidetitle">Tags</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/DNS/" title="DNS">DNS<sup>1</sup></a></li>
+		
+			<li><a href="/tags/GitLab/" title="GitLab">GitLab<sup>1</sup></a></li>
+		
+			<li><a href="/tags/K8s/" title="K8s">K8s<sup>5</sup></a></li>
+		
+			<li><a href="/tags/Linux/" title="Linux">Linux<sup>1</sup></a></li>
+		
+			<li><a href="/tags/MongoDB/" title="MongoDB">MongoDB<sup>2</sup></a></li>
+		
+			<li><a href="/tags/OpenWrt/" title="OpenWrt">OpenWrt<sup>1</sup></a></li>
+		
+			<li><a href="/tags/Python/" title="Python">Python<sup>2</sup></a></li>
+		
+			<li><a href="/tags/RabbitMQ/" title="RabbitMQ">RabbitMQ<sup>1</sup></a></li>
+		
+			<li><a href="/tags/cdn/" title="cdn">cdn<sup>1</sup></a></li>
+		
+			<li><a href="/tags/docker/" title="docker">docker<sup>2</sup></a></li>
+		
+			<li><a href="/tags/elk/" title="elk">elk<sup>3</sup></a></li>
+		
+			<li><a href="/tags/nginx/" title="nginx">nginx<sup>1</sup></a></li>
+		
+			<li><a href="/tags/tomcat/" title="tomcat">tomcat<sup>1</sup></a></li>
+		
+			<li><a href="/tags/traefik/" title="traefik">traefik<sup>1</sup></a></li>
+		
+			<li><a href="/tags/zabbix/" title="zabbix">zabbix<sup>1</sup></a></li>
+		
+			<li><a href="/tags/中间人攻击/" title="中间人攻击">中间人攻击<sup>1</sup></a></li>
+		
+			<li><a href="/tags/压力测试/" title="压力测试">压力测试<sup>3</sup></a></li>
+		
+			<li><a href="/tags/安全/" title="安全">安全<sup>1</sup></a></li>
+		
+			<li><a href="/tags/微信企业号/" title="微信企业号">微信企业号<sup>1</sup></a></li>
+		
+			<li><a href="/tags/监控/" title="监控">监控<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">Links</p>
+    <ul>
+      <li><a href="http://www.v2ex.com/?r=zong400" target="_blank" title="V2EX">V2EX</a></li>
+      <li><a href="http://hexo.io" target="_blank" title="Hexo">Hexo</a></li>
+	  <li><a href="https://promotion.aliyun.com/ntms/yunparter/invite.html?userCode=s0bh6uzq" target="_blank" title="阿里云">阿里云</a></li>
+	  <li><a href="https://cloud.tencent.com/redirect.php?redirect=1014&cps_key=5bd9deb84d4d9f34b65fb934e12d03e3&from=console" target="_blank" title="腾讯云">腾讯云</a></li>
+    </ul>
+</div>
+
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+	</div>
+		<p class="copyright">Hosted by <a href="https://pages.coding.me/" target="_blank" title="Coding Pages">Coding Pages</a></p>
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wizicer/iceman" target="_blank" title="Iceman">Iceman</a> © 2019 
+		
+		<a href="http://www.lstop.pub" target="_blank" title="Zong">Zong</a>
+		
+		</p>
+</div>
+</footer>
+    <script src="//cdn.staticfile.org/jquery/2.1.0/jquery.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+
+
+
+  </body>
+</html>
+

@@ -1,0 +1,368 @@
+
+ <!DOCTYPE HTML>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+  
+    <title>zabbix rest api开发（登录） | Zong&#39;s blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Zong">
+    
+    <meta name="description" content="不知为什么自己挖坑说想把zabbix的监控展示在微信企业号。。。不知能不能填啊。。。一点一点来吧今天记录一下关于zabbix的restAPI开发，首先我们要登录到zabbixzabbix的restAPI会接收一个json格式的登录数据，通过这个json提交必要的username和password
+1">
+    
+    
+    
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/pacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+</html>
+  <body>
+    <header>
+      <div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.svg" alt="Zong&#39;s blog" title="Zong&#39;s blog"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="Zong&#39;s blog">Zong&#39;s blog</a></h1>
+				<h2 class="blog-motto">日常积累，技术分享</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+						<li><a href="/categories/运维">运维</a></li>
+					
+						<li><a href="/categories/容器架构">容器架构</a></li>
+					
+					<li>
+					
+					<form class="search" action="//baidu.com/s" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="text" id="search" name="wd" autocomplete="off" maxlength="20" placeholder="Search" />
+                        <input name=tn type=hidden value="bds">
+                        <input name=cl type=hidden value="3">
+                        <input name=ct type=hidden value="2097152">
+						<input type="hidden" name="si" value="www.lstop.pub">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2017/03/01/zabbix-rest-api开发（登录）/" title="zabbix rest api开发（登录）" itemprop="url">zabbix rest api开发（登录）</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://www.lstop.pub" title="Zong">Zong</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2017-03-01T06:02:11.000Z" itemprop="datePublished">2017-03-01</time>
+    
+  </p>
+</header>
+
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">Contents</strong>
+		
+		</div>
+		
+		<p>不知为什么自己挖坑说想把zabbix的监控展示在微信企业号。。。不知能不能填啊。。。一点一点来吧<br>今天记录一下关于zabbix的restAPI开发，首先我们要登录到zabbix<br>zabbix的restAPI会接收一个json格式的登录数据，通过这个json提交必要的username和password</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;jsonrpc&quot;: &quot;2.0&quot;,</span><br><span class="line">    &quot;method&quot;: &quot;user.login&quot;,</span><br><span class="line">    &quot;params&quot;: &#123;</span><br><span class="line">     &quot;user&quot;: &quot;username&quot;,</span><br><span class="line">     &quot;password&quot;: &quot;password&quot;</span><br><span class="line">     &#125;,</span><br><span class="line">    &quot;id&quot;: 0</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<p>zabbix的rest api入口是<a href="http://localhost/zabbix/api_jsonrpc.php" target="_blank" rel="noopener">http://localhost/zabbix/api_jsonrpc.php</a></p>
+<p>我们使用python的requests模块就能很方便的把这个json数据post到zabbix，如果成功就能返回登录的token，之后的操作带上这个token就能继续访问restAPI提供的各种数据接口。<br>我自己写的一个测试代码</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/python</span></span><br><span class="line"><span class="comment"># coding=utf-8</span></span><br><span class="line"><span class="string">'''</span></span><br><span class="line"><span class="string">zabbix登录类，获取zabbix token</span></span><br><span class="line"><span class="string">'''</span></span><br><span class="line"><span class="keyword">import</span> json</span><br><span class="line"><span class="keyword">import</span> requests</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">zabbixToken</span><span class="params">(object)</span>:</span></span><br><span class="line"> <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, username = <span class="string">'admin'</span>, password = <span class="string">'admin'</span> , zurl = <span class="string">''</span>)</span>:</span></span><br><span class="line">  self.__username = username</span><br><span class="line">  self.__password = password</span><br><span class="line">  self.__zurl = zurl</span><br><span class="line">  </span><br><span class="line"> <span class="function"><span class="keyword">def</span> <span class="title">_login_to_zabbix</span><span class="params">(self)</span>:</span></span><br><span class="line">  login_json = <span class="string">'''</span></span><br><span class="line"><span class="string">  &#123;</span></span><br><span class="line"><span class="string">    "jsonrpc": "2.0",</span></span><br><span class="line"><span class="string">    "method": "user.login",</span></span><br><span class="line"><span class="string">    "params": &#123;</span></span><br><span class="line"><span class="string">     "user": "%s",</span></span><br><span class="line"><span class="string">     "password": "%s"</span></span><br><span class="line"><span class="string">     &#125;,</span></span><br><span class="line"><span class="string">    "id": 0</span></span><br><span class="line"><span class="string">  &#125;</span></span><br><span class="line"><span class="string">  '''</span> % (self.__username, self.__password)</span><br><span class="line">  headers = &#123;<span class="string">"Content-Type"</span>: <span class="string">"application/json"</span>&#125;</span><br><span class="line">  <span class="keyword">return</span> requests.post(self.__zurl, data=login_json, headers=headers)</span><br><span class="line"> </span><br><span class="line"> <span class="function"><span class="keyword">def</span> <span class="title">get_token</span><span class="params">(self)</span>:</span></span><br><span class="line">  token = self._login_to_zabbix().json()[<span class="string">'result'</span>]</span><br><span class="line">  <span class="keyword">return</span> token</span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">main</span><span class="params">()</span>:</span></span><br><span class="line"> token = zabbixToken(username=<span class="string">'admin'</span>, password=<span class="string">'pass'</span>, zurl=<span class="string">'http://localhost/zabbix/api_jsonrpc.php'</span>)</span><br><span class="line"> <span class="keyword">print</span> <span class="string">'zabbix token: '</span> + token.get_token()</span><br><span class="line"> </span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">'__main__'</span>:</span><br><span class="line"> main()</span><br></pre></td></tr></table></figure>
+
+<p>运行成功能得到token</p>
+<blockquote>
+<p>Python 2.7.12 (v2.7.12:d33e0cf91556, Jun 27 2016, 15:19:22) [MSC v.1500 32 bit (Intel)] on win32<br>Type “copyright”, “credits” or “license()” for more information.</p>
+<p>=============== RESTART: D:\pyproject\zabbixwx\zabbixToken.py ===============<br>zabbix token: f26bb031ef648d8b13ff8d1a3714f480</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/zabbix/">zabbix</a><a href="/tags/Python/">Python</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/运维/">运维</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://www.lstop.pub/2017/03/01/zabbix-rest-api开发（登录）/" data-title="zabbix rest api开发（登录） | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2017/03/07/微信企业号发送消息和图片/" title="微信企业号发送消息和图片">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  微信企业号发送消息和图片</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2017/02/24/安装GitLab的一些记录/"  title="安装GitLab的一些记录">
+ <strong>NEXT:</strong><br/> 
+ <span>安装GitLab的一些记录
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+
+  
+<div class="tagslist">
+	<p class="asidetitle">Tags</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/DNS/" title="DNS">DNS<sup>1</sup></a></li>
+		
+			<li><a href="/tags/GitLab/" title="GitLab">GitLab<sup>1</sup></a></li>
+		
+			<li><a href="/tags/K8s/" title="K8s">K8s<sup>5</sup></a></li>
+		
+			<li><a href="/tags/Linux/" title="Linux">Linux<sup>1</sup></a></li>
+		
+			<li><a href="/tags/MongoDB/" title="MongoDB">MongoDB<sup>2</sup></a></li>
+		
+			<li><a href="/tags/OpenWrt/" title="OpenWrt">OpenWrt<sup>1</sup></a></li>
+		
+			<li><a href="/tags/Python/" title="Python">Python<sup>2</sup></a></li>
+		
+			<li><a href="/tags/RabbitMQ/" title="RabbitMQ">RabbitMQ<sup>1</sup></a></li>
+		
+			<li><a href="/tags/cdn/" title="cdn">cdn<sup>1</sup></a></li>
+		
+			<li><a href="/tags/docker/" title="docker">docker<sup>2</sup></a></li>
+		
+			<li><a href="/tags/elk/" title="elk">elk<sup>3</sup></a></li>
+		
+			<li><a href="/tags/nginx/" title="nginx">nginx<sup>1</sup></a></li>
+		
+			<li><a href="/tags/tomcat/" title="tomcat">tomcat<sup>1</sup></a></li>
+		
+			<li><a href="/tags/traefik/" title="traefik">traefik<sup>1</sup></a></li>
+		
+			<li><a href="/tags/zabbix/" title="zabbix">zabbix<sup>1</sup></a></li>
+		
+			<li><a href="/tags/中间人攻击/" title="中间人攻击">中间人攻击<sup>1</sup></a></li>
+		
+			<li><a href="/tags/压力测试/" title="压力测试">压力测试<sup>3</sup></a></li>
+		
+			<li><a href="/tags/安全/" title="安全">安全<sup>1</sup></a></li>
+		
+			<li><a href="/tags/微信企业号/" title="微信企业号">微信企业号<sup>1</sup></a></li>
+		
+			<li><a href="/tags/监控/" title="监控">监控<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">Links</p>
+    <ul>
+      <li><a href="http://www.v2ex.com/?r=zong400" target="_blank" title="V2EX">V2EX</a></li>
+      <li><a href="http://hexo.io" target="_blank" title="Hexo">Hexo</a></li>
+	  <li><a href="https://promotion.aliyun.com/ntms/yunparter/invite.html?userCode=s0bh6uzq" target="_blank" title="阿里云">阿里云</a></li>
+	  <li><a href="https://cloud.tencent.com/redirect.php?redirect=1014&cps_key=5bd9deb84d4d9f34b65fb934e12d03e3&from=console" target="_blank" title="腾讯云">腾讯云</a></li>
+    </ul>
+</div>
+
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+	</div>
+		<p class="copyright">Hosted by <a href="https://pages.coding.me/" target="_blank" title="Coding Pages">Coding Pages</a></p>
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wizicer/iceman" target="_blank" title="Iceman">Iceman</a> © 2019 
+		
+		<a href="http://www.lstop.pub" target="_blank" title="Zong">Zong</a>
+		
+		</p>
+</div>
+</footer>
+    <script src="//cdn.staticfile.org/jquery/2.1.0/jquery.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+
+
+
+  </body>
+</html>
+

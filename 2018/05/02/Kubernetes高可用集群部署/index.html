@@ -1,0 +1,395 @@
+
+ <!DOCTYPE HTML>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+  
+    <title>Kubernetes高可用集群部署 | Zong&#39;s blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Zong">
+    
+    <meta name="description" content="Kubernetes集群能保证在其上运行的各种服务、应用在不同物理节点上漂移以达到高可用的目的。但Kubernetes本身的高可用在生产环境中需要特别注意，参照官网给出的文章Building High-Availability Clusters，可以搭建一个高可用的K8s环境。下面我们使用三个mas">
+    
+    
+    
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/pacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+</html>
+  <body>
+    <header>
+      <div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.svg" alt="Zong&#39;s blog" title="Zong&#39;s blog"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="Zong&#39;s blog">Zong&#39;s blog</a></h1>
+				<h2 class="blog-motto">日常积累，技术分享</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+						<li><a href="/categories/运维">运维</a></li>
+					
+						<li><a href="/categories/容器架构">容器架构</a></li>
+					
+					<li>
+					
+					<form class="search" action="//baidu.com/s" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="text" id="search" name="wd" autocomplete="off" maxlength="20" placeholder="Search" />
+                        <input name=tn type=hidden value="bds">
+                        <input name=cl type=hidden value="3">
+                        <input name=ct type=hidden value="2097152">
+						<input type="hidden" name="si" value="www.lstop.pub">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2018/05/02/Kubernetes高可用集群部署/" title="Kubernetes高可用集群部署" itemprop="url">Kubernetes高可用集群部署</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://www.lstop.pub" title="Zong">Zong</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2018-05-02T03:04:35.000Z" itemprop="datePublished">2018-05-02</time>
+    
+  </p>
+</header>
+
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">Contents</strong>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#一-准备kubelet"><span class="toc-number">1.</span> <span class="toc-text">一 准备kubelet</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#二-etcd集群"><span class="toc-number">2.</span> <span class="toc-text">二 etcd集群</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#三-kube-apiserver"><span class="toc-number">3.</span> <span class="toc-text">三 kube-apiserver</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#负载均衡"><span class="toc-number">3.1.</span> <span class="toc-text">负载均衡</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#四、其他组件"><span class="toc-number">4.</span> <span class="toc-text">四、其他组件</span></a></li></ol>
+		</div>
+		
+		<p>Kubernetes集群能保证在其上运行的各种服务、应用在不同物理节点上漂移以达到高可用的目的。但Kubernetes本身的高可用在生产环境中需要特别注意，参照官网给出的文章<a href="https://kubernetes.io/docs/admin/high-availability/building/#master-elected-components" target="_blank" rel="noopener">Building High-Availability Clusters</a>，可以搭建一个高可用的K8s环境。<br>下面我们使用三个master节点搭建集群。</p>
+<h1 id="一-准备kubelet"><a href="#一-准备kubelet" class="headerlink" title="一 准备kubelet"></a>一 准备kubelet</h1><p>在每个master node上安装kubelet，kubelet负责以static pod形式运行etcd、kube-apiserver、kube-controller-manager等组件，这些组件由kubelet提供异常重启，资源管理等功能。<br>从官方下载<a href="https://dl.k8s.io/v1.9.7/kubernetes-node-linux-amd64.tar.gz" target="_blank" rel="noopener">kubelet</a>，解压后cp到/usr/bin<br>详细过程参考之前的文章，安装docker-ce，部署并使用systemd运行kubelet。</p>
+<p>kubelet配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">KUBELET_ARGS=&quot;--pod-manifest-path=/etc/kubernetes/staticPods --allow_privileged=true --cluster-dns=10.172.0.2 --cluster-domain=wxk8s.local -pod-infra-container-image=registry.cn-hangzhou.aliyuncs.com/google-containers/pause-amd64:3.0 --logtostderr=false --log-dir=/var/log/kubernetes --v=2&quot;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>–pod-manifest-path 指定了静态pod配置目录</li>
+</ul>
+<h1 id="二-etcd集群"><a href="#二-etcd集群" class="headerlink" title="二 etcd集群"></a>二 etcd集群</h1><p>K8s使用etcd存储数据，所以etcd集群化能提供数据安全、数据冗余及高可用。<br>我们在三个master node上都部署一个etcd节点，因为pod的ip是随机分配，所以使用etcd discovery服务部署集群。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -w &quot;\n&quot; &apos;https://discovery.etcd.io/new?size=3&apos;</span><br></pre></td></tr></table></figure>
+
+<p>访问连接，得出一个token，之后在etcd配置中指定。<br>把下面的yaml放进/etc/kubernetes/staticPods，kubelet会创建出pod。<br><strong>etcd.yaml</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Pod</span><br><span class="line">metadata:</span><br><span class="line">  name: etcd-server1</span><br><span class="line">spec:</span><br><span class="line">  hostNetwork: true</span><br><span class="line">  containers:</span><br><span class="line">  - image: registry.cn-hangzhou.aliyuncs.com/google_containers/etcd-amd64:3.2.18</span><br><span class="line">    name: etcd-container</span><br><span class="line">    command:</span><br><span class="line">    - /usr/local/bin/etcd</span><br><span class="line">    - --name</span><br><span class="line">    - etcd-server1</span><br><span class="line">    - --initial-advertise-peer-urls</span><br><span class="line">    - https://$&#123;master_node_ip&#125;:2380</span><br><span class="line">    - --listen-peer-urls</span><br><span class="line">    - https://$&#123;master_node_ip&#125;:2380</span><br><span class="line">    - --advertise-client-urls</span><br><span class="line">    - https://$&#123;master_node_ip&#125;:4001</span><br><span class="line">    - --listen-client-urls</span><br><span class="line">    - https://0.0.0.0:4001</span><br><span class="line">    - --data-dir</span><br><span class="line">    - /data/etcd</span><br><span class="line">    - --discovery</span><br><span class="line">    - https://discovery.etcd.io/540c9ade1637bf4f24947ab1db14de7e</span><br><span class="line">    - --client-cert-auth</span><br><span class="line">    - --trusted-ca-file=/etc/etcd/ssl/ca.pem</span><br><span class="line">    - --cert-file=/etc/etcd/ssl/etcdserver.pem</span><br><span class="line">    - --key-file=/etc/etcd/ssl/etcdserver-key.pem</span><br><span class="line">    - --peer-client-cert-auth</span><br><span class="line">    - --peer-trusted-ca-file=/etc/etcd/ssl/ca.pem</span><br><span class="line">    - --peer-cert-file=/etc/etcd/ssl/etcdserver.pem</span><br><span class="line">    - --peer-key-file=/etc/etcd/ssl/etcdserver-key.pem</span><br><span class="line">    ports:</span><br><span class="line">    - containerPort: 2380</span><br><span class="line">      hostPort: 2380</span><br><span class="line">      name: serverport</span><br><span class="line">    - containerPort: 4001</span><br><span class="line">      hostPort: 4001</span><br><span class="line">      name: clientport</span><br><span class="line">    volumeMounts:</span><br><span class="line">    - mountPath: /data/etcd</span><br><span class="line">      name: dataetcd</span><br><span class="line">    - mountPath: /etc/etcd/ssl</span><br><span class="line">      name: etcdssl</span><br><span class="line">      readOnly: true</span><br><span class="line">    - mountPath: /usr/lib/ssl</span><br><span class="line">      name: usrlibssl</span><br><span class="line">      readOnly: true</span><br><span class="line">    - mountPath: /etc/ssl</span><br><span class="line">      name: etcssl</span><br><span class="line">      readOnly: true</span><br><span class="line">  volumes:</span><br><span class="line">  - hostPath:</span><br><span class="line">      path: /data/etcd</span><br><span class="line">    name: dataetcd</span><br><span class="line">  - hostPath:</span><br><span class="line">      path: /etc/etcd/ssl</span><br><span class="line">    name: etcdssl</span><br><span class="line">  - hostPath:</span><br><span class="line">      path: /usr/lib/ssl</span><br><span class="line">    name: usrlibssl</span><br><span class="line">  - hostPath:</span><br><span class="line">      path: /etc/ssl</span><br><span class="line">    name: etcssl</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>–name etcd节点名称</li>
+<li>${master_node_ip} 替换为master节点的ip</li>
+<li>–discovery 填写上面获取的etcd token url</li>
+<li>–data-dir etcd数据存储目录，使用hostPath方式挂载节点目录</li>
+<li>–client-cert-auth 客户端tls认证，可以使用cfssl工具生成tls证书</li>
+<li>–peer-client-cert-auth 集群节点间的tls认证，可以使用cfssl工具生成tls证书</li>
+</ul>
+<p>三个节点启动后，登录到容器验证一下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">etcdctl --ca-file /etc/etcd/ssl/ca.pem \</span><br><span class="line">--cert-file /etc/etcd/ssl/etcdclient.pem \</span><br><span class="line">--key-file /etc/etcd/ssl/etcdclient-key.pem \</span><br><span class="line">--endpoints https://localhost:4001 cluster-health</span><br><span class="line">member b134bae85b06bb33 is healthy: got healthy result from https://172.31.32.15:4001</span><br><span class="line">member f22cd359aefb3870 is healthy: got healthy result from https://172.31.32.4:4001</span><br><span class="line">member f7f2a252878f0d60 is healthy: got healthy result from https://172.31.32.2:4001</span><br><span class="line">cluster is healthy</span><br></pre></td></tr></table></figure>
+
+<h1 id="三-kube-apiserver"><a href="#三-kube-apiserver" class="headerlink" title="三 kube-apiserver"></a>三 kube-apiserver</h1><p>apiserver比较简单，其需要tls认证，推荐使用easyrsa工具创建一个自签证书，<strong>tls证书需要包括负载均衡IP</strong>，参考之前的文章。<br>剩下的工作是按实际修改好yaml，分别在三个master node上部署。<br><strong>apiserver.yaml</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Pod</span><br><span class="line">metadata:</span><br><span class="line">  name: kube-apiserver</span><br><span class="line">spec:</span><br><span class="line">  hostNetwork: true</span><br><span class="line">  containers:</span><br><span class="line">  - name: kube-apiserver</span><br><span class="line">    image: registry.cn-hangzhou.aliyuncs.com/google_containers/kube-apiserver-amd64:v1.9.7</span><br><span class="line">    command:</span><br><span class="line">    - /bin/sh</span><br><span class="line">    - -c</span><br><span class="line">    - /usr/local/bin/kube-apiserver --bind-address=0.0.0.0 --storage-backend=etcd3 </span><br><span class="line">      --etcd-servers=https://172.31.32.2:4001,https://172.31.32.4:4001,https://172.31.32.15:4001</span><br><span class="line">      --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,ResourceQuota,DefaultTolerationSeconds</span><br><span class="line">      --service-cluster-ip-range=10.172.0.0/16 --client-ca-file=/etc/kubernetes/pki/ca.crt</span><br><span class="line">      --tls-cert-file=/etc/kubernetes/pki/server.crt</span><br><span class="line">      --tls-private-key-file=/etc/kubernetes/pki/server.key --secure-port=443 </span><br><span class="line">      --service-node-port-range=1-65535 --v=2 --allow-privileged=true --endpoint-reconciler-type=lease</span><br><span class="line">      --etcd-cafile=/etc/kubernetes/pki/ca.pem --etcd-certfile=/etc/kubernetes/pki/etcdclient.pem</span><br><span class="line">      --etcd-keyfile=/etc/kubernetes/pki/etcdclient-key.pem 1&gt;&gt;/var/log/kube-apiserver.log 2&gt;&amp;1</span><br><span class="line">    ports:</span><br><span class="line">    - containerPort: 443</span><br><span class="line">      hostPort: 443</span><br><span class="line">      name: https</span><br><span class="line">    - containerPort: 7080</span><br><span class="line">      hostPort: 7080</span><br><span class="line">      name: http</span><br><span class="line">    - containerPort: 8080</span><br><span class="line">      hostPort: 8080</span><br><span class="line">      name: local</span><br><span class="line">    volumeMounts:</span><br><span class="line">    - mountPath: /etc/kubernetes/pki</span><br><span class="line">      name: kubepki</span><br><span class="line">      readOnly: true</span><br><span class="line">    - mountPath: /var/log/kube-apiserver.log</span><br><span class="line">      name: logfile</span><br><span class="line">    - mountPath: /etc/ssl</span><br><span class="line">      name: etcssl</span><br><span class="line">      readOnly: true</span><br><span class="line">    - mountPath: /usr/lib/ssl</span><br><span class="line">      name: usrlibssl</span><br><span class="line">      readOnly: true</span><br><span class="line">  volumes:</span><br><span class="line">  - hostPath:</span><br><span class="line">      path: /etc/kubernetes/pki</span><br><span class="line">    name: kubepki</span><br><span class="line">  - hostPath:</span><br><span class="line">      path: /var/log/kubernetes/kube-apiserver.log </span><br><span class="line">    name: logfile</span><br><span class="line">  - hostPath:</span><br><span class="line">      path: /etc/ssl</span><br><span class="line">    name: etcssl</span><br><span class="line">  - hostPath:</span><br><span class="line">      path: /usr/lib/ssl</span><br><span class="line">    name: usrlibssl</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>–endpoint-reconciler-type=lease 多个apiserver同时运行时，需要加这个lease锁用于防止冲突和相互告知状态。</li>
+</ul>
+<h2 id="负载均衡"><a href="#负载均衡" class="headerlink" title="负载均衡"></a>负载均衡</h2><p>apiserver有三个，需要使用一些负载均衡的手段达到高可用目的，这里如果选择在云上运行就比较简单，直接用云提供的负载均衡。<br>如果自己搭建的物理节点，则可以考虑haproxy + keepalive方案。<br><strong>tls证书需要包括负载均衡IP。</strong></p>
+<h1 id="四、其他组件"><a href="#四、其他组件" class="headerlink" title="四、其他组件"></a>四、其他组件</h1><p>包括kube-scheduler、kube-controller-manager，这两个部署简单，也是static pod方式，在所有master node上部署。<br><strong>kube-controller-manager.yaml</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Pod</span><br><span class="line">metadata:</span><br><span class="line">  name: kube-controller-manager</span><br><span class="line">spec:</span><br><span class="line">  containers:</span><br><span class="line">  - command:</span><br><span class="line">    - /bin/sh</span><br><span class="line">    - -c</span><br><span class="line">    - /usr/local/bin/kube-controller-manager --master=127.0.0.1:8080</span><br><span class="line">      --service_account_private_key_file=/etc/kubernetes/pki/server.key --root-ca-file=/etc/kubernetes/pki/ca.crt</span><br><span class="line">      --v=2 --leader-elect=true 1&gt;&gt;/var/log/kube-controller-manager.log 2&gt;&amp;1</span><br><span class="line">    image: registry.cn-hangzhou.aliyuncs.com/google_containers/kube-controller-manager-amd64:v1.9.7</span><br><span class="line">    livenessProbe:</span><br><span class="line">      httpGet:</span><br><span class="line">        path: /healthz</span><br><span class="line">        port: 10252</span><br><span class="line">      initialDelaySeconds: 15</span><br><span class="line">      timeoutSeconds: 1</span><br><span class="line">    name: kube-controller-manager</span><br><span class="line">    volumeMounts:</span><br><span class="line">    - mountPath: /etc/kubernetes</span><br><span class="line">      name: kubeconf</span><br><span class="line">      readOnly: true</span><br><span class="line">    - mountPath: /var/log/kube-controller-manager.log</span><br><span class="line">      name: logfile</span><br><span class="line">    - mountPath: /etc/ssl</span><br><span class="line">      name: etcssl</span><br><span class="line">      readOnly: true</span><br><span class="line">    - mountPath: /usr/lib/ssl</span><br><span class="line">      name: usrlibssl</span><br><span class="line">      readOnly: true</span><br><span class="line">  hostNetwork: true</span><br><span class="line">  volumes:</span><br><span class="line">  - hostPath:</span><br><span class="line">      path: /var/log/kubernetes/kube-controller-manager.log</span><br><span class="line">    name: logfile</span><br><span class="line">  - hostPath:</span><br><span class="line">      path: /etc/kubernetes</span><br><span class="line">    name: kubeconf</span><br><span class="line">  - hostPath:</span><br><span class="line">      path: /etc/ssl</span><br><span class="line">    name: etcssl</span><br><span class="line">  - hostPath:</span><br><span class="line">      path: /usr/lib/ssl</span><br><span class="line">    name: usrlibssl</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>–service_account_private_key_file 用于server account权限，不填会出权限问题</li>
+<li>–leader-elect 类似于一个排他锁，保证只有一个controller-manager作用于集群</li>
+</ul>
+<p><strong>kube-scheduler.yaml</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Pod</span><br><span class="line">metadata:</span><br><span class="line">  name: kube-scheduler</span><br><span class="line">spec:</span><br><span class="line">  hostNetwork: true</span><br><span class="line">  containers:</span><br><span class="line">  - name: kube-scheduler</span><br><span class="line">    image: registry.cn-hangzhou.aliyuncs.com/google_containers/kube-scheduler-amd64:v1.9.7</span><br><span class="line">    command:</span><br><span class="line">    - /bin/sh</span><br><span class="line">    - -c</span><br><span class="line">    - /usr/local/bin/kube-scheduler --master=127.0.0.1:8080 --v=2 </span><br><span class="line">      --leader-elect=true 1&gt;&gt;/var/log/kube-scheduler.log 2&gt;&amp;1</span><br><span class="line">    livenessProbe:</span><br><span class="line">      httpGet:</span><br><span class="line">        path: /healthz</span><br><span class="line">        port: 10251</span><br><span class="line">      initialDelaySeconds: 15</span><br><span class="line">      timeoutSeconds: 1</span><br><span class="line">    volumeMounts:</span><br><span class="line">    - mountPath: /var/log/kube-scheduler.log</span><br><span class="line">      name: logfile</span><br><span class="line">    - mountPath: /etc/kubernetes</span><br><span class="line">      name: kubeconf</span><br><span class="line">      readOnly: true</span><br><span class="line">    - mountPath: /etc/ssl</span><br><span class="line">      name: etcssl</span><br><span class="line">      readOnly: true</span><br><span class="line">    - mountPath: /usr/lib/ssl</span><br><span class="line">      name: usrlibssl</span><br><span class="line">      readOnly: true</span><br><span class="line">  volumes:</span><br><span class="line">  - hostPath:</span><br><span class="line">      path: /var/log/kubernetes/kube-scheduler.log</span><br><span class="line">    name: logfile</span><br><span class="line">  - hostPath:</span><br><span class="line">      path: /etc/kubernetes</span><br><span class="line">    name: kubeconf</span><br><span class="line">  - hostPath:</span><br><span class="line">      path: /etc/ssl</span><br><span class="line">    name: etcssl</span><br><span class="line">  - hostPath:</span><br><span class="line">      path: /usr/lib/ssl</span><br><span class="line">    name: usrlibssl</span><br></pre></td></tr></table></figure>  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/K8s/">K8s</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/容器架构/">容器架构</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://www.lstop.pub/2018/05/02/Kubernetes高可用集群部署/" data-title="Kubernetes高可用集群部署 | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2018/06/05/traefik实现ssl双向认证/" title="traefik实现ssl双向认证">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  traefik实现ssl双向认证</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2018/03/13/Kubernetes-1-8-DNS服务-自定义域DNS/"  title="Kubernetes 1.8 DNS服务-自定义域DNS">
+ <strong>NEXT:</strong><br/> 
+ <span>Kubernetes 1.8 DNS服务-自定义域DNS
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#一-准备kubelet"><span class="toc-number">1.</span> <span class="toc-text">一 准备kubelet</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#二-etcd集群"><span class="toc-number">2.</span> <span class="toc-text">二 etcd集群</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#三-kube-apiserver"><span class="toc-number">3.</span> <span class="toc-text">三 kube-apiserver</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#负载均衡"><span class="toc-number">3.1.</span> <span class="toc-text">负载均衡</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#四、其他组件"><span class="toc-number">4.</span> <span class="toc-text">四、其他组件</span></a></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+
+  
+<div class="tagslist">
+	<p class="asidetitle">Tags</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/DNS/" title="DNS">DNS<sup>1</sup></a></li>
+		
+			<li><a href="/tags/GitLab/" title="GitLab">GitLab<sup>1</sup></a></li>
+		
+			<li><a href="/tags/K8s/" title="K8s">K8s<sup>5</sup></a></li>
+		
+			<li><a href="/tags/Linux/" title="Linux">Linux<sup>1</sup></a></li>
+		
+			<li><a href="/tags/MongoDB/" title="MongoDB">MongoDB<sup>2</sup></a></li>
+		
+			<li><a href="/tags/OpenWrt/" title="OpenWrt">OpenWrt<sup>1</sup></a></li>
+		
+			<li><a href="/tags/Python/" title="Python">Python<sup>2</sup></a></li>
+		
+			<li><a href="/tags/RabbitMQ/" title="RabbitMQ">RabbitMQ<sup>1</sup></a></li>
+		
+			<li><a href="/tags/cdn/" title="cdn">cdn<sup>1</sup></a></li>
+		
+			<li><a href="/tags/docker/" title="docker">docker<sup>2</sup></a></li>
+		
+			<li><a href="/tags/elk/" title="elk">elk<sup>3</sup></a></li>
+		
+			<li><a href="/tags/nginx/" title="nginx">nginx<sup>1</sup></a></li>
+		
+			<li><a href="/tags/tomcat/" title="tomcat">tomcat<sup>1</sup></a></li>
+		
+			<li><a href="/tags/traefik/" title="traefik">traefik<sup>1</sup></a></li>
+		
+			<li><a href="/tags/zabbix/" title="zabbix">zabbix<sup>1</sup></a></li>
+		
+			<li><a href="/tags/中间人攻击/" title="中间人攻击">中间人攻击<sup>1</sup></a></li>
+		
+			<li><a href="/tags/压力测试/" title="压力测试">压力测试<sup>3</sup></a></li>
+		
+			<li><a href="/tags/安全/" title="安全">安全<sup>1</sup></a></li>
+		
+			<li><a href="/tags/微信企业号/" title="微信企业号">微信企业号<sup>1</sup></a></li>
+		
+			<li><a href="/tags/监控/" title="监控">监控<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">Links</p>
+    <ul>
+      <li><a href="http://www.v2ex.com/?r=zong400" target="_blank" title="V2EX">V2EX</a></li>
+      <li><a href="http://hexo.io" target="_blank" title="Hexo">Hexo</a></li>
+	  <li><a href="https://promotion.aliyun.com/ntms/yunparter/invite.html?userCode=s0bh6uzq" target="_blank" title="阿里云">阿里云</a></li>
+	  <li><a href="https://cloud.tencent.com/redirect.php?redirect=1014&cps_key=5bd9deb84d4d9f34b65fb934e12d03e3&from=console" target="_blank" title="腾讯云">腾讯云</a></li>
+    </ul>
+</div>
+
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+	</div>
+		<p class="copyright">Hosted by <a href="https://pages.coding.me/" target="_blank" title="Coding Pages">Coding Pages</a></p>
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wizicer/iceman" target="_blank" title="Iceman">Iceman</a> © 2019 
+		
+		<a href="http://www.lstop.pub" target="_blank" title="Zong">Zong</a>
+		
+		</p>
+</div>
+</footer>
+    <script src="//cdn.staticfile.org/jquery/2.1.0/jquery.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+
+
+
+  </body>
+</html>
+

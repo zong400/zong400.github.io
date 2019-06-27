@@ -1,0 +1,386 @@
+
+ <!DOCTYPE HTML>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+  
+    <title>logback发送日志到filebeat | Zong&#39;s blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Zong">
+    
+    <meta name="description" content="干掉logstash传统ELK模式在收集日志方面使用logstash，在应用端创建一个java进程读取应用日志传送出去。这种方式其实是比较臃肿和消耗资源的，假设有50个服务器就最少需要50个logstash进程，如果每个服务器有多个需要收集的log文件（不同的java进程），也要考虑每个文件的日志格">
+    
+    
+    
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/pacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+</html>
+  <body>
+    <header>
+      <div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.svg" alt="Zong&#39;s blog" title="Zong&#39;s blog"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="Zong&#39;s blog">Zong&#39;s blog</a></h1>
+				<h2 class="blog-motto">日常积累，技术分享</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+						<li><a href="/categories/运维">运维</a></li>
+					
+						<li><a href="/categories/容器架构">容器架构</a></li>
+					
+					<li>
+					
+					<form class="search" action="//baidu.com/s" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="text" id="search" name="wd" autocomplete="off" maxlength="20" placeholder="Search" />
+                        <input name=tn type=hidden value="bds">
+                        <input name=cl type=hidden value="3">
+                        <input name=ct type=hidden value="2097152">
+						<input type="hidden" name="si" value="www.lstop.pub">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2017/03/14/logback发送日志到filebeat/" title="logback发送日志到filebeat" itemprop="url">logback发送日志到filebeat</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://www.lstop.pub" title="Zong">Zong</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2017-03-14T06:18:44.000Z" itemprop="datePublished">2017-03-14</time>
+    
+  </p>
+</header>
+
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">Contents</strong>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#干掉logstash"><span class="toc-number">1.</span> <span class="toc-text">干掉logstash</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#直接用logback发送日志"><span class="toc-number">2.</span> <span class="toc-text">直接用logback发送日志</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#filebeat-socat"><span class="toc-number">3.</span> <span class="toc-text">filebeat + socat</span></a></li></ol>
+		</div>
+		
+		<h1 id="干掉logstash"><a href="#干掉logstash" class="headerlink" title="干掉logstash"></a>干掉logstash</h1><p>传统ELK模式在收集日志方面使用logstash，在应用端创建一个java进程读取应用日志传送出去。<br>这种方式其实是比较臃肿和消耗资源的，假设有50个服务器就最少需要50个logstash进程，如果每个服务器有多个需要收集的log文件（不同的java进程），也要考虑每个文件的日志格式，特别是前期没有考虑ELK的情况，可能需要做很多工作让这些文件格式一致，若不能达成一致则可能要多个logstash解析。<br>针对这种情况，我们最好能有一个解决方案，把logstash去除掉，无缝衔接应用，解决log格式差异，而且对业务本身透明。</p>
+<h1 id="直接用logback发送日志"><a href="#直接用logback发送日志" class="headerlink" title="直接用logback发送日志"></a>直接用logback发送日志</h1><p>要干掉logstash，必须改变日志收集方式，我们找到了开源项目logstash-logback-encoder。<br>logstash-logback-encoder是logback的扩展，它的主要工作是帮我们把日志格式化成ELK标准的json格式，并且通过它发送到ELK。<br>通过maven把它构建进你的项目，要注意logback版本需要1.2.0或以上。<br>然后在你的logback.xml配置加上如下appender:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&lt;appender name=&quot;stash&quot; class=&quot;net.logstash.logback.appender.LogstashSocketAppender&quot;&gt;</span><br><span class="line">    &lt;host&gt;filebeat-server&lt;/host&gt;</span><br><span class="line">    &lt;port&gt;5111&lt;/port&gt;</span><br><span class="line">    &lt;includeContext&gt;false&lt;/includeContext&gt;</span><br><span class="line">    &lt;customFields&gt;&#123;&quot;appname&quot;:&quot;your app name&quot;,&quot;host&quot;:&quot;$&#123;HOSTNAME&#125;&quot;&#125;&lt;/customFields&gt;</span><br><span class="line">    &lt;suffix class=&quot;ch.qos.logback.classic.PatternLayout&quot;&gt;</span><br><span class="line">       &lt;pattern&gt;%n&lt;/pattern&gt;</span><br><span class="line">    &lt;/suffix&gt;</span><br><span class="line">&lt;/appender&gt;</span><br><span class="line">&lt;root level=&quot;INFO&quot;&gt;   </span><br><span class="line">    &lt;appender-ref ref=&quot;STDOUT&quot; /&gt;   </span><br><span class="line">    &lt;appender-ref ref=&quot;stash&quot; /&gt; </span><br><span class="line">&lt;/root&gt;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>customFields 自定义的字段，推荐加上HOSTNAME，便于在负载均衡的情况下分辨具体的服务器。</li>
+<li>Prefix/Suffix 在行首/行末增加点东西，这里表示在行末增加换行符，否则所有json格式日志写在一行，filebeat不认。</li>
+</ul>
+<p>上面的配置使用udp方式把日志发送到filebeat server，udp相对于tcp来说对程序和业务基本无影响，就算接收端不能访问也不会阻塞网络或者进程，在内网传输推荐使用udp。</p>
+<h1 id="filebeat-socat"><a href="#filebeat-socat" class="headerlink" title="filebeat + socat"></a>filebeat + socat</h1><p>filebeat 我们之前在做nginx access log传输的时候使用过，对他的处理能力比较认可，最新5.2版和5.0版配置有点差别。<br>实现logback直接发送日志后，我们需要在远端搭建filebeat接收udp数据并且转发给Elasticsearch。<br>其实也可以使用logstash，但是logstash是java开发的，对比filebeat使用go开发，并发性能理论上差点，我们做多个服务器日志转发所以选择并发性和处理能力较好的。<br>filebeat本身不支持监听udp端口，我们需要一个辅助工具：socat<br>socat负责监听udp并把数据转到标准输出，filebeat使用stdin输入数据：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">socat -u -lf/var/log/socat.log udp-listen:5111,fork - | filebeat.sh -c /etc/filebeat/filebeat-dev.yml</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>-u 表示单向传输数据，从udp 5111端口到标准输出，默认双向传输</li>
+<li>-lf 可以把日志写到文件，方便保存排错</li>
+<li>fork 创建子进程处理实际数据</li>
+</ul>
+<blockquote>
+<p>ps：测试过nc，在接收长日志，比如带stack trace的java ERROR日志，会接收不完整。</p>
+</blockquote>
+<p>filebeat5.2配置：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">filebeat.prospectors:</span><br><span class="line">- input_type: stdin </span><br><span class="line">  json.message_key:</span><br><span class="line">  json.keys_under_root: true</span><br><span class="line">  json.overwrite_keys: true </span><br><span class="line">output.kafka:</span><br><span class="line">  enabled: true </span><br><span class="line">  hosts: [&quot;your_kafka:9092&quot;]</span><br><span class="line">  topic: your_topic_name</span><br><span class="line">  worker: 2</span><br><span class="line">  keep_alive: 20s</span><br><span class="line">output.console:</span><br><span class="line">  enabled: false</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>json.message_key 接收json格式数据</li>
+<li>json.keys_under_root 把接收到的json字段放在顶端</li>
+<li>json.overwrite_keys 字段相同则覆盖</li>
+<li>output.kafka 输出到kafka，还有其他选择，比如logstash，redis，Elasticsearch等，具体参考文档</li>
+<li>output.console 输出到console，调试用</li>
+</ul>
+<p>ok，现在应该可以在kibana看到你传输的java日志了。</p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/elk/">elk</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/运维/">运维</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://www.lstop.pub/2017/03/14/logback发送日志到filebeat/" data-title="logback发送日志到filebeat | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2017/05/26/一直以来对tcp-tw-recycle参数的误解及tcp-timestamps/" title="一直以来对tcp_tw_recycle参数的误解及tcp_timestamps">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  一直以来对tcp_tw_recycle参数的误解及tcp_timestamps</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2017/03/07/微信企业号发送消息和图片/"  title="微信企业号发送消息和图片">
+ <strong>NEXT:</strong><br/> 
+ <span>微信企业号发送消息和图片
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#干掉logstash"><span class="toc-number">1.</span> <span class="toc-text">干掉logstash</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#直接用logback发送日志"><span class="toc-number">2.</span> <span class="toc-text">直接用logback发送日志</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#filebeat-socat"><span class="toc-number">3.</span> <span class="toc-text">filebeat + socat</span></a></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+
+  
+<div class="tagslist">
+	<p class="asidetitle">Tags</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/DNS/" title="DNS">DNS<sup>1</sup></a></li>
+		
+			<li><a href="/tags/GitLab/" title="GitLab">GitLab<sup>1</sup></a></li>
+		
+			<li><a href="/tags/K8s/" title="K8s">K8s<sup>5</sup></a></li>
+		
+			<li><a href="/tags/Linux/" title="Linux">Linux<sup>1</sup></a></li>
+		
+			<li><a href="/tags/MongoDB/" title="MongoDB">MongoDB<sup>2</sup></a></li>
+		
+			<li><a href="/tags/OpenWrt/" title="OpenWrt">OpenWrt<sup>1</sup></a></li>
+		
+			<li><a href="/tags/Python/" title="Python">Python<sup>2</sup></a></li>
+		
+			<li><a href="/tags/RabbitMQ/" title="RabbitMQ">RabbitMQ<sup>1</sup></a></li>
+		
+			<li><a href="/tags/cdn/" title="cdn">cdn<sup>1</sup></a></li>
+		
+			<li><a href="/tags/docker/" title="docker">docker<sup>2</sup></a></li>
+		
+			<li><a href="/tags/elk/" title="elk">elk<sup>3</sup></a></li>
+		
+			<li><a href="/tags/nginx/" title="nginx">nginx<sup>1</sup></a></li>
+		
+			<li><a href="/tags/tomcat/" title="tomcat">tomcat<sup>1</sup></a></li>
+		
+			<li><a href="/tags/traefik/" title="traefik">traefik<sup>1</sup></a></li>
+		
+			<li><a href="/tags/zabbix/" title="zabbix">zabbix<sup>1</sup></a></li>
+		
+			<li><a href="/tags/中间人攻击/" title="中间人攻击">中间人攻击<sup>1</sup></a></li>
+		
+			<li><a href="/tags/压力测试/" title="压力测试">压力测试<sup>3</sup></a></li>
+		
+			<li><a href="/tags/安全/" title="安全">安全<sup>1</sup></a></li>
+		
+			<li><a href="/tags/微信企业号/" title="微信企业号">微信企业号<sup>1</sup></a></li>
+		
+			<li><a href="/tags/监控/" title="监控">监控<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">Links</p>
+    <ul>
+      <li><a href="http://www.v2ex.com/?r=zong400" target="_blank" title="V2EX">V2EX</a></li>
+      <li><a href="http://hexo.io" target="_blank" title="Hexo">Hexo</a></li>
+	  <li><a href="https://promotion.aliyun.com/ntms/yunparter/invite.html?userCode=s0bh6uzq" target="_blank" title="阿里云">阿里云</a></li>
+	  <li><a href="https://cloud.tencent.com/redirect.php?redirect=1014&cps_key=5bd9deb84d4d9f34b65fb934e12d03e3&from=console" target="_blank" title="腾讯云">腾讯云</a></li>
+    </ul>
+</div>
+
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+	</div>
+		<p class="copyright">Hosted by <a href="https://pages.coding.me/" target="_blank" title="Coding Pages">Coding Pages</a></p>
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wizicer/iceman" target="_blank" title="Iceman">Iceman</a> © 2019 
+		
+		<a href="http://www.lstop.pub" target="_blank" title="Zong">Zong</a>
+		
+		</p>
+</div>
+</footer>
+    <script src="//cdn.staticfile.org/jquery/2.1.0/jquery.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+
+
+
+  </body>
+</html>
+

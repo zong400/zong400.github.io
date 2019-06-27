@@ -1,0 +1,400 @@
+
+ <!DOCTYPE HTML>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+  
+    <title>Kubernetes 1.8 DNS服务 | Zong&#39;s blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Zong">
+    
+    <meta name="description" content="Kubernetes把一个实际的服务抽象为pod和service资源，pod是后端，负责处理业务逻辑，后端的pod可以有很多，有些pod可能异常被controller回收或者动态缩放，pod的ip都是动态分配的，所以需要抽象出service把pod提供的服务开放出来，这样我们就不需要管后端pod的i">
+    
+    
+    
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/pacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+</html>
+  <body>
+    <header>
+      <div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.svg" alt="Zong&#39;s blog" title="Zong&#39;s blog"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="Zong&#39;s blog">Zong&#39;s blog</a></h1>
+				<h2 class="blog-motto">日常积累，技术分享</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+						<li><a href="/categories/运维">运维</a></li>
+					
+						<li><a href="/categories/容器架构">容器架构</a></li>
+					
+					<li>
+					
+					<form class="search" action="//baidu.com/s" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="text" id="search" name="wd" autocomplete="off" maxlength="20" placeholder="Search" />
+                        <input name=tn type=hidden value="bds">
+                        <input name=cl type=hidden value="3">
+                        <input name=ct type=hidden value="2097152">
+						<input type="hidden" name="si" value="www.lstop.pub">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2017/12/04/Kubernetes-1-8-DNS服务/" title="Kubernetes 1.8 DNS服务" itemprop="url">Kubernetes 1.8 DNS服务</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://www.lstop.pub" title="Zong">Zong</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2017-12-04T02:32:57.000Z" itemprop="datePublished">2017-12-04</time>
+    
+  </p>
+</header>
+
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">Contents</strong>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#搭建kubeDNS"><span class="toc-number">1.</span> <span class="toc-text">搭建kubeDNS</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#修改kubelet参数"><span class="toc-number">2.</span> <span class="toc-text">修改kubelet参数</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#测试"><span class="toc-number">3.</span> <span class="toc-text">测试</span></a></li></ol>
+		</div>
+		
+		<p>Kubernetes把一个实际的服务抽象为pod和service资源，pod是后端，负责处理业务逻辑，后端的pod可以有很多，有些pod可能异常被controller回收或者动态缩放，pod的ip都是动态分配的，所以需要抽象出service把pod提供的服务开放出来，这样我们就不需要管后端pod的ip变化。那service本身的ip我们怎么知道呢？k8s使用DNS解决这个问题。<br>K8s的DNS服务之前使用etcd + kube2sky + skydns搭建，在之后改为kubedns + dnsmasq，本文当然基于kubedns搭建。</p>
+<blockquote>
+<p>ps:最新版推荐CoreDNS</p>
+</blockquote>
+<h1 id="搭建kubeDNS"><a href="#搭建kubeDNS" class="headerlink" title="搭建kubeDNS"></a>搭建kubeDNS</h1><p>kubeDNS容器监听apiserver的服务变化，但service和endpoints出现更新时，把名字和IP在内存中存储起来，对外使用dnsmasq提供DNS服务。<br>在kubernetes源码包cluster/addons/dns目录中有DNS服务需要的yaml文件，可以使用这些文件略加修改搭建DNS。<br><strong>kubedns-sa.yaml</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: ServiceAccount</span><br><span class="line">metadata:</span><br><span class="line">  name: kube-dns</span><br><span class="line">  namespace: kube-system</span><br><span class="line">  labels:</span><br><span class="line">    kubernetes.io/cluster-service: &quot;true&quot;</span><br><span class="line">    addonmanager.kubernetes.io/mode: Reconcile</span><br></pre></td></tr></table></figure>
+
+<p><strong>kubedns-cm.yaml</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: ConfigMap</span><br><span class="line">metadata:</span><br><span class="line">  name: kube-dns</span><br><span class="line">  namespace: kube-system</span><br><span class="line">  labels:</span><br><span class="line">    addonmanager.kubernetes.io/mode: EnsureExists</span><br></pre></td></tr></table></figure>
+
+<p>ConfigMap文件中可以配置自定义DNS和上游DNS，自定义DNS指对特定域名查询特定的DNS服务器，上游DNS指外部的DNS服务器，不指定的话就从主机/etc/resolv.conf继承。<br>下面这个文件设置了域名out-of.k8s的查询会被发送到10.11.33.44服务器。上游DNS指定了8.8.8.8和114.114.114.114</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: ConfigMap</span><br><span class="line">metadata:</span><br><span class="line">  name: kube-dns</span><br><span class="line">  namespace: kube-system</span><br><span class="line">  labels:</span><br><span class="line">    addonmanager.kubernetes.io/mode: EnsureExists</span><br><span class="line">data：</span><br><span class="line">   stubDomains: |</span><br><span class="line">      &#123;&quot;out-of.k8s&quot;: [&quot;10.11.33.44&quot;]&#125;</span><br><span class="line">   upstreamNameservers: |</span><br><span class="line">      [&quot;8.8.8.8&quot;,&quot;114.114.114.114&quot;]</span><br></pre></td></tr></table></figure>
+
+<p><strong>kubedns-deployment.yaml</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: extensions/v1beta2</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  name: kube-dns</span><br><span class="line">  namespace: kube-system</span><br><span class="line">  labels:</span><br><span class="line">    k8s-app: kube-dns</span><br><span class="line">    kubernetes.io/cluster-service: &quot;true&quot;</span><br><span class="line">    addonmanager.kubernetes.io/mode: Reconcile</span><br><span class="line">spec:</span><br><span class="line">  # replicas: not specified here:</span><br><span class="line">  # 1. In order to make Addon Manager do not reconcile this replicas parameter.</span><br><span class="line">  # 2. Default is 1.</span><br><span class="line">  # 3. Will be tuned in real time if DNS horizontal auto-scaling is turned on.</span><br><span class="line">  strategy:</span><br><span class="line">    rollingUpdate:</span><br><span class="line">      maxSurge: 10%</span><br><span class="line">      maxUnavailable: 0</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      k8s-app: kube-dns</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        k8s-app: kube-dns</span><br><span class="line">      annotations:</span><br><span class="line">        scheduler.alpha.kubernetes.io/critical-pod: &apos;&apos;</span><br><span class="line">    spec:</span><br><span class="line">      tolerations:</span><br><span class="line">      - key: &quot;CriticalAddonsOnly&quot;</span><br><span class="line">        operator: &quot;Exists&quot;</span><br><span class="line">      volumes:</span><br><span class="line">      - name: kube-dns-config</span><br><span class="line">        configMap:</span><br><span class="line">          name: kube-dns</span><br><span class="line">          optional: true</span><br><span class="line">      containers:</span><br><span class="line">      - name: kubedns</span><br><span class="line">        image: registry.cn-hangzhou.aliyuncs.com/szss_k8s/k8s-dns-kube-dns-amd64:1.14.5</span><br><span class="line">        resources:</span><br><span class="line">          # TODO: Set memory limits when we&apos;ve profiled the container for large</span><br><span class="line">          # clusters, then set request = limit to keep this container in</span><br><span class="line">          # guaranteed class. Currently, this container falls into the</span><br><span class="line">          # &quot;burstable&quot; category so the kubelet doesn&apos;t backoff from restarting it.</span><br><span class="line">          limits:</span><br><span class="line">            memory: 170Mi</span><br><span class="line">          requests:</span><br><span class="line">            cpu: 100m</span><br><span class="line">            memory: 70Mi</span><br><span class="line">        livenessProbe:</span><br><span class="line">          httpGet:</span><br><span class="line">            path: /healthcheck/kubedns</span><br><span class="line">            port: 10054</span><br><span class="line">            scheme: HTTP</span><br><span class="line">          initialDelaySeconds: 60</span><br><span class="line">          timeoutSeconds: 5</span><br><span class="line">          successThreshold: 1</span><br><span class="line">          failureThreshold: 5</span><br><span class="line">        readinessProbe:</span><br><span class="line">          httpGet:</span><br><span class="line">            path: /readiness</span><br><span class="line">            port: 8081</span><br><span class="line">            scheme: HTTP</span><br><span class="line">          # we poll on pod startup for the Kubernetes master service and</span><br><span class="line">          # only setup the /readiness HTTP server once that&apos;s available.</span><br><span class="line">          initialDelaySeconds: 3</span><br><span class="line">          timeoutSeconds: 5</span><br><span class="line">        args:</span><br><span class="line">        - --domain=wx-dev.local.</span><br><span class="line">        - --dns-port=10053</span><br><span class="line">        - --config-dir=/kube-dns-config</span><br><span class="line">        - --v=2</span><br><span class="line">        env:</span><br><span class="line">        - name: PROMETHEUS_PORT</span><br><span class="line">          value: &quot;10055&quot;</span><br><span class="line">        ports:</span><br><span class="line">        - containerPort: 10053</span><br><span class="line">          name: dns-local</span><br><span class="line">          protocol: UDP</span><br><span class="line">        - containerPort: 10053</span><br><span class="line">          name: dns-tcp-local</span><br><span class="line">          protocol: TCP</span><br><span class="line">        - containerPort: 10055</span><br><span class="line">          name: metrics</span><br><span class="line">          protocol: TCP</span><br><span class="line">        volumeMounts:</span><br><span class="line">        - name: kube-dns-config</span><br><span class="line">          mountPath: /kube-dns-config</span><br><span class="line">      - name: dnsmasq</span><br><span class="line">        image: registry.cn-hangzhou.aliyuncs.com/szss_k8s/k8s-dns-dnsmasq-nanny-amd64:1.14.5</span><br><span class="line">        livenessProbe:</span><br><span class="line">          httpGet:</span><br><span class="line">            path: /healthcheck/dnsmasq</span><br><span class="line">            port: 10054</span><br><span class="line">            scheme: HTTP</span><br><span class="line">          initialDelaySeconds: 60</span><br><span class="line">          timeoutSeconds: 5</span><br><span class="line">          successThreshold: 1</span><br><span class="line">          failureThreshold: 5</span><br><span class="line">        args:</span><br><span class="line">        - -v=2</span><br><span class="line">        - -logtostderr</span><br><span class="line">        - -configDir=/etc/k8s/dns/dnsmasq-nanny</span><br><span class="line">        - -restartDnsmasq=true</span><br><span class="line">        - --</span><br><span class="line">        - -k</span><br><span class="line">        - --cache-size=1000</span><br><span class="line">        - --log-facility=-</span><br><span class="line">        - --server=/wx-dev.local/127.0.0.1#10053</span><br><span class="line">        - --server=/in-addr.arpa/127.0.0.1#10053</span><br><span class="line">        - --server=/ip6.arpa/127.0.0.1#10053</span><br><span class="line">        ports:</span><br><span class="line">        - containerPort: 53</span><br><span class="line">          name: dns</span><br><span class="line">          protocol: UDP</span><br><span class="line">        - containerPort: 53</span><br><span class="line">          name: dns-tcp</span><br><span class="line">          protocol: TCP</span><br><span class="line">        # see: https://github.com/kubernetes/kubernetes/issues/29055 for details</span><br><span class="line">        resources:</span><br><span class="line">          requests:</span><br><span class="line">            cpu: 150m</span><br><span class="line">            memory: 20Mi</span><br><span class="line">        volumeMounts:</span><br><span class="line">        - name: kube-dns-config</span><br><span class="line">          mountPath: /etc/k8s/dns/dnsmasq-nanny</span><br><span class="line">      - name: sidecar</span><br><span class="line">        image: registry.cn-hangzhou.aliyuncs.com/szss_k8s/k8s-dns-sidecar-amd64:1.14.5</span><br><span class="line">        livenessProbe:</span><br><span class="line">          httpGet:</span><br><span class="line">            path: /metrics</span><br><span class="line">            port: 10054</span><br><span class="line">            scheme: HTTP</span><br><span class="line">          initialDelaySeconds: 60</span><br><span class="line">          timeoutSeconds: 5</span><br><span class="line">          successThreshold: 1</span><br><span class="line">          failureThreshold: 5</span><br><span class="line">        args:</span><br><span class="line">        - --v=2</span><br><span class="line">        - --logtostderr</span><br><span class="line">        - --probe=kubedns,127.0.0.1:10053,kubernetes.default.svc.wx-dev.local,5,A</span><br><span class="line">        - --probe=dnsmasq,127.0.0.1:53,kubernetes.default.svc.wx-dev.local,5,A</span><br><span class="line">        ports:</span><br><span class="line">        - containerPort: 10054</span><br><span class="line">          name: metrics</span><br><span class="line">          protocol: TCP</span><br><span class="line">        resources:</span><br><span class="line">          requests:</span><br><span class="line">            memory: 20Mi</span><br><span class="line">            cpu: 10m</span><br><span class="line">      dnsPolicy: Default  # Don&apos;t use cluster DNS.</span><br><span class="line">      serviceAccountName: kube-dns</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>把配置中wx-dev.local改成你的域名</li>
+<li>这个配置中镜像地址都换成了阿里的registry.cn-hangzhou.aliyuncs.com/szss_k8s</li>
+</ul>
+<p>创建出的deployment：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ubuntu@ubuntu1:~$ sudo kubectl get deployments --namespace=kube-system</span><br><span class="line">NAME       DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE</span><br><span class="line">kube-dns   1         1         1            1           9d</span><br></pre></td></tr></table></figure>
+
+<p><strong>kubedns-svc.yaml</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  name: kube-dns</span><br><span class="line">  namespace: kube-system</span><br><span class="line">  labels:</span><br><span class="line">    k8s-app: kube-dns</span><br><span class="line">    kubernetes.io/cluster-service: &quot;true&quot;</span><br><span class="line">    addonmanager.kubernetes.io/mode: Reconcile</span><br><span class="line">    kubernetes.io/name: &quot;KubeDNS&quot;</span><br><span class="line">spec:</span><br><span class="line">  selector:</span><br><span class="line">    k8s-app: kube-dns</span><br><span class="line">  clusterIP: 169.169.0.2</span><br><span class="line">  ports:</span><br><span class="line">  - name: dns</span><br><span class="line">    port: 53</span><br><span class="line">    protocol: UDP</span><br><span class="line">  - name: dns-tcp</span><br><span class="line">    port: 53</span><br><span class="line">    protocol: TCP</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>clusterIP是DNS服务端ip，与集群同网段</li>
+</ul>
+<p>创建出的service：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ubuntu@ubuntu1:~$ sudo kubectl get svc --namespace=kube-system</span><br><span class="line">NAME       TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)         AGE</span><br><span class="line">kube-dns   ClusterIP   169.169.0.2   &lt;none&gt;        53/UDP,53/TCP   9d</span><br></pre></td></tr></table></figure>
+
+<h1 id="修改kubelet参数"><a href="#修改kubelet参数" class="headerlink" title="修改kubelet参数"></a>修改kubelet参数</h1><p>在集群中每个node节点的kubelet服务添加启动参数指定DNS地址。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">--cluster-dns=169.169.0.2 --cluster-domain=wx-dev.local</span><br></pre></td></tr></table></figure>
+
+<h1 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h1><p>我们之前已经创建好一个nginx的pod和service了</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ubuntu@ubuntu1:~$ sudo kubectl get svc</span><br><span class="line">NAME            TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)       AGE</span><br><span class="line">kubernetes      ClusterIP   169.169.0.1      &lt;none&gt;        443/TCP       20d</span><br><span class="line">nginx-service   NodePort    169.169.181.54   &lt;none&gt;        80:8081/TCP   10d</span><br></pre></td></tr></table></figure>
+
+<p>现在我们要使用dns方式，通过查询nginx-service得到对应的ip。<br>先创建一个基础的busybox运行nslookup命令<br>busybox.yaml:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Pod</span><br><span class="line">metadata:</span><br><span class="line">  name: busybox</span><br><span class="line">  namespace: default</span><br><span class="line">spec:</span><br><span class="line">  containers:</span><br><span class="line">  - name: busybox</span><br><span class="line">    image: registry.cn-hangzhou.aliyuncs.com/qinyujia-test/busybox</span><br><span class="line">    command:</span><br><span class="line">	  - sleep</span><br><span class="line">	  - &quot;3600&quot;</span><br></pre></td></tr></table></figure>
+
+<p>运行命令得到结果</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">ubuntu@ubuntu1:~$ sudo kubectl exec busybox -- nslookup nginx-service</span><br><span class="line">Server:    169.169.0.2</span><br><span class="line">Address 1: 169.169.0.2 kube-dns.kube-system.svc.wx-dev.local</span><br><span class="line">Name:      nginx-service</span><br><span class="line">Address 1: 169.169.181.54 nginx-service.default.svc.wx-dev.local</span><br></pre></td></tr></table></figure>
+
+<p>证明在同一个k8s集群内，dns能准确找出service name和ip的对应关系。</p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/K8s/">K8s</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/容器架构/">容器架构</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://www.lstop.pub/2017/12/04/Kubernetes-1-8-DNS服务/" data-title="Kubernetes 1.8 DNS服务 | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2017/12/13/Kubernetes-1-8-集群网络/" title="Kubernetes 1.8 集群网络">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  Kubernetes 1.8 集群网络</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2017/11/29/Kubernetes-1-8-基础集群搭建/"  title="Kubernetes 1.8 基础集群搭建">
+ <strong>NEXT:</strong><br/> 
+ <span>Kubernetes 1.8 基础集群搭建
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#搭建kubeDNS"><span class="toc-number">1.</span> <span class="toc-text">搭建kubeDNS</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#修改kubelet参数"><span class="toc-number">2.</span> <span class="toc-text">修改kubelet参数</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#测试"><span class="toc-number">3.</span> <span class="toc-text">测试</span></a></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+
+  
+<div class="tagslist">
+	<p class="asidetitle">Tags</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/DNS/" title="DNS">DNS<sup>1</sup></a></li>
+		
+			<li><a href="/tags/GitLab/" title="GitLab">GitLab<sup>1</sup></a></li>
+		
+			<li><a href="/tags/K8s/" title="K8s">K8s<sup>5</sup></a></li>
+		
+			<li><a href="/tags/Linux/" title="Linux">Linux<sup>1</sup></a></li>
+		
+			<li><a href="/tags/MongoDB/" title="MongoDB">MongoDB<sup>2</sup></a></li>
+		
+			<li><a href="/tags/OpenWrt/" title="OpenWrt">OpenWrt<sup>1</sup></a></li>
+		
+			<li><a href="/tags/Python/" title="Python">Python<sup>2</sup></a></li>
+		
+			<li><a href="/tags/RabbitMQ/" title="RabbitMQ">RabbitMQ<sup>1</sup></a></li>
+		
+			<li><a href="/tags/cdn/" title="cdn">cdn<sup>1</sup></a></li>
+		
+			<li><a href="/tags/docker/" title="docker">docker<sup>2</sup></a></li>
+		
+			<li><a href="/tags/elk/" title="elk">elk<sup>3</sup></a></li>
+		
+			<li><a href="/tags/nginx/" title="nginx">nginx<sup>1</sup></a></li>
+		
+			<li><a href="/tags/tomcat/" title="tomcat">tomcat<sup>1</sup></a></li>
+		
+			<li><a href="/tags/traefik/" title="traefik">traefik<sup>1</sup></a></li>
+		
+			<li><a href="/tags/zabbix/" title="zabbix">zabbix<sup>1</sup></a></li>
+		
+			<li><a href="/tags/中间人攻击/" title="中间人攻击">中间人攻击<sup>1</sup></a></li>
+		
+			<li><a href="/tags/压力测试/" title="压力测试">压力测试<sup>3</sup></a></li>
+		
+			<li><a href="/tags/安全/" title="安全">安全<sup>1</sup></a></li>
+		
+			<li><a href="/tags/微信企业号/" title="微信企业号">微信企业号<sup>1</sup></a></li>
+		
+			<li><a href="/tags/监控/" title="监控">监控<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">Links</p>
+    <ul>
+      <li><a href="http://www.v2ex.com/?r=zong400" target="_blank" title="V2EX">V2EX</a></li>
+      <li><a href="http://hexo.io" target="_blank" title="Hexo">Hexo</a></li>
+	  <li><a href="https://promotion.aliyun.com/ntms/yunparter/invite.html?userCode=s0bh6uzq" target="_blank" title="阿里云">阿里云</a></li>
+	  <li><a href="https://cloud.tencent.com/redirect.php?redirect=1014&cps_key=5bd9deb84d4d9f34b65fb934e12d03e3&from=console" target="_blank" title="腾讯云">腾讯云</a></li>
+    </ul>
+</div>
+
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+	</div>
+		<p class="copyright">Hosted by <a href="https://pages.coding.me/" target="_blank" title="Coding Pages">Coding Pages</a></p>
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wizicer/iceman" target="_blank" title="Iceman">Iceman</a> © 2019 
+		
+		<a href="http://www.lstop.pub" target="_blank" title="Zong">Zong</a>
+		
+		</p>
+</div>
+</footer>
+    <script src="//cdn.staticfile.org/jquery/2.1.0/jquery.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+
+
+
+  </body>
+</html>
+

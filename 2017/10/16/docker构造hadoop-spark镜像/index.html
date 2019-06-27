@@ -1,0 +1,477 @@
+
+ <!DOCTYPE HTML>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+  
+    <title>docker构造hadoop+spark镜像 | Zong&#39;s blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Zong">
+    
+    <meta name="description" content="一、docker不是虚拟机docker有别于传统虚拟化，他不是一个虚拟机，而是容器，本质就是在主机上运行的一个特殊的进程。所以docker比虚拟机更轻、启动更快、调用底层更直接。关于docker容器和虚拟机的更多对比，可以参考以下一些文章：虚拟机与Docker有何不同？反思｜容器与虚拟机的真正区别在">
+    
+    
+    
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/pacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+</html>
+  <body>
+    <header>
+      <div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.svg" alt="Zong&#39;s blog" title="Zong&#39;s blog"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="Zong&#39;s blog">Zong&#39;s blog</a></h1>
+				<h2 class="blog-motto">日常积累，技术分享</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+						<li><a href="/categories/运维">运维</a></li>
+					
+						<li><a href="/categories/容器架构">容器架构</a></li>
+					
+					<li>
+					
+					<form class="search" action="//baidu.com/s" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="text" id="search" name="wd" autocomplete="off" maxlength="20" placeholder="Search" />
+                        <input name=tn type=hidden value="bds">
+                        <input name=cl type=hidden value="3">
+                        <input name=ct type=hidden value="2097152">
+						<input type="hidden" name="si" value="www.lstop.pub">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2017/10/16/docker构造hadoop-spark镜像/" title="docker构造hadoop+spark镜像" itemprop="url">docker构造hadoop+spark镜像</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://www.lstop.pub" title="Zong">Zong</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2017-10-16T01:07:10.000Z" itemprop="datePublished">2017-10-16</time>
+    
+  </p>
+</header>
+
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">Contents</strong>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#一、docker不是虚拟机"><span class="toc-number">1.</span> <span class="toc-text">一、docker不是虚拟机</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#二、开始使用docker"><span class="toc-number">2.</span> <span class="toc-text">二、开始使用docker</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#在ubuntu下安装docker"><span class="toc-number">2.1.</span> <span class="toc-text">在ubuntu下安装docker</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#docker的镜像"><span class="toc-number">2.2.</span> <span class="toc-text">docker的镜像</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#三、使用dockerfile构建镜像"><span class="toc-number">3.</span> <span class="toc-text">三、使用dockerfile构建镜像</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#FROM"><span class="toc-number">3.1.</span> <span class="toc-text">FROM</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#USER"><span class="toc-number">3.2.</span> <span class="toc-text">USER</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#RUN"><span class="toc-number">3.3.</span> <span class="toc-text">RUN</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ENV"><span class="toc-number">3.4.</span> <span class="toc-text">ENV</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#WORKDIR"><span class="toc-number">3.5.</span> <span class="toc-text">WORKDIR</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#COPY"><span class="toc-number">3.6.</span> <span class="toc-text">COPY</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CMD"><span class="toc-number">3.7.</span> <span class="toc-text">CMD</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ENTRYPOINT"><span class="toc-number">3.8.</span> <span class="toc-text">ENTRYPOINT</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#完整的dockerfile"><span class="toc-number">3.9.</span> <span class="toc-text">完整的dockerfile</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#build镜像"><span class="toc-number">3.10.</span> <span class="toc-text">build镜像</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#四、网络"><span class="toc-number">4.</span> <span class="toc-text">四、网络</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#五、启动"><span class="toc-number">5.</span> <span class="toc-text">五、启动</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#六、后记"><span class="toc-number">6.</span> <span class="toc-text">六、后记</span></a></li></ol>
+		</div>
+		
+		<h1 id="一、docker不是虚拟机"><a href="#一、docker不是虚拟机" class="headerlink" title="一、docker不是虚拟机"></a>一、docker不是虚拟机</h1><p>docker有别于传统虚拟化，他不是一个虚拟机，而是容器，本质就是在主机上运行的一个特殊的进程。所以docker比虚拟机更轻、启动更快、调用底层更直接。<br>关于docker容器和虚拟机的更多对比，可以参考以下一些文章：<br><a href="https://blog.fundebug.com/2017/05/31/docker-and-vm/" target="_blank" rel="noopener">虚拟机与Docker有何不同？</a><br><a href="http://dockone.io/article/723" target="_blank" rel="noopener">反思｜容器与虚拟机的真正区别在哪里？</a></p>
+<h1 id="二、开始使用docker"><a href="#二、开始使用docker" class="headerlink" title="二、开始使用docker"></a>二、开始使用docker</h1><h2 id="在ubuntu下安装docker"><a href="#在ubuntu下安装docker" class="headerlink" title="在ubuntu下安装docker"></a>在ubuntu下安装docker</h2><p>添加使用HTTPS传输的安全依赖和CA证书软件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install     apt-transport-https     ca-certificates     curl     software-properties-common</span><br></pre></td></tr></table></figure>
+
+<p>使用阿里的源安装</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">curl -fsSL https://mirrors.aliyun.com/docker-ce/linux/ubuntu/gpg | sudo apt-key add -</span><br><span class="line">sudo add-apt-repository \</span><br><span class="line">    &quot;deb [arch=amd64] https://mirrors.aliyun.com/docker-ce/linux/ubuntu \</span><br><span class="line">    $(lsb_release -cs) \</span><br><span class="line">    stable&quot;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>以上命令会添加稳定版本的 Docker CE APT 镜像源，如果需要最新版本的 Docker CE 请将 stable 改为 edge 或者 test。从 Docker 17.06 开始，edge test 版本的 APT 镜像源也会包含稳定版本的 Docker。</p>
+</blockquote>
+<p>安装docker-ce</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt update</span><br><span class="line">sudo apt-get install docker-ce</span><br></pre></td></tr></table></figure>
+
+<p>经过以上步骤，docker最新版就安装好了。<br>也可以安装指定版本，使用命令查看可用版本：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">ubuntu@wx:/etc/kubernetes$ apt-cache madison docker-ce</span><br><span class="line"> docker-ce | 17.09.0~ce-0~ubuntu | https://mirrors.aliyun.com/docker-ce/linux/ubuntu xenial/stable amd64 Packages</span><br><span class="line"> docker-ce | 17.06.2~ce-0~ubuntu | https://mirrors.aliyun.com/docker-ce/linux/ubuntu xenial/stable amd64 Packages</span><br><span class="line"> docker-ce | 17.06.1~ce-0~ubuntu | https://mirrors.aliyun.com/docker-ce/linux/ubuntu xenial/stable amd64 Packages</span><br><span class="line"> docker-ce | 17.06.0~ce-0~ubuntu | https://mirrors.aliyun.com/docker-ce/linux/ubuntu xenial/stable amd64 Packages</span><br><span class="line"> docker-ce | 17.03.2~ce-0~ubuntu-xenial | https://mirrors.aliyun.com/docker-ce/linux/ubuntu xenial/stable amd64 Packages</span><br><span class="line"> docker-ce | 17.03.1~ce-0~ubuntu-xenial | https://mirrors.aliyun.com/docker-ce/linux/ubuntu xenial/stable amd64 Packages</span><br><span class="line"> docker-ce | 17.03.0~ce-0~ubuntu-xenial | https://mirrors.aliyun.com/docker-ce/linux/ubuntu xenial/stable amd64 Packages</span><br></pre></td></tr></table></figure>
+
+<p>使用命令安装指定版本：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install docker-ce=&lt;VERSION&gt;</span><br></pre></td></tr></table></figure>
+
+<p>使用systemctl命令查看docker进程是active状态</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">ubuntu@ubuntu1:~$ systemctl status docker</span><br><span class="line">● docker.service - Docker Application Container Engine</span><br><span class="line">   Loaded: loaded (/lib/systemd/system/docker.service; enabled; vendor preset: enabled)</span><br><span class="line">   Active: active (running) since 五 2017-10-20 17:01:59 CST; 28min ago</span><br><span class="line">     Docs: https://docs.docker.com</span><br><span class="line"> Main PID: 8530 (dockerd)</span><br><span class="line">   CGroup: /system.slice/docker.service</span><br><span class="line">           ├─8530 /usr/bin/dockerd -H fd://</span><br><span class="line">           └─8538 docker-containerd -l unix:///var/run/docker/libcontainerd/docker-containerd.sock --metrics-interval=0 --start-timeout</span><br></pre></td></tr></table></figure>
+
+<h2 id="docker的镜像"><a href="#docker的镜像" class="headerlink" title="docker的镜像"></a>docker的镜像</h2><p>docker官方仓库也有很多镜像可以选择，使用docker search命令可以搜索到.<br>例如我搜索ubuntu镜像，结果显示有很多，其中有官方的也有第三方build的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">ubuntu@wx:~/compose-hadoop-spark/hadoop$ docker search ubuntu</span><br><span class="line">NAME                                                   DESCRIPTION                                     STARS     OFFICIAL   AUTOMATED</span><br><span class="line">ubuntu                                                 Ubuntu is a Debian-based Linux operating s...   6677      [OK]       </span><br><span class="line">dorowu/ubuntu-desktop-lxde-vnc                         Ubuntu with openssh-server and NoVNC            136                  [OK]</span><br><span class="line">rastasheep/ubuntu-sshd                                 Dockerized SSH service, built on top of of...   108                  [OK]</span><br><span class="line">ansible/ubuntu14.04-ansible                            Ubuntu 14.04 LTS with ansible                   87                   [OK]</span><br><span class="line">ubuntu-upstart                                         Upstart is an event-based replacement for ...   80        [OK]       </span><br><span class="line">neurodebian                                            NeuroDebian provides neuroscience research...   40        [OK]       </span><br><span class="line">ubuntu-debootstrap                                     debootstrap --variant=minbase --components...   31        [OK]       </span><br><span class="line">nuagebec/ubuntu                                        Simple always updated Ubuntu docker images...   22                   [OK]</span><br><span class="line">tutum/ubuntu                                           Simple Ubuntu docker images with SSH access     18                   </span><br><span class="line">1and1internet/ubuntu-16-nginx-php-phpmyadmin-mysql-5   ubuntu-16-nginx-php-phpmyadmin-mysql-5          16                   [OK]</span><br><span class="line">ppc64le/ubuntu                                         Ubuntu is a Debian-based Linux operating s...   11                   </span><br><span class="line">aarch64/ubuntu                                         Ubuntu is a Debian-based Linux operating s...   9                    </span><br><span class="line">i386/ubuntu                                            Ubuntu is a Debian-based Linux operating s...   8                    </span><br><span class="line">codenvy/ubuntu_jdk8                                    Ubuntu, JDK8, Maven 3, git, curl, nmap, mc...   3                    [OK]</span><br><span class="line">darksheer/ubuntu                                       Base Ubuntu Image -- Updated hourly             3                    [OK]</span><br><span class="line">1and1internet/ubuntu-16-apache-php-7.0                 ubuntu-16-apache-php-7.0</span><br></pre></td></tr></table></figure>
+
+<p>使用docker pull ubuntu:version命令，可以把镜像下载下来使用。<br>第一步我们需要下载一个ubuntu 16的镜像:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo docker pull ubuntu:16.04</span><br></pre></td></tr></table></figure>
+
+<h1 id="三、使用dockerfile构建镜像"><a href="#三、使用dockerfile构建镜像" class="headerlink" title="三、使用dockerfile构建镜像"></a>三、使用dockerfile构建镜像</h1><p>我们的目标是吧hadoop+spark集成环境构建成自己的镜像，使用镜像搭建3节点的spark集群。<br>在这个过程中学习使用dockerfile，dockerfile定义了很多命令，我们下面会介绍我们使用到的命令，更多命令用法可以参考官方文档。</p>
+<h2 id="FROM"><a href="#FROM" class="headerlink" title="FROM"></a>FROM</h2><p>FROM意思是使用一个镜像做基础，我们使用刚刚下载的ubuntu镜像</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">FROM ubuntu:16.04</span><br></pre></td></tr></table></figure>
+
+<h2 id="USER"><a href="#USER" class="headerlink" title="USER"></a>USER</h2><p>USER意思是切换用户，必须要用户存在才可以，后续操作就使用这个用户执行</p>
+<h2 id="RUN"><a href="#RUN" class="headerlink" title="RUN"></a>RUN</h2><p>RUN是运行命令的意思，构建镜像就是在原有镜像基础进行定制化，必须会运行一些命令，例如新建帐户、改权限、下载安装包等<br>示例：新建hadoop用户并赋予sudo免密权限</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">RUN groupadd hadoop \</span><br><span class="line">	&amp;&amp; useradd -g hadoop -G sudo -m hadoop \</span><br><span class="line">	&amp;&amp; chmod u+w /etc/sudoers \</span><br><span class="line">	&amp;&amp; echo &apos;hadoop ALL=(ALL) NOPASSWD: ALL&apos; &gt;&gt; /etc/sudoers \</span><br><span class="line">	&amp;&amp; chmod u-w /etc/sudoers</span><br></pre></td></tr></table></figure>
+
+<h2 id="ENV"><a href="#ENV" class="headerlink" title="ENV"></a>ENV</h2><p>ENV是添加环境变量，对后续操作生效，例如JAVA_HOME</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64</span><br></pre></td></tr></table></figure>
+
+<p>后续的RUN命令可以使用$JAVA_HOME</p>
+<h2 id="WORKDIR"><a href="#WORKDIR" class="headerlink" title="WORKDIR"></a>WORKDIR</h2><p>指定容器启动后的工作目录，可以把程序或脚本放在这个目录</p>
+<h2 id="COPY"><a href="#COPY" class="headerlink" title="COPY"></a>COPY</h2><p>COPY是复制文件，可以把文件复制进镜像，这里我们把hadoop的配置文件预先写好一并复制进镜像</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">COPY ./*-site.xml $HADOOP_PREFIX/etc/hadoop/</span><br></pre></td></tr></table></figure>
+
+<h2 id="CMD"><a href="#CMD" class="headerlink" title="CMD"></a>CMD</h2><p>CMD是启动镜像默认运行的命令，如果docker run指定了其他命令则CMD会忽略。<br>需要注意进程不要后台运行，后台运行的命令在容器看来驻留后台的时候就已经结束了，记住docker是容器。所以要保持容器运行，命令需要前台运行。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">CMD [ &quot;sh&quot;, &quot;-c&quot;, &quot;sudo service ssh start; bash&quot;]</span><br></pre></td></tr></table></figure>
+
+<h2 id="ENTRYPOINT"><a href="#ENTRYPOINT" class="headerlink" title="ENTRYPOINT"></a>ENTRYPOINT</h2><p>ENTRYPOINT 指令可让容器以应用程序或者服务的形式运行，ENTRYPOINT 不会被忽略，一定会被执行，即使运行 docker run 时指定了其他命令。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ENTRYPOINT [&quot;/bin/echo&quot;, &quot;Hello&quot;]</span><br></pre></td></tr></table></figure>
+
+<p>如果同时存在ENTRYPOINT和CMD，CMD会被当作参数传入ENTRYPOINT，docker run运行时指定的命令会作为参数覆盖CMD，传入ENTRYPOINT成为新参数。</p>
+<blockquote>
+<p>k8s中，在pod定义command和args会覆盖镜像的ENTRYPOINT和CMD参数</p>
+<table>
+<thead>
+<tr>
+<th>Image Entrypoint</th>
+<th>Image Cmd</th>
+<th>Container command</th>
+<th>Container args</th>
+<th>Command run</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>[/ep-1]</td>
+<td>[foo bar]</td>
+<td><not set></not></td>
+<td><not set></not></td>
+<td>[ep-1 foo bar]</td>
+</tr>
+<tr>
+<td>[/ep-1]</td>
+<td>[foo bar]</td>
+<td>[/ep-2]</td>
+<td><not set></not></td>
+<td>[ep-2]</td>
+</tr>
+<tr>
+<td>[/ep-1]</td>
+<td>[foo bar]</td>
+<td><not set></not></td>
+<td>[zoo boo]</td>
+<td>[ep-1 zoo boo]</td>
+</tr>
+<tr>
+<td>[/ep-1]</td>
+<td>[foo bar]</td>
+<td>[/ep-2]</td>
+<td>[zoo boo]</td>
+<td>[ep-2 zoo boo]</td>
+</tr>
+</tbody></table>
+</blockquote>
+<p>更完整的定义参考<a href="http://www.dockerinfo.net/dockerfile%E4%BB%8B%E7%BB%8D" target="_blank" rel="noopener">Dockerfile介绍</a></p>
+<h2 id="完整的dockerfile"><a href="#完整的dockerfile" class="headerlink" title="完整的dockerfile"></a>完整的dockerfile</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">FROM ubuntu:16.04</span><br><span class="line">USER root</span><br><span class="line"># install base tools</span><br><span class="line">RUN apt update \</span><br><span class="line">        &amp;&amp; apt install -y curl tar sudo openssh-server openssh-client rsync openjdk-8-jdk </span><br><span class="line">ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 PATH=$PATH:$JAVA_HOME/bin</span><br><span class="line"># add hadoop user and passwordless ssh </span><br><span class="line">RUN groupadd hadoop \</span><br><span class="line">        &amp;&amp; useradd -g hadoop -G sudo -m hadoop \</span><br><span class="line">        &amp;&amp; chmod u+w /etc/sudoers \</span><br><span class="line">        &amp;&amp; echo &apos;hadoop ALL=(ALL) NOPASSWD: ALL&apos; &gt;&gt; /etc/sudoers \</span><br><span class="line">        &amp;&amp; chmod u-w /etc/sudoers</span><br><span class="line">USER hadoop</span><br><span class="line">RUN ssh-keygen -q -N &quot;&quot; -t rsa -f ~/.ssh/id_rsa \</span><br><span class="line">        &amp;&amp; cat ~/.ssh/id_rsa.pub &gt;&gt; ~/.ssh/authorized_keys \</span><br><span class="line">        &amp;&amp; echo &quot;ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCfyJOeBBSHCQVu6/ ubuntu@wx&quot; &gt;&gt;  ~/.ssh/authorized_keys \</span><br><span class="line">        &amp;&amp; chmod 600 ~/.ssh/authorized_keys \</span><br><span class="line">        &amp;&amp; echo &apos;StrictHostKeyChecking no&apos; &gt; ~/.ssh/config</span><br><span class="line"># download and config hadoop</span><br><span class="line">RUN curl -s http://mirror.bit.edu.cn/apache/hadoop/common/hadoop-2.8.1/hadoop-2.8.1.tar.gz  |sudo tar -xz -C /usr/local/ \</span><br><span class="line">        &amp;&amp; sudo chown -R hadoop:hadoop /usr/local/hadoop-2.8.1 \</span><br><span class="line">        &amp;&amp; sudo ln -s /usr/local/hadoop-2.8.1 /usr/local/hadoop \</span><br><span class="line">        &amp;&amp; mkdir /usr/local/hadoop/tmp</span><br><span class="line">ENV HADOOP_PREFIX /usr/local/hadoop</span><br><span class="line">RUN sudo sed -i &apos;/^export JAVA_HOME/ s:.*:export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64\nexport HADOOP_PREFIX=/usr/local/hadoop\nexport HADOOP_HOME=/usr/local/hadoop\n:&apos; $HADOOP_PREFIX/etc/hadoop/hadoop-env.sh \</span><br><span class="line">        &amp;&amp; sudo sed -i &apos;/^export HADOOP_CONF_DIR/ s:.*:export HADOOP_CONF_DIR=/usr/local/hadoop/etc/hadoop/:&apos; $HADOOP_PREFIX/etc/hadoop/hadoop-env.sh</span><br><span class="line">COPY ./*-site.xml $HADOOP_PREFIX/etc/hadoop/</span><br><span class="line">COPY ./slaves $HADOOP_PREFIX/etc/hadoop/slaves</span><br><span class="line"># download and config spark</span><br><span class="line">RUN curl -s https://d3kbcqa49mib13.cloudfront.net/spark-2.2.0-bin-hadoop2.7.tgz |sudo tar -xz -C /usr/local/ \</span><br><span class="line">        &amp;&amp; sudo chown -R hadoop:hadoop /usr/local/spark-2.2.0-bin-hadoop2.7 \</span><br><span class="line">        &amp;&amp; sudo ln -s /usr/local/spark-2.2.0-bin-hadoop2.7 /usr/local/spark </span><br><span class="line">ENV SPARK_HOME /usr/local/spark</span><br><span class="line">COPY ./slaves $SPARK_HOME/conf/slaves</span><br><span class="line">RUN echo &apos;export HADOOP_CONF_DIR=/usr/local/hadoop/etc/hadoop&apos; &gt;&gt; $SPARK_HOME/conf/spark-env.sh </span><br><span class="line">COPY ./start-service.sh /home/hadoop/start-service.sh</span><br><span class="line">RUN sudo chmod +x /home/hadoop/start-service.sh</span><br><span class="line">CMD [ &quot;sh&quot;, &quot;-c&quot;, &quot;sudo service ssh start; bash&quot;]</span><br></pre></td></tr></table></figure>
+
+<h2 id="build镜像"><a href="#build镜像" class="headerlink" title="build镜像"></a>build镜像</h2><p>使用命令docker build构建镜像，进入Dockerfile所在目录，运行如下命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo docker build -t spark:0.1 .</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>需要注意命令中’.’代表当前目录，这影响到Dockerfile中的参数环境。<br>-t 镜像名称:版本</p>
+</blockquote>
+<h1 id="四、网络"><a href="#四、网络" class="headerlink" title="四、网络"></a>四、网络</h1><p>搭建3节点集群需要把节点放在同一个虚拟网络环境下，节点间通过hostname可以互联。docker在这方面提供了方便的实现，我们通过简单的命令创建一个叫net1的网络环境。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo docker network create --driver=bridge net1</span><br></pre></td></tr></table></figure>
+
+<p>使用docker network查看当前存在的网络</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">ubuntu@wx:~/dockerimg/hadoop$ sudo docker network ls</span><br><span class="line">NETWORK ID          NAME                DRIVER              SCOPE</span><br><span class="line">bbc1b008d971        bridge              bridge              local</span><br><span class="line">6c90e7d1cdd9        host                host                local</span><br><span class="line">2d74b1e3b79d        net1                bridge              local</span><br><span class="line">e4753da64f2b        none                null                local</span><br></pre></td></tr></table></figure>
+
+<h1 id="五、启动"><a href="#五、启动" class="headerlink" title="五、启动"></a>五、启动</h1><p>我们先启动2个slave节点，使用如下命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo docker run -itd --rm --net=net1 -v /data/hadoop/slave1/tmp:/usr/local/hadoop/tmp  -h hadoop-slave1 --name hadoop-slave1 spark:0.1</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>-v 把本地目录/data/hadoop/slave1/tmp 挂在到容器目录/usr/local/hadoop/tmp<br>–rm 当容器进程退出就删除容器<br>–it 交互模式 -d 后台运行<br>-h hostname<br>slave1改成slave2启动节点2</p>
+</blockquote>
+<p>启动master节点</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo docker run -it --rm --net=net1 -p 8080:8080 -p 8020:8020 -p 50070:50070  -v /data/hadoop/master/tmp:/usr/local/hadoop/tmp  -h hadoop-master --name hadoop-master spark:v0.3</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>-p 端口映射 本地端口:容器端口</p>
+</blockquote>
+<p>master容器启动后直接就进入了bash交换操作，然后像一般集群那样运行start-all.sh启动hadoop和spark</p>
+<h1 id="六、后记"><a href="#六、后记" class="headerlink" title="六、后记"></a>六、后记</h1><p>docker学习下来比传统虚拟机有很多不一样，像kvm这种虚拟机需要底层硬件支持才能发挥更好性能，可以说全面虚拟了一个服务器，包括硬件。容器就完全在软件方面做功夫，把利用LXC把资源给隔离出来，使进程跑在独立的环境上。<br>你要虚拟出一个Windows？docker帮不了你。<br>接下来会继续玩docker-compose。</p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/docker/">docker</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/容器架构/">容器架构</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://www.lstop.pub/2017/10/16/docker构造hadoop-spark镜像/" data-title="docker构造hadoop+spark镜像 | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2017/10/23/docker-compose编排容器/" title="docker-compose编排容器">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  docker-compose编排容器</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2017/06/19/ELK的一些技巧和知识记录/"  title="ELK的一些技巧和知识记录">
+ <strong>NEXT:</strong><br/> 
+ <span>ELK的一些技巧和知识记录
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#一、docker不是虚拟机"><span class="toc-number">1.</span> <span class="toc-text">一、docker不是虚拟机</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#二、开始使用docker"><span class="toc-number">2.</span> <span class="toc-text">二、开始使用docker</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#在ubuntu下安装docker"><span class="toc-number">2.1.</span> <span class="toc-text">在ubuntu下安装docker</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#docker的镜像"><span class="toc-number">2.2.</span> <span class="toc-text">docker的镜像</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#三、使用dockerfile构建镜像"><span class="toc-number">3.</span> <span class="toc-text">三、使用dockerfile构建镜像</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#FROM"><span class="toc-number">3.1.</span> <span class="toc-text">FROM</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#USER"><span class="toc-number">3.2.</span> <span class="toc-text">USER</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#RUN"><span class="toc-number">3.3.</span> <span class="toc-text">RUN</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ENV"><span class="toc-number">3.4.</span> <span class="toc-text">ENV</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#WORKDIR"><span class="toc-number">3.5.</span> <span class="toc-text">WORKDIR</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#COPY"><span class="toc-number">3.6.</span> <span class="toc-text">COPY</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CMD"><span class="toc-number">3.7.</span> <span class="toc-text">CMD</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ENTRYPOINT"><span class="toc-number">3.8.</span> <span class="toc-text">ENTRYPOINT</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#完整的dockerfile"><span class="toc-number">3.9.</span> <span class="toc-text">完整的dockerfile</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#build镜像"><span class="toc-number">3.10.</span> <span class="toc-text">build镜像</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#四、网络"><span class="toc-number">4.</span> <span class="toc-text">四、网络</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#五、启动"><span class="toc-number">5.</span> <span class="toc-text">五、启动</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#六、后记"><span class="toc-number">6.</span> <span class="toc-text">六、后记</span></a></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+
+  
+<div class="tagslist">
+	<p class="asidetitle">Tags</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/DNS/" title="DNS">DNS<sup>1</sup></a></li>
+		
+			<li><a href="/tags/GitLab/" title="GitLab">GitLab<sup>1</sup></a></li>
+		
+			<li><a href="/tags/K8s/" title="K8s">K8s<sup>5</sup></a></li>
+		
+			<li><a href="/tags/Linux/" title="Linux">Linux<sup>1</sup></a></li>
+		
+			<li><a href="/tags/MongoDB/" title="MongoDB">MongoDB<sup>2</sup></a></li>
+		
+			<li><a href="/tags/OpenWrt/" title="OpenWrt">OpenWrt<sup>1</sup></a></li>
+		
+			<li><a href="/tags/Python/" title="Python">Python<sup>2</sup></a></li>
+		
+			<li><a href="/tags/RabbitMQ/" title="RabbitMQ">RabbitMQ<sup>1</sup></a></li>
+		
+			<li><a href="/tags/cdn/" title="cdn">cdn<sup>1</sup></a></li>
+		
+			<li><a href="/tags/docker/" title="docker">docker<sup>2</sup></a></li>
+		
+			<li><a href="/tags/elk/" title="elk">elk<sup>3</sup></a></li>
+		
+			<li><a href="/tags/nginx/" title="nginx">nginx<sup>1</sup></a></li>
+		
+			<li><a href="/tags/tomcat/" title="tomcat">tomcat<sup>1</sup></a></li>
+		
+			<li><a href="/tags/traefik/" title="traefik">traefik<sup>1</sup></a></li>
+		
+			<li><a href="/tags/zabbix/" title="zabbix">zabbix<sup>1</sup></a></li>
+		
+			<li><a href="/tags/中间人攻击/" title="中间人攻击">中间人攻击<sup>1</sup></a></li>
+		
+			<li><a href="/tags/压力测试/" title="压力测试">压力测试<sup>3</sup></a></li>
+		
+			<li><a href="/tags/安全/" title="安全">安全<sup>1</sup></a></li>
+		
+			<li><a href="/tags/微信企业号/" title="微信企业号">微信企业号<sup>1</sup></a></li>
+		
+			<li><a href="/tags/监控/" title="监控">监控<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">Links</p>
+    <ul>
+      <li><a href="http://www.v2ex.com/?r=zong400" target="_blank" title="V2EX">V2EX</a></li>
+      <li><a href="http://hexo.io" target="_blank" title="Hexo">Hexo</a></li>
+	  <li><a href="https://promotion.aliyun.com/ntms/yunparter/invite.html?userCode=s0bh6uzq" target="_blank" title="阿里云">阿里云</a></li>
+	  <li><a href="https://cloud.tencent.com/redirect.php?redirect=1014&cps_key=5bd9deb84d4d9f34b65fb934e12d03e3&from=console" target="_blank" title="腾讯云">腾讯云</a></li>
+    </ul>
+</div>
+
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+	</div>
+		<p class="copyright">Hosted by <a href="https://pages.coding.me/" target="_blank" title="Coding Pages">Coding Pages</a></p>
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wizicer/iceman" target="_blank" title="Iceman">Iceman</a> © 2019 
+		
+		<a href="http://www.lstop.pub" target="_blank" title="Zong">Zong</a>
+		
+		</p>
+</div>
+</footer>
+    <script src="//cdn.staticfile.org/jquery/2.1.0/jquery.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+
+
+
+  </body>
+</html>
+
