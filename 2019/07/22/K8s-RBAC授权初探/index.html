@@ -101,7 +101,7 @@
 <h1 id="使用RBAC"><a href="#使用RBAC" class="headerlink" title="使用RBAC"></a>使用RBAC</h1><p>RBAC在1.8版已经稳定，使用rbac.authorization.k8s.io/v1 API进行定义，启用RBAC需要在apiserver启动时指定参数</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">--authorization-mode=RBAC</span><br></pre></td></tr></table></figure>
 
-<h2 id="kubeconfig授权"><a href="#kubeconfig授权" class="headerlink" title="kubeconfig授权"></a>kubeconfig授权</h2><p>kubeconfig通常使用x509证书认证访问apiserver，k8s会读取证书的CN作为user，O作为group<br>下面给一个例子,system:kube-proxy是user，k8s是group</p>
+<h2 id="kubeconfig授权"><a href="#kubeconfig授权" class="headerlink" title="kubeconfig授权"></a>kubeconfig授权</h2><p>kubeconfig通常使用x509证书认证访问apiserver，k8s会读取证书的CN作为user，O作为group<br>下面给一个例子，用这个json生成的x509证书，其中system:kube-proxy是user，k8s是group</p>
 <figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"CN"</span>: <span class="string">"system:kube-proxy"</span>,</span><br><span class="line">  <span class="attr">"hosts"</span>: [],</span><br><span class="line">  <span class="attr">"key"</span>: &#123;</span><br><span class="line">    <span class="attr">"algo"</span>: <span class="string">"rsa"</span>,</span><br><span class="line">    <span class="attr">"size"</span>: <span class="number">2048</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">"names"</span>: [</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="attr">"C"</span>: <span class="string">"CN"</span>,</span><br><span class="line">      <span class="attr">"ST"</span>: <span class="string">"Guangdong"</span>,</span><br><span class="line">      <span class="attr">"L"</span>: <span class="string">"Zhongshan"</span>,</span><br><span class="line">      <span class="attr">"O"</span>: <span class="string">"k8s"</span>,</span><br><span class="line">      <span class="attr">"OU"</span>: <span class="string">"System"</span></span><br><span class="line">    &#125;</span><br><span class="line">  ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>给这个x509证书授权可用更新bxr-dev namespace上的deployment的image版本（kubectl set image）</p>
@@ -164,6 +164,14 @@
 	
 <nav class="article-nav clearfix">
  
+ <div class="prev" >
+ <a href="/2019/08/15/K8s-HPA/" title="K8s HPA">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  K8s HPA</span>
+</a>
+</div>
+
 
 <div class="next">
 <a href="/2019/07/01/docker-registry清理历史镜像/"  title="docker registry清理历史镜像">
@@ -199,7 +207,7 @@
 		
 			<li><a href="/tags/GitLab/" title="GitLab">GitLab<sup>1</sup></a></li>
 		
-			<li><a href="/tags/K8s/" title="K8s">K8s<sup>7</sup></a></li>
+			<li><a href="/tags/K8s/" title="K8s">K8s<sup>8</sup></a></li>
 		
 			<li><a href="/tags/Linux/" title="Linux">Linux<sup>1</sup></a></li>
 		
