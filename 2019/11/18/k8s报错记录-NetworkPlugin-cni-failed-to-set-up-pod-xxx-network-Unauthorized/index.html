@@ -4,12 +4,13 @@
 <head><meta name="generator" content="Hexo 3.9.0">
   <meta charset="UTF-8">
   
-    <title>使用cAdvisor监控节点中的容器资源 | Zong&#39;s blog</title>
+    <title>k8s报错记录  NetworkPlugin cni failed to set up pod xxx network: Unauthorized | Zong&#39;s blog</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
     <meta name="author" content="Zong">
     
-    <meta name="description" content="前言Kubernetes中监控节点中的容器资源使用情况是通过cAdvisor实现的，这在1.12开始发生了变化，1.12之前kubelet集成了cAdvisor，启动kubelet默认打开4194端口就可以使用cAdvisor。但是1.12之后这个功能废弃了，kubelet不再集成cAdvisor，">
+    <meta name="description" content="k8s集群某个节点出现不能启动pod的情况，其他节点正常，从错误信息很容易联想到rbac的权限问题，查询节点syslog、kubelet日志、calico日志等但没有明显指示。完整报错信息：
+1234567891011121314Events:  Type     Reason           ">
     
     
     
@@ -73,14 +74,14 @@
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2019/05/07/使用cAdvisor监控节点中的容器资源/" title="使用cAdvisor监控节点中的容器资源" itemprop="url">使用cAdvisor监控节点中的容器资源</a>
+      <a href="/2019/11/18/k8s报错记录-NetworkPlugin-cni-failed-to-set-up-pod-xxx-network-Unauthorized/" title="k8s报错记录  NetworkPlugin cni failed to set up pod xxx network: Unauthorized" itemprop="url">k8s报错记录  NetworkPlugin cni failed to set up pod xxx network: Unauthorized</a>
   </h1>
   <p class="article-author">By
     
       <a href="http://www.lstop.pub" title="Zong">Zong</a>
     </p>
   <p class="article-time">
-    <time datetime="2019-05-07T07:53:34.000Z" itemprop="datePublished">2019-05-07</time>
+    <time datetime="2019-11-18T05:42:11.000Z" itemprop="datePublished">2019-11-18</time>
     
   </p>
 </header>
@@ -90,41 +91,33 @@
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#部署cAdvisor"><span class="toc-number">2.</span> <span class="toc-text">部署cAdvisor</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Prometheus配置"><span class="toc-number">3.</span> <span class="toc-text">Prometheus配置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#grafana"><span class="toc-number">4.</span> <span class="toc-text">grafana</span></a></li></ol>
+		
 		</div>
 		
-		<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>Kubernetes中监控节点中的容器资源使用情况是通过cAdvisor实现的，这在1.12开始发生了变化，1.12之前kubelet集成了cAdvisor，启动kubelet默认打开4194端口就可以使用cAdvisor。<br>但是1.12之后这个功能废弃了，kubelet不再集成cAdvisor，需要手动部署。本文K8s版本是1.13，我们使用Daemonset重新部署了cAdvisor服务。</p>
-<h1 id="部署cAdvisor"><a href="#部署cAdvisor" class="headerlink" title="部署cAdvisor"></a>部署cAdvisor</h1><p>部署方法挺简单的，可以参考<a href="https://github.com/google/cadvisor/tree/master/deploy/kubernetes" target="_blank" rel="noopener">cadvisor的github</a><br>这个页面有现成的yaml文件，我们只需要cluserrole.yaml、cluserrolebinding.yaml、serviceaccount.yaml、daemonset.yaml几个，daemonset.yaml里面的namespace我改成现有的monitor。<br>很快就建好daemonset</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">NAME                          READY   STATUS    RESTARTS   AGE</span><br><span class="line">cadvisor-6gnv8                1/1     Running   0          5h19m</span><br><span class="line">cadvisor-bd9dn                1/1     Running   0          5h19m</span><br><span class="line">cadvisor-hcszs                1/1     Running   0          5h19m</span><br><span class="line">cadvisor-k9d55                1/1     Running   0          5h19m</span><br><span class="line">cadvisor-rlq8g                1/1     Running   0          5h19m</span><br><span class="line">cadvisor-xsgp2                1/1     Running   0          5h19m</span><br></pre></td></tr></table></figure>
+		<p>k8s集群某个节点出现不能启动pod的情况，其他节点正常，从错误信息很容易联想到rbac的权限问题，查询节点syslog、kubelet日志、calico日志等但没有明显指示。<br>完整报错信息：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">Events:</span><br><span class="line">  Type     Reason                  Age                    From                    Message</span><br><span class="line">  ----     ------                  ----                   ----                    -------</span><br><span class="line">  Normal   Scheduled               10m                    default-scheduler       Successfully assigned bxr-dev/core-service-clazzalbum-7886f68fbc-547b2 to k8s-dev-node5</span><br><span class="line">  Warning  FailedCreatePodSandBox  10m                    kubelet, k8s-dev-node5  Failed create pod sandbox: rpc error: code = Unknown desc = failed to set up sandbox container &quot;d77730a242c3da53c5263e86e595d104b53da9e3b4526fdbbab2404fa76678ec&quot; network for pod &quot;core-service-clazzalbum-7886f68fbc-547b2&quot;: NetworkPlugin cni failed to set up pod &quot;core-service-clazzalbum-7886f68fbc-547b2_bxr-dev&quot; network: Unauthorized</span><br><span class="line">  Warning  FailedCreatePodSandBox  10m                    kubelet, k8s-dev-node5  Failed create pod sandbox: rpc error: code = Unknown desc = failed to set up sandbox container &quot;66ff75fde18b59ecc336042a18003d1f03968a3c5f50e988d74d52e536d86ddb&quot; network for pod &quot;core-service-clazzalbum-7886f68fbc-547b2&quot;: NetworkPlugin cni failed to set up pod &quot;core-service-clazzalbum-7886f68fbc-547b2_bxr-dev&quot; network: Unauthorized</span><br><span class="line">  Warning  FailedCreatePodSandBox  10m                    kubelet, k8s-dev-node5  Failed create pod sandbox: rpc error: code = Unknown desc = failed to set up sandbox container &quot;d1f4d7910a872b90ecf2080719985db3b869dd74ee684c3fa5770c8968abe06f&quot; network for pod &quot;core-service-clazzalbum-7886f68fbc-547b2&quot;: NetworkPlugin cni failed to set up pod &quot;core-service-clazzalbum-7886f68fbc-547b2_bxr-dev&quot; network: Unauthorized</span><br><span class="line">  Warning  FailedCreatePodSandBox  10m                    kubelet, k8s-dev-node5  Failed create pod sandbox: rpc error: code = Unknown desc = failed to set up sandbox container &quot;960dc8a43831ca4c6589fe2a8e1566444aaf69a3961933989eff6bcea862bc27&quot; network for pod &quot;core-service-clazzalbum-7886f68fbc-547b2&quot;: NetworkPlugin cni failed to set up pod &quot;core-service-clazzalbum-7886f68fbc-547b2_bxr-dev&quot; network: Unauthorized</span><br><span class="line">  Warning  FailedCreatePodSandBox  10m                    kubelet, k8s-dev-node5  Failed create pod sandbox: rpc error: code = Unknown desc = failed to set up sandbox container &quot;08bde655d956d48be9285438121f7f7e0d2eb354a8b797166445af0f67803142&quot; network for pod &quot;core-service-clazzalbum-7886f68fbc-547b2&quot;: NetworkPlugin cni failed to set up pod &quot;core-service-clazzalbum-7886f68fbc-547b2_bxr-dev&quot; network: Unauthorized</span><br><span class="line">  Warning  FailedCreatePodSandBox  10m                    kubelet, k8s-dev-node5  Failed create pod sandbox: rpc error: code = Unknown desc = failed to set up sandbox container &quot;cb7368a1cbabc8f1043a2cedbaa5bda01cce02e86f8323bcf9c76313ec736ac2&quot; network for pod &quot;core-service-clazzalbum-7886f68fbc-547b2&quot;: NetworkPlugin cni failed to set up pod &quot;core-service-clazzalbum-7886f68fbc-547b2_bxr-dev&quot; network: Unauthorized</span><br><span class="line">  Warning  FailedCreatePodSandBox  10m                    kubelet, k8s-dev-node5  Failed create pod sandbox: rpc error: code = Unknown desc = failed to set up sandbox container &quot;2f6d8ac6aec39dcca1645fefd5988ea78129efc1464acd1b05b97cb429bdd26d&quot; network for pod &quot;core-service-clazzalbum-7886f68fbc-547b2&quot;: NetworkPlugin cni failed to set up pod &quot;core-service-clazzalbum-7886f68fbc-547b2_bxr-dev&quot; network: Unauthorized</span><br><span class="line">  Warning  FailedCreatePodSandBox  10m                    kubelet, k8s-dev-node5  Failed create pod sandbox: rpc error: code = Unknown desc = failed to set up sandbox container &quot;064b477ce9998c9ceb47e3fb35f97cacacf273c6553bfa797e68a6bfdc8a453b&quot; network for pod &quot;core-service-clazzalbum-7886f68fbc-547b2&quot;: NetworkPlugin cni failed to set up pod &quot;core-service-clazzalbum-7886f68fbc-547b2_bxr-dev&quot; network: Unauthorized</span><br><span class="line">  Warning  FailedCreatePodSandBox  10m                    kubelet, k8s-dev-node5  Failed create pod sandbox: rpc error: code = Unknown desc = failed to set up sandbox container &quot;da4842bec87e9677e5aa9f0e028c33875e7a16562b232c16d234be666431028f&quot; network for pod &quot;core-service-clazzalbum-7886f68fbc-547b2&quot;: NetworkPlugin cni failed to set up pod &quot;core-service-clazzalbum-7886f68fbc-547b2_bxr-dev&quot; network: Unauthorized</span><br><span class="line">  Warning  FailedCreatePodSandBox  10m (x4 over 10m)      kubelet, k8s-dev-node5  (combined from similar events): Failed create pod sandbox: rpc error: code = Unknown desc = failed to set up sandbox container &quot;818e2a24df475c2fccf1d5c6003fdf5283e9d31ac409eb6c67d188f054db632d&quot; network for pod &quot;core-service-clazzalbum-7886f68fbc-547b2&quot;: NetworkPlugin cni failed to set up pod &quot;core-service-clazzalbum-7886f68fbc-547b2_bxr-dev&quot; network: Unauthorized</span><br></pre></td></tr></table></figure>
 
-<h1 id="Prometheus配置"><a href="#Prometheus配置" class="headerlink" title="Prometheus配置"></a>Prometheus配置</h1><p>如果是从低版本K8s升级过来的，需要在Prometheus中把之前的cadvisor配置段清掉，改成下面的配置</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">- job_name: &apos;cadvisor&apos;</span><br><span class="line">  scheme: http</span><br><span class="line">  kubernetes_sd_configs:</span><br><span class="line">    - role: pod</span><br><span class="line">  relabel_configs:</span><br><span class="line">    - source_labels: [__meta_kubernetes_namespace]</span><br><span class="line">      regex: monitor</span><br><span class="line">      action: keep</span><br><span class="line">    - source_labels: [__meta_kubernetes_pod_label_name]</span><br><span class="line">      regex: cadvisor</span><br><span class="line">      action: keep</span><br></pre></td></tr></table></figure>
-
-<p>这段的意思大概是过滤出namespace=monitor和label是name=cadvisor的pod，然后动态获得匹配到的pod的ip端口，例如<a href="http://172.17.10.176:8080/metrice" target="_blank" rel="noopener">http://172.17.10.176:8080/metrice</a><br>重启Prometheus后就能在target中看到cadvisor</p>
-<blockquote>
-<p>prometheus的配置真的可以很灵活，具体参考它的<a href="https://prometheus.io/docs/prometheus/latest/configuration/configuration/#kubernetes_sd_config" target="_blank" rel="noopener">文档</a></p>
-</blockquote>
-<h1 id="grafana"><a href="#grafana" class="headerlink" title="grafana"></a>grafana</h1><p>因为cadvisor改了，prometheus中获取到的指标也可能变，如果发现grafana中的图表显示出问题就要找一下原因了<br>比如我发现container_cpu_usage_seconds_total中的pod_name就变成了container_label_io_kubernetes_pod_name，这时候要手动改一下，或者找找看有没有新一点点的dashboard下载</p>
+<p>解决方法：<br>该节点进行过kubelet证书轮换，有可能这个kubelet还是使用了旧证书，重启kubelet和kube-proxy后pod能正常启动。</p>
   
 	</div>
 		<footer class="article-footer clearfix">
 
   <div class="article-tags">
   
-  <span></span> <a href="/tags/K8s/">K8s</a>
+  <span></span> <a href="/tags/k8s/">k8s</a><a href="/tags/报错/">报错</a>
   </div>
 
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/运维/">运维</a>
+  <a class="article-category-link" href="/categories/容器架构/">容器架构</a>
 </div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://www.lstop.pub/2019/05/07/使用cAdvisor监控节点中的容器资源/" data-title="使用cAdvisor监控节点中的容器资源 | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  <div data-url="http://www.lstop.pub/2019/11/18/k8s报错记录-NetworkPlugin-cni-failed-to-set-up-pod-xxx-network-Unauthorized/" data-title="k8s报错记录  NetworkPlugin cni failed to set up pod xxx network: Unauthorized | Zong&#39;s blog" data-tsina="" class="share clearfix">
   </div>
 
 </div>
@@ -133,19 +126,11 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
- <a href="/2019/06/27/Airtest自动化测试初探/" title="Airtest自动化测试初探">
-  <strong>PREVIOUS:</strong><br/>
-  <span>
-  Airtest自动化测试初探</span>
-</a>
-</div>
-
 
 <div class="next">
-<a href="/2019/04/11/OpenWrt-DNS-over-Https纯净上网/"  title="OpenWrt DNS-over-Https纯净上网">
+<a href="/2019/10/21/比较6的python语法/"  title="比较6的python语法">
  <strong>NEXT:</strong><br/> 
- <span>OpenWrt DNS-over-Https纯净上网
+ <span>比较6的python语法
 </span>
 </a>
 </div>
@@ -158,7 +143,7 @@
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#部署cAdvisor"><span class="toc-number">2.</span> <span class="toc-text">部署cAdvisor</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Prometheus配置"><span class="toc-number">3.</span> <span class="toc-text">Prometheus配置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#grafana"><span class="toc-number">4.</span> <span class="toc-text">grafana</span></a></li></ol>
+  
   </div>
 
 <div id="asidepart">
