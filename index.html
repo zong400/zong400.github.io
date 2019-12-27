@@ -77,8 +77,8 @@
     <h1 itemprop="name">k8s报错记录  NetworkPlugin cni failed to set up pod xxx network: Unauthorized</h1>
     
      
-           <p itemprop="description" >k8s集群某个节点出现不能启动pod的情况，其他节点正常，从错误信息很容易联想到rbac的权限问题，查询节点syslog、kubelet日志、calico日志等但没有明显指示。完整报错信息：
-1234567891011121314Events:  Type     Reason </p>
+           <p itemprop="description" >k8s集群某个节点出现不能启动pod的情况，其他节点正常。从错误信息很容易联想到rbac的权限问题，查询节点syslog、kubelet日志、calico日志等但没有明显指示。重新对比环境的calico rbac配置和官方rbac配置，没有发现异常。完整报错信息：
+1234567</p>
         
     
     <time datetime="2019-11-18T05:42:11.000Z" itemprop="datePublished">2019-11-18</time>
