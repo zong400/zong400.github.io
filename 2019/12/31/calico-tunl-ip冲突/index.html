@@ -4,13 +4,14 @@
 <head><meta name="generator" content="Hexo 3.9.0">
   <meta charset="UTF-8">
   
-    <title>zabbix rest api开发（登录） | Zong&#39;s blog</title>
+    <title>calico tunl ip冲突 | Zong&#39;s blog</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
     <meta name="author" content="Zong">
     
-    <meta name="description" content="不知为什么自己挖坑说想把zabbix的监控展示在微信企业号。。。不知能不能填啊。。。一点一点来吧今天记录一下关于zabbix的restAPI开发，首先我们要登录到zabbixzabbix的restAPI会接收一个json格式的登录数据，通过这个json提交必要的username和password
-1">
+    <meta name="description" content="集群新增2个node，完了之后发现网络有问题，其中一个节点和pod网络不通，经过一轮排查，发现新增的两个node分配的tunl0 ip是一样的，就是出现问题的原因。如图：
+通过 calicoctl get node 和 kubectl get no 对比发现节点域名不一致
+解决方法：删除 /var/">
     
     
     
@@ -74,14 +75,14 @@
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2017/03/01/zabbix-rest-api开发（登录）/" title="zabbix rest api开发（登录）" itemprop="url">zabbix rest api开发（登录）</a>
+      <a href="/2019/12/31/calico-tunl-ip冲突/" title="calico tunl ip冲突" itemprop="url">calico tunl ip冲突</a>
   </h1>
   <p class="article-author">By
     
       <a href="http://www.lstop.pub" title="Zong">Zong</a>
     </p>
   <p class="article-time">
-    <time datetime="2017-03-01T06:02:11.000Z" itemprop="datePublished">2017-03-01</time>
+    <time datetime="2019-12-31T07:33:51.000Z" itemprop="datePublished">2019-12-31</time>
     
   </p>
 </header>
@@ -94,38 +95,29 @@
 		
 		</div>
 		
-		<p>不知为什么自己挖坑说想把zabbix的监控展示在微信企业号。。。不知能不能填啊。。。一点一点来吧<br>今天记录一下关于zabbix的restAPI开发，首先我们要登录到zabbix<br>zabbix的restAPI会接收一个json格式的登录数据，通过这个json提交必要的username和password</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;jsonrpc&quot;: &quot;2.0&quot;,</span><br><span class="line">    &quot;method&quot;: &quot;user.login&quot;,</span><br><span class="line">    &quot;params&quot;: &#123;</span><br><span class="line">     &quot;user&quot;: &quot;username&quot;,</span><br><span class="line">     &quot;password&quot;: &quot;password&quot;</span><br><span class="line">     &#125;,</span><br><span class="line">    &quot;id&quot;: 0</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
-
-<p>zabbix的rest api入口是<a href="http://localhost/zabbix/api_jsonrpc.php" target="_blank" rel="noopener">http://localhost/zabbix/api_jsonrpc.php</a></p>
-<p>我们使用python的requests模块就能很方便的把这个json数据post到zabbix，如果成功就能返回登录的token，之后的操作带上这个token就能继续访问restAPI提供的各种数据接口。<br>我自己写的一个测试代码</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/python</span></span><br><span class="line"><span class="comment"># coding=utf-8</span></span><br><span class="line"><span class="string">'''</span></span><br><span class="line"><span class="string">zabbix登录类，获取zabbix token</span></span><br><span class="line"><span class="string">'''</span></span><br><span class="line"><span class="keyword">import</span> json</span><br><span class="line"><span class="keyword">import</span> requests</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">zabbixToken</span><span class="params">(object)</span>:</span></span><br><span class="line"> <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, username = <span class="string">'admin'</span>, password = <span class="string">'admin'</span> , zurl = <span class="string">''</span>)</span>:</span></span><br><span class="line">  self.__username = username</span><br><span class="line">  self.__password = password</span><br><span class="line">  self.__zurl = zurl</span><br><span class="line">  </span><br><span class="line"> <span class="function"><span class="keyword">def</span> <span class="title">_login_to_zabbix</span><span class="params">(self)</span>:</span></span><br><span class="line">  login_json = <span class="string">'''</span></span><br><span class="line"><span class="string">  &#123;</span></span><br><span class="line"><span class="string">    "jsonrpc": "2.0",</span></span><br><span class="line"><span class="string">    "method": "user.login",</span></span><br><span class="line"><span class="string">    "params": &#123;</span></span><br><span class="line"><span class="string">     "user": "%s",</span></span><br><span class="line"><span class="string">     "password": "%s"</span></span><br><span class="line"><span class="string">     &#125;,</span></span><br><span class="line"><span class="string">    "id": 0</span></span><br><span class="line"><span class="string">  &#125;</span></span><br><span class="line"><span class="string">  '''</span> % (self.__username, self.__password)</span><br><span class="line">  headers = &#123;<span class="string">"Content-Type"</span>: <span class="string">"application/json"</span>&#125;</span><br><span class="line">  <span class="keyword">return</span> requests.post(self.__zurl, data=login_json, headers=headers)</span><br><span class="line"> </span><br><span class="line"> <span class="function"><span class="keyword">def</span> <span class="title">get_token</span><span class="params">(self)</span>:</span></span><br><span class="line">  token = self._login_to_zabbix().json()[<span class="string">'result'</span>]</span><br><span class="line">  <span class="keyword">return</span> token</span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">main</span><span class="params">()</span>:</span></span><br><span class="line"> token = zabbixToken(username=<span class="string">'admin'</span>, password=<span class="string">'pass'</span>, zurl=<span class="string">'http://localhost/zabbix/api_jsonrpc.php'</span>)</span><br><span class="line"> <span class="keyword">print</span> <span class="string">'zabbix token: '</span> + token.get_token()</span><br><span class="line"> </span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">'__main__'</span>:</span><br><span class="line"> main()</span><br></pre></td></tr></table></figure>
-
-<p>运行成功能得到token</p>
-<blockquote>
-<p>Python 2.7.12 (v2.7.12:d33e0cf91556, Jun 27 2016, 15:19:22) [MSC v.1500 32 bit (Intel)] on win32<br>Type “copyright”, “credits” or “license()” for more information.</p>
-<p>=============== RESTART: D:\pyproject\zabbixwx\zabbixToken.py ===============<br>zabbix token: f26bb031ef648d8b13ff8d1a3714f480</p>
-</blockquote>
+		<p>集群新增2个node，完了之后发现网络有问题，其中一个节点和pod网络不通，经过一轮排查，发现新增的两个node分配的tunl0 ip是一样的，就是出现问题的原因。<br>如图：<br><img src="http://qnimg.banxiaoer.net/yw/k8s/node1-docker-ip.png" alt><br><img src="http://qnimg.banxiaoer.net/yw/k8s/node8-docker-ip.png" alt></p>
+<p>通过 calicoctl get node 和 kubectl get no 对比发现节点域名不一致</p>
+<p>解决方法：<br>删除 /var/lib/calico/nodename，重启对应节点的calico node<br>此问题疑似由于node8是克隆自node1，待验证</p>
   
 	</div>
 		<footer class="article-footer clearfix">
 
   <div class="article-tags">
   
-  <span></span> <a href="/tags/zabbix/">zabbix</a><a href="/tags/Python/">Python</a>
+  <span></span> <a href="/tags/k8s/">k8s</a><a href="/tags/calico/">calico</a>
   </div>
 
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/运维/">运维</a>
+  <a class="article-category-link" href="/categories/容器架构/">容器架构</a>
 </div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://www.lstop.pub/2017/03/01/zabbix-rest-api开发（登录）/" data-title="zabbix rest api开发（登录） | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  <div data-url="http://www.lstop.pub/2019/12/31/calico-tunl-ip冲突/" data-title="calico tunl ip冲突 | Zong&#39;s blog" data-tsina="" class="share clearfix">
   </div>
 
 </div>
@@ -134,19 +126,11 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
- <a href="/2017/03/07/微信企业号发送消息和图片/" title="微信企业号发送消息和图片">
-  <strong>PREVIOUS:</strong><br/>
-  <span>
-  微信企业号发送消息和图片</span>
-</a>
-</div>
-
 
 <div class="next">
-<a href="/2017/02/24/安装GitLab的一些记录/"  title="安装GitLab的一些记录">
+<a href="/2019/11/18/k8s报错记录-NetworkPlugin-cni-failed-to-set-up-pod-xxx-network-Unauthorized/"  title="k8s报错记录  NetworkPlugin cni failed to set up pod xxx network: Unauthorized">
  <strong>NEXT:</strong><br/> 
- <span>安装GitLab的一些记录
+ <span>k8s报错记录  NetworkPlugin cni failed to set up pod xxx network: Unauthorized
 </span>
 </a>
 </div>

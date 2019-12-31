@@ -72,6 +72,22 @@
 
   <section class="post" itemscope itemprop="blogPost">
   
+    <a href="/2019/12/31/calico-tunl-ip冲突/" title="calico tunl ip冲突" itemprop="url">
+  
+    <h1 itemprop="name">calico tunl ip冲突</h1>
+    
+     
+           <p itemprop="description" >集群新增2个node，完了之后发现网络有问题，其中一个节点和pod网络不通，经过一轮排查，发现新增的两个node分配的tunl0 ip是一样的，就是出现问题的原因。如图：
+通过 calicoctl get node 和 kubectl get no 对比发现节点域名不一致
+解决方</p>
+        
+    
+    <time datetime="2019-12-31T07:33:51.000Z" itemprop="datePublished">2019-12-31</time>
+  </a>
+</section>
+
+  <section class="post" itemscope itemprop="blogPost">
+  
     <a href="/2019/11/18/k8s报错记录-NetworkPlugin-cni-failed-to-set-up-pod-xxx-network-Unauthorized/" title="k8s报错记录  NetworkPlugin cni failed to set up pod xxx network: Unauthorized" itemprop="url">
   
     <h1 itemprop="name">k8s报错记录  NetworkPlugin cni failed to set up pod xxx network: Unauthorized</h1>
@@ -204,20 +220,6 @@
   </a>
 </section>
 
-  <section class="post" itemscope itemprop="blogPost">
-  
-    <a href="/2018/05/02/Kubernetes高可用集群部署/" title="Kubernetes高可用集群部署" itemprop="url">
-  
-    <h1 itemprop="name">Kubernetes高可用集群部署</h1>
-    
-     
-           <p itemprop="description" >Kubernetes集群能保证在其上运行的各种服务、应用在不同物理节点上漂移以达到高可用的目的。但Kubernetes本身的高可用在生产环境中需要特别注意，参照官网给出的文章Building High-Availability Clusters，可以搭建一个高可用的K8s环境。下</p>
-        
-    
-    <time datetime="2018-05-02T03:04:35.000Z" itemprop="datePublished">2018-05-02</time>
-  </a>
-</section>
-
 
   <nav id="page-nav" class="clearfix">
     <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/2/">Next &raquo;</a>
@@ -253,6 +255,8 @@
 		
 			<li><a href="/tags/RabbitMQ/" title="RabbitMQ">RabbitMQ<sup>1</sup></a></li>
 		
+			<li><a href="/tags/calico/" title="calico">calico<sup>1</sup></a></li>
+		
 			<li><a href="/tags/cdn/" title="cdn">cdn<sup>1</sup></a></li>
 		
 			<li><a href="/tags/docker/" title="docker">docker<sup>3</sup></a></li>
@@ -261,7 +265,7 @@
 		
 			<li><a href="/tags/elk/" title="elk">elk<sup>3</sup></a></li>
 		
-			<li><a href="/tags/k8s/" title="k8s">k8s<sup>1</sup></a></li>
+			<li><a href="/tags/k8s/" title="k8s">k8s<sup>2</sup></a></li>
 		
 			<li><a href="/tags/nginx/" title="nginx">nginx<sup>1</sup></a></li>
 		
@@ -272,8 +276,6 @@
 			<li><a href="/tags/traefik/" title="traefik">traefik<sup>1</sup></a></li>
 		
 			<li><a href="/tags/zabbix/" title="zabbix">zabbix<sup>1</sup></a></li>
-		
-			<li><a href="/tags/中间人攻击/" title="中间人攻击">中间人攻击<sup>1</sup></a></li>
 		
 		</ul>
 </div>
