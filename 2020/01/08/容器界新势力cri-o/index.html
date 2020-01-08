@@ -99,7 +99,7 @@
 <li>OCI Open Container Initiative这是开放容器标准，也叫容器runtime，简单来说只要符合这个标准运行的就是容器，例如runC，Kata，gVisor这些runtime创建出来的都是OCI标准容器容器标准，也叫容器runtime，简单来说只要符合这个标准运行的，就是容器，例如runC，Kata，gVisor这些runtime创建出来的都是OCI标准容器</li>
 </ul>
 <blockquote>
-<p><a href="https://aleiwu.com/post/cncf-runtime-landscape/" target="_blank" rel="noopener">白话 Kubernetes Runtime</a> 这篇文章写得挺有趣，可以读一下加深了解 </p>
+<p><a href="https://aleiwu.com/post/cncf-runtime-landscape/" target="_blank" rel="noopener">白话 Kubernetes Runtime</a> 这篇文章写得挺有趣，可以读一下加深了解<br><a href="http://weekly.dockerone.com/article/8891" target="_blank" rel="noopener">为Kubernetes选择合适的容器运行时</a> 这篇更详细一点</p>
 </blockquote>
 <h1 id="二-对比docker"><a href="#二-对比docker" class="headerlink" title="二 对比docker"></a>二 对比docker</h1><h2 id="1-比docker简洁"><a href="#1-比docker简洁" class="headerlink" title="1 比docker简洁"></a>1 比docker简洁</h2><p>cri-o对比docker的一大特点就是直接，调用链条短。熟悉docker架构就知道，docker是传统的守护进程架构，docker把命令发送到docker daemon，docker daemon调用contrainerd进程，创建containerd-shim进程调用runC启动容器。整个架构显得繁琐，因为docker本身也有一套集群编排架构swarm，所以很多规则和调用放在k8s架构下显得重。<br>而cri-o就直接调用runC创建容器，而且容器并不会下挂到crio进程下面，天生没有docker重启容器的尴尬。<br>下面这个图直观描述了调用链</p>
 <p><img src="https://i.imgur.com/nUAYZiq.png" alt></p>
