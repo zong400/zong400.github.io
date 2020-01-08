@@ -9,12 +9,13 @@
     
     <meta name="author" content="Zong">
     
-    <meta name="description" content="今天踩了个坑，记录一下现象是容器不能连通外网，直觉检查网络连通性，发现curl www.baidu.com失败，curl 百度ip成功。
+    <meta name="description" content="今天踩了个坑，记录一下现象是容器不能连通外网，直觉检查网络连通性，发现curl百度失败，curl百度ip成功。
 
 检查coredns配置，最近没有修改
 联想到最近1个节点使用了ubuntu18
 查看coredns刚好分配到该节点
-检查改节点本身能连通外网，nslookup正">
+检查改节点本身能连通外网，nslookup正常
+定位原因是ubuntu">
     
     
     
@@ -98,7 +99,7 @@
 		
 		</div>
 		
-		<p>今天踩了个坑，记录一下<br>现象是容器不能连通外网，直觉检查网络连通性，发现curl <a href="http://www.baidu.com失败，curl" target="_blank" rel="noopener">www.baidu.com失败，curl</a> 百度ip成功。</p>
+		<p>今天踩了个坑，记录一下<br>现象是容器不能连通外网，直觉检查网络连通性，发现curl百度失败，curl百度ip成功。</p>
 <ol>
 <li>检查coredns配置，最近没有修改</li>
 <li>联想到最近1个节点使用了ubuntu18</li>
