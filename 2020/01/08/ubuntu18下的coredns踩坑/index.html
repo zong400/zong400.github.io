@@ -105,7 +105,7 @@
 <li>联想到最近1个节点使用了ubuntu18</li>
 <li>查看coredns刚好分配到该节点</li>
 <li>检查改节点本身能连通外网，nslookup正常</li>
-<li>定位原因是ubuntu18 的resolv规则变了，使用systemd-resolved管理，resolv.conf内容变成类似 nameserver 127.0.0.53，coredns规则是k8s外部查询继承宿主机的resolv.conf</li>
+<li>定位原因是ubuntu18 的resolv规则变了，使用systemd-resolved管理，resolv.conf内容变成类似 nameserver 127.0.0.53，coredns规则是k8s外部查询继承宿主机的resolv.conf<br>当容器解析外部域名时，使用了127.0.0.53，容器内当然没有systemd-resolved负责后续工作了</li>
 </ol>
 <p>解决方法是停用systemd-resolved，使用传统的写nameserver到resolv.conf方式。<br>另外ubuntu18使用systemd-resolved的好处不明确。</p>
   
