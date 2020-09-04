@@ -4,14 +4,13 @@
 <head><meta name="generator" content="Hexo 3.9.0">
   <meta charset="UTF-8">
   
-    <title>calico tunl ip冲突 | Zong&#39;s blog</title>
+    <title>elasticsearch template及index的优化参数 | Zong&#39;s blog</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
     <meta name="author" content="Zong">
     
-    <meta name="description" content="集群新增2个node，完了之后发现网络有问题，其中一个节点和pod网络不通，经过一轮排查，发现新增的两个node分配的tunl0 ip是一样的，就是出现问题的原因。如图：
-通过 calicoctl get node 和 kubectl get no 对比发现节点域名不一致
-解决方法：删除 /var/">
+    <meta name="description" content="elasticsearch的template是很有用，它描述了index的mapping（类似表结构）、setting参数优化，推荐在创建index前先定义好。template可以创建多个，一个template可以对应一组相同结构的index，其定义大概如下：
+1234567891011121314">
     
     
     
@@ -75,14 +74,14 @@
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2019/12/31/calico-tunl-ip冲突/" title="calico tunl ip冲突" itemprop="url">calico tunl ip冲突</a>
+      <a href="/2020/09/04/elasticsearch-template及index的优化参数/" title="elasticsearch template及index的优化参数" itemprop="url">elasticsearch template及index的优化参数</a>
   </h1>
   <p class="article-author">By
     
       <a href="http://www.lstop.pub" title="Zong">Zong</a>
     </p>
   <p class="article-time">
-    <time datetime="2019-12-31T07:33:51.000Z" itemprop="datePublished">2019-12-31</time>
+    <time datetime="2020-09-04T10:12:39.000Z" itemprop="datePublished">2020-09-04</time>
     
   </p>
 </header>
@@ -95,29 +94,43 @@
 		
 		</div>
 		
-		<p>集群新增2个node，完了之后发现网络有问题，其中一个节点和pod网络不通，经过一轮排查，发现新增的两个node分配的tunl0 ip是一样的，就是出现问题的原因。<br>如图：<br><img src="http://qnimg.banxiaoer.net/yw/k8s/node1-docker-ip.png" alt><br><img src="http://qnimg.banxiaoer.net/yw/k8s/node8-docker-ip.png" alt></p>
-<p>通过 calicoctl get node 和 kubectl get no 对比发现节点域名不一致</p>
-<p>解决方法：<br>删除 /var/lib/calico/nodename，重启对应节点的calico node<br>此问题疑似由于node8是克隆自node1，待验证</p>
+		<p>elasticsearch的template是很有用，它描述了index的mapping（类似表结构）、setting参数优化，推荐在创建index前先定义好。<br>template可以创建多个，一个template可以对应一组相同结构的index，其定义大概如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">PUT _template/filebeat-bxr-app-pro</span><br><span class="line">&#123;</span><br><span class="line">  &quot;index_patterns&quot;: [&quot;filebeat-bxr-app-pro-*&quot;],</span><br><span class="line">  &quot;settings&quot;: &#123;</span><br><span class="line">    &quot;number_of_shards&quot;: 8,</span><br><span class="line">	&quot;number_of_replicas&quot;: 1,</span><br><span class="line">    &quot;refresh_interval&quot;: &quot;120s&quot;,</span><br><span class="line">    &quot;index.merge.scheduler.max_thread_count&quot;: 1,</span><br><span class="line">    &quot;index.translog.durability&quot;: &quot;async&quot;,</span><br><span class="line">    &quot;index.translog.sync_interval&quot;: &quot;60s&quot;,</span><br><span class="line">	&quot;index.translog.flush_threshold_size&quot;: &quot;1g&quot;</span><br><span class="line">  &#125;,</span><br><span class="line">  &quot;mappings&quot;: &#123;</span><br><span class="line">    &quot;doc&quot;: &#123;</span><br><span class="line">      &quot;properties&quot;: &#123;</span><br><span class="line">        &quot;level&quot;: &#123;</span><br><span class="line">          &quot;type&quot; : &quot;keyword&quot;</span><br><span class="line">        &#125;,</span><br><span class="line">        &quot;appname&quot;: &#123;</span><br><span class="line">          &quot;type&quot; : &quot;keyword&quot;</span><br><span class="line">        &#125;,</span><br><span class="line">        &quot;podname&quot;: &#123;</span><br><span class="line">          &quot;type&quot; : &quot;keyword&quot;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>index_patterns: index的名称，可以用*表示多个index</p>
+<p>settings: index的参数，包括定义shard、replica等</p>
+<ul>
+<li>number_of_replicas: 数据冗余度，1表示1个冗余副本</li>
+<li>number_of_shards:   分片数，一个index分开多个分片，保存在不同的集群节点，配合routing参数可以更快进行查询操作，类似mysql的分表</li>
+<li>refresh_interval:   刷新间隔，在 Elasticsearch 中，写入和打开一个新段的轻量的过程叫做 refresh。默认情况下每个分片会每秒自动刷新一次。这就是为什么我们说 Elasticsearch 是近实时搜索: 文档的变化并不是立即对搜索可见，但会在一秒之内变为可见。如果写入数据量大，调整这个参数可以有效降低io压力。</li>
+<li>merge.scheduler.max_thread_count:  索引 merge 最大线程数，该参数可以有效调节写入的性能。因为在存储介质上并发写，由于寻址的原因，写入性能不会提升，只会降低。</li>
+<li>translog: 每次 index、bulk、delete、update 完成的时候，一定会触发刷新 translog 到磁盘上，类似mysql binlog</li>
+<li>translog.durability:            async异步写入translog</li>
+<li>translog.flush_threshold_size:  log文件大小</li>
+</ul>
+<p>mappings: index中关键字的类型定义，类似mysql的字段属性，也可以设置分词器</p>
+</blockquote>
   
 	</div>
 		<footer class="article-footer clearfix">
 
   <div class="article-tags">
   
-  <span></span> <a href="/tags/k8s/">k8s</a><a href="/tags/calico/">calico</a>
+  <span></span> <a href="/tags/elasticsearch/">elasticsearch</a>
   </div>
 
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/容器架构/">容器架构</a>
+  <a class="article-category-link" href="/categories/运维/">运维</a>
 </div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://www.lstop.pub/2019/12/31/calico-tunl-ip冲突/" data-title="calico tunl ip冲突 | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  <div data-url="http://www.lstop.pub/2020/09/04/elasticsearch-template及index的优化参数/" data-title="elasticsearch template及index的优化参数 | Zong&#39;s blog" data-tsina="" class="share clearfix">
   </div>
 
 </div>
@@ -126,19 +139,11 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
- <a href="/2020/01/08/容器界新势力cri-o/" title="容器界新势力cri-o">
-  <strong>PREVIOUS:</strong><br/>
-  <span>
-  容器界新势力cri-o</span>
-</a>
-</div>
-
 
 <div class="next">
-<a href="/2019/11/18/k8s报错记录-NetworkPlugin-cni-failed-to-set-up-pod-xxx-network-Unauthorized/"  title="k8s报错记录  NetworkPlugin cni failed to set up pod xxx network: Unauthorized">
+<a href="/2020/08/28/elasticsearch备份到hdfs/"  title="elasticsearch备份到hdfs">
  <strong>NEXT:</strong><br/> 
- <span>k8s报错记录  NetworkPlugin cni failed to set up pod xxx network: Unauthorized
+ <span>elasticsearch备份到hdfs
 </span>
 </a>
 </div>
