@@ -9,10 +9,10 @@
     
     <meta name="author" content="Zong">
     
-    <meta name="description" content="elasticsearch快照备份到hdfs，先安装hdfs插件，可以到官方下载zip格式，或者线上安装官方安装文档
+    <meta name="description" content="设置插件elasticsearch快照备份到hdfs，先安装hdfs插件，可以到官方下载zip格式，或者线上安装官方安装文档
 1sudo bin/elasticsearch-plugin install repository-hdfs
 
-然后建立hdfs repository，这里如果hdfs是主备mast">
+建立快照库然后建立hdfs repository，这里如果hd">
     
     
     
@@ -93,23 +93,55 @@
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#设置插件"><span class="toc-number">1.</span> <span class="toc-text">设置插件</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#建立快照库"><span class="toc-number">2.</span> <span class="toc-text">建立快照库</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#创建快照"><span class="toc-number">3.</span> <span class="toc-text">创建快照</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#还原快照"><span class="toc-number">4.</span> <span class="toc-text">还原快照</span></a></li></ol>
 		</div>
 		
-		<p>elasticsearch快照备份到hdfs，先安装hdfs插件，可以到官方下载zip格式，或者线上安装<br><a href="https://www.elastic.co/guide/en/elasticsearch/plugins/7.9/repository-hdfs.html" target="_blank" rel="noopener">官方安装文档</a></p>
+		<h1 id="设置插件"><a href="#设置插件" class="headerlink" title="设置插件"></a>设置插件</h1><p>elasticsearch快照备份到hdfs，先安装hdfs插件，可以到官方下载zip格式，或者线上安装<br><a href="https://www.elastic.co/guide/en/elasticsearch/plugins/7.9/repository-hdfs.html" target="_blank" rel="noopener">官方安装文档</a></p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo bin/elasticsearch-plugin install repository-hdfs</span><br></pre></td></tr></table></figure>
 
-<p>然后建立hdfs repository，这里如果hdfs是主备master，把core-site.xml里面的相关配置按es的格式写进去<br><a href="https://www.elastic.co/guide/en/elasticsearch/plugins/7.9/repository-hdfs-config.html" target="_blank" rel="noopener">官方配置解析</a></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">PUT _snapshot/backup_hdfs_repo</span><br><span class="line">&#123;</span><br><span class="line">  &quot;type&quot;: &quot;hdfs&quot;,</span><br><span class="line">  &quot;settings&quot;: &#123;</span><br><span class="line">    &quot;uri&quot;: &quot;hdfs://zhadoop:8020/&quot;,</span><br><span class="line">    &quot;path&quot;: &quot;/user/elasticsearch/backup&quot;,</span><br><span class="line">    &quot;load_defaults&quot;: true,</span><br><span class="line">    &quot;conf.dfs.nameservices&quot;: &quot;zhadoop&quot;,</span><br><span class="line">	&quot;conf.dfs.ha.namenodes.zhadoop&quot;: &quot;nn1,nn2&quot;,</span><br><span class="line">	&quot;conf.dfs.namenode.rpc-address.zhadoop.nn1&quot;: &quot;hadoop-m1:8020&quot;,</span><br><span class="line">	&quot;conf.dfs.namenode.rpc-address.zhadoop.nn2&quot;: &quot;hadoop-m2:8020&quot;,</span><br><span class="line">	&quot;conf.dfs.namenode.http-address.zhadoop.nn1&quot;: &quot;hadoop-m1:50070&quot;,</span><br><span class="line">	&quot;conf.dfs.namenode.http-address.zhadoop.nn2&quot;: &quot;hadoop-m2:50070&quot;,</span><br><span class="line">	&quot;conf.dfs.client.failover.proxy.provider.zhadoop&quot;: &quot;org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="建立快照库"><a href="#建立快照库" class="headerlink" title="建立快照库"></a>建立快照库</h1><p>然后建立hdfs repository，这里如果hdfs是主备master，把core-site.xml里面的相关配置按es的格式写进去<br><a href="https://www.elastic.co/guide/en/elasticsearch/plugins/7.9/repository-hdfs-config.html" target="_blank" rel="noopener">官方配置解析</a></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">PUT _snapshot/backup_hdfs_repo</span><br><span class="line">&#123;</span><br><span class="line">  &quot;type&quot;: &quot;hdfs&quot;,</span><br><span class="line">  &quot;settings&quot;: &#123;</span><br><span class="line">    &quot;uri&quot;: &quot;hdfs://zhadoop:8020/&quot;,</span><br><span class="line">    &quot;path&quot;: &quot;/user/elasticsearch/backup&quot;,</span><br><span class="line">    &quot;load_defaults&quot;: true,</span><br><span class="line">    &quot;conf.dfs.nameservices&quot;: &quot;zhadoop&quot;,</span><br><span class="line">	&quot;conf.dfs.ha.namenodes.zhadoop&quot;: &quot;nn1,nn2&quot;,</span><br><span class="line">	&quot;conf.dfs.namenode.rpc-address.zhadoop.nn1&quot;: &quot;hadoop-m1:8020&quot;,</span><br><span class="line">	&quot;conf.dfs.namenode.rpc-address.zhadoop.nn2&quot;: &quot;hadoop-m2:8020&quot;,</span><br><span class="line">	&quot;conf.dfs.client.failover.proxy.provider.zhadoop&quot;: &quot;org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <blockquote>
 <p>backup_hdfs_repo：这个repo的名字<br>uri：填hdfs servicename<br>path：备份目录<br>conf*：hdfs其他配置项，按hadoop配置文件填</p>
 </blockquote>
+<p>查询仓库：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GET _snapshot?pretty</span><br></pre></td></tr></table></figure>
+
 <p>如果出现权限报错：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&quot;reason&quot; : &quot;Permission denied: user=elasticsearch, access=WRITE, inode=\&quot;/\&quot;:hadoop:supergroup:drwxr-xr-x\n\tat</span><br></pre></td></tr></table></figure>
 
 <p>是因为hdfs没有启用安全认证，可以在hdfs预先建立好目录并授权</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">hdfs dfs -mkdir /user/elasticsearch</span><br><span class="line">hdfs dfs -chown elasticsearch /user/elasticsearch</span><br></pre></td></tr></table></figure>  
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">hdfs dfs -mkdir /user/elasticsearch</span><br><span class="line">hdfs dfs -chown elasticsearch /user/elasticsearch</span><br></pre></td></tr></table></figure>
+
+<h1 id="创建快照"><a href="#创建快照" class="headerlink" title="创建快照"></a>创建快照</h1><p>快照写进之前建立的快照库</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">PUT _snapshot/backup_hdfs_repo/tk_snapshot?wait_for_completion=true&amp;pretty</span><br><span class="line">&#123;</span><br><span class="line">  &quot;indices&quot;: &quot;tk_*&quot;,</span><br><span class="line">  &quot;ignore_unavailable&quot;: true,</span><br><span class="line">  &quot;include_global_state&quot;: false</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>url格式：_snapshot/快照库/快照名称<br>wait_for_completion: 是否阻塞直到完成快照，比较大可以设置false<br>indices: 做快照的index名称</p>
+</blockquote>
+<p>可以用日期表达式，例如当天快照，tk_snapshot-2020.09.15：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#PUT /_snapshot/backup_hdfs_repo/&lt;tk_snapshot-&#123;now/d&#125;&gt;</span><br><span class="line">PUT /_snapshot/backup_hdfs_repo/%3Ctk_snapshot-%7Bnow%2Fd%7D%3E?wait_for_completion=true&amp;pretty</span><br></pre></td></tr></table></figure>
+
+<p>注意要把特殊符号转换，参考<a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.9/date-math-index-names.html" target="_blank" rel="noopener">日期表达式官方文档</a></p>
+<p>查询快照：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GET _snapshot/backup_hdfs_repo/tk_snapshot?pretty</span><br></pre></td></tr></table></figure>
+
+<p>可以用*号列出所有快照：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GET _snapshot/backup_hdfs_repo/*</span><br></pre></td></tr></table></figure>
+
+<p>删除快照</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">DELETE _snapshot/backup_hdfs_repo/tk_book_category_snapshot</span><br></pre></td></tr></table></figure>
+
+<h1 id="还原快照"><a href="#还原快照" class="headerlink" title="还原快照"></a>还原快照</h1><p>可以在本集群或者另外的机器还原，如果在另外的集群还原，要创建相同名字的快照仓库，集群结构和当前要一致。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">POST _snapshot/backup_hdfs_repo/tk_snapshot/_restore?wait_for_completion=true</span><br></pre></td></tr></table></figure>
+
+<p>快照版本有兼容性要求，快照版本最多落后目标集群一个大版本。</p>
+<ul>
+<li>快照6.x，可以还原到集群7.x</li>
+<li>快照7.x，可以还原到集群8.x</li>
+</ul>
+  
 	</div>
 		<footer class="article-footer clearfix">
 
@@ -162,7 +194,7 @@
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#设置插件"><span class="toc-number">1.</span> <span class="toc-text">设置插件</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#建立快照库"><span class="toc-number">2.</span> <span class="toc-text">建立快照库</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#创建快照"><span class="toc-number">3.</span> <span class="toc-text">创建快照</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#还原快照"><span class="toc-number">4.</span> <span class="toc-text">还原快照</span></a></li></ol>
   </div>
 
 <div id="asidepart">
