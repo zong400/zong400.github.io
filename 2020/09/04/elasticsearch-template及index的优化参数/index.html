@@ -9,8 +9,7 @@
     
     <meta name="author" content="Zong">
     
-    <meta name="description" content="elasticsearch的template是很有用，它描述了index的mapping（类似表结构）、setting参数优化，推荐在创建index前先定义好。template可以创建多个，一个template可以对应一组相同结构的index，其定义大概如下：
-1234567891011121314">
+    <meta name="description" content="elasticsearch的template是很有用，它描述了index的mapping（类似表结构）、setting参数优化，特别是用日期分割index的情况，提前建好template能在自动创建index的时候套用上。一般日志类、自动创建多个同类index等情况推荐在创建index前先定义好。t">
     
     
     
@@ -94,7 +93,7 @@
 		
 		</div>
 		
-		<p>elasticsearch的template是很有用，它描述了index的mapping（类似表结构）、setting参数优化，推荐在创建index前先定义好。<br>template可以创建多个，一个template可以对应一组相同结构的index，其定义大概如下：</p>
+		<p>elasticsearch的template是很有用，它描述了index的mapping（类似表结构）、setting参数优化，特别是用日期分割index的情况，提前建好template能在自动创建index的时候套用上。一般日志类、自动创建多个同类index等情况推荐在创建index前先定义好。<br>template可以创建多个，一个template可以对应一组相同结构的index，其定义大概如下：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">PUT _template/filebeat-bxr-app-pro</span><br><span class="line">&#123;</span><br><span class="line">  &quot;index_patterns&quot;: [&quot;filebeat-bxr-app-pro-*&quot;],</span><br><span class="line">  &quot;settings&quot;: &#123;</span><br><span class="line">    &quot;number_of_shards&quot;: 8,</span><br><span class="line">	&quot;number_of_replicas&quot;: 1,</span><br><span class="line">    &quot;refresh_interval&quot;: &quot;120s&quot;,</span><br><span class="line">    &quot;index.merge.scheduler.max_thread_count&quot;: 1,</span><br><span class="line">    &quot;index.translog.durability&quot;: &quot;async&quot;,</span><br><span class="line">    &quot;index.translog.sync_interval&quot;: &quot;60s&quot;,</span><br><span class="line">	&quot;index.translog.flush_threshold_size&quot;: &quot;1g&quot;</span><br><span class="line">  &#125;,</span><br><span class="line">  &quot;mappings&quot;: &#123;</span><br><span class="line">    &quot;doc&quot;: &#123;</span><br><span class="line">      &quot;properties&quot;: &#123;</span><br><span class="line">        &quot;level&quot;: &#123;</span><br><span class="line">          &quot;type&quot; : &quot;keyword&quot;</span><br><span class="line">        &#125;,</span><br><span class="line">        &quot;appname&quot;: &#123;</span><br><span class="line">          &quot;type&quot; : &quot;keyword&quot;</span><br><span class="line">        &#125;,</span><br><span class="line">        &quot;podname&quot;: &#123;</span><br><span class="line">          &quot;type&quot; : &quot;keyword&quot;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <blockquote>
@@ -110,6 +109,12 @@
 <li>translog.flush_threshold_size:  log文件大小</li>
 </ul>
 <p>mappings: index中关键字的类型定义，类似mysql的字段属性，也可以设置分词器</p>
+<ul>
+<li>analyzer： 分词器，默认是英文，也有中文分词器</li>
+<li>copy_to： 将该字段复制到目标字段，实现类似_all的作用，不会出现在_source中，只用来搜索。列如把字段first_name，last_name，合成full_name做搜索。</li>
+<li>index： 控制当前字段是否索引，默认为true，即记录索引，false不记录，即不可搜索</li>
+</ul>
+<p>更多请参考:<br><a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping.html" target="_blank" rel="noopener">官方文档</a><br><a href="https://juejin.im/post/6844903661722664973#heading-14" target="_blank" rel="noopener">Elasticsearch 6.x Mapping设置</a></p>
 </blockquote>
   
 	</div>
@@ -139,6 +144,14 @@
 	
 <nav class="article-nav clearfix">
  
+ <div class="prev" >
+ <a href="/2020/09/18/elasticsearch-reindex/" title="elasticsearch reindex">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  elasticsearch reindex</span>
+</a>
+</div>
+
 
 <div class="next">
 <a href="/2020/08/28/elasticsearch备份到hdfs/"  title="elasticsearch备份到hdfs">
@@ -194,7 +207,7 @@
 		
 			<li><a href="/tags/docker-registry/" title="docker registry">docker registry<sup>1</sup></a></li>
 		
-			<li><a href="/tags/elasticsearch/" title="elasticsearch">elasticsearch<sup>2</sup></a></li>
+			<li><a href="/tags/elasticsearch/" title="elasticsearch">elasticsearch<sup>3</sup></a></li>
 		
 			<li><a href="/tags/elk/" title="elk">elk<sup>3</sup></a></li>
 		
