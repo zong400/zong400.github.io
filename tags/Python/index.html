@@ -4,7 +4,7 @@
 <head><meta name="generator" content="Hexo 3.9.0">
   <meta charset="UTF-8">
   
-    <title>Tag: Python | Zong&#39;s blog</title>
+    <title>Tag: python | Zong&#39;s blog</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
     <meta name="author" content="Zong">
@@ -69,7 +69,7 @@
         
 
 <div class="archive-title" >
-  <h2 class="tag-icon">Python</h2>
+  <h2 class="tag-icon">python</h2>
   
 </div>
 <div id="main" class="archive-part clearfix">
@@ -77,21 +77,11 @@
 
   <section class="post" itemscope itemprop="blogPost">
   
-    <a href="/2017/03/07/微信企业号发送消息和图片/" title="微信企业号发送消息和图片" itemprop="url">
+    <a href="/2019/10/21/比较6的python语法/" title="比较6的python语法" itemprop="url">
   
-    <h1 itemprop="name">微信企业号发送消息和图片</h1>
+    <h1 itemprop="name">比较6的python语法</h1>
     
-    <time datetime="2017-03-07T06:04:33.000Z" itemprop="datePublished">2017-03-07</time>
-  </a>
-</section>
-
-  <section class="post" itemscope itemprop="blogPost">
-  
-    <a href="/2017/03/01/zabbix-rest-api开发（登录）/" title="zabbix rest api开发（登录）" itemprop="url">
-  
-    <h1 itemprop="name">zabbix rest api开发（登录）</h1>
-    
-    <time datetime="2017-03-01T06:02:11.000Z" itemprop="datePublished">2017-03-01</time>
+    <time datetime="2019-10-21T01:27:28.000Z" itemprop="datePublished">2019-10-21</time>
   </a>
 </section>
 
@@ -150,6 +140,32 @@ $(document).ready(function(){
   c.click(function(){
     a.addClass('fadeOut').css('display', 'none');
     o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+
+
+
+
+
+
+
+
+    </body>
+   </html>
+
+block').addClass('fadeIn');
     m.addClass('moveMain');
   });
   o.click(function(){
