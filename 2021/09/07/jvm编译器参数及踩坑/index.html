@@ -4,13 +4,12 @@
 <head><meta name="generator" content="Hexo 3.9.0">
   <meta charset="UTF-8">
   
-    <title>traefik实现ssl双向认证 | Zong&#39;s blog</title>
+    <title>jvm编译器参数及踩坑-弃用C2 | Zong&#39;s blog</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
     <meta name="author" content="Zong">
     
-    <meta name="description" content="ssl双向认证简单来说就是服务端需要认证客户端证书，客户端也需要认证服务端证书。通常应用于安全等级很高的内部系统，保证能访问系统的客户端都是授信任的。
-证书通常我们可以使用ca自签来颁发服务端和客户端证书，值得注意的是生成服务端签名申请（csr）中的Common Name值需要填写真实访问的域名，最">
+    <meta name="description" content="最近通过阿里的arthas观察到java进程经常因为”C2 CompilerThread”导致cpu使用率波动，就因为这个进程容器cpu经常彪高到告警线。网上查的资料都感觉不靠谱，推荐方法要么用jmeter压（成本高），去尽快把代码优化成C2；要么启动多个C2进程快点完成编译（cpu更吃紧了）。这里">
     
     
     
@@ -74,14 +73,14 @@
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2018/06/05/traefik实现ssl双向认证/" title="traefik实现ssl双向认证" itemprop="url">traefik实现ssl双向认证</a>
+      <a href="/2021/09/07/jvm编译器参数及踩坑/" title="jvm编译器参数及踩坑-弃用C2" itemprop="url">jvm编译器参数及踩坑-弃用C2</a>
   </h1>
   <p class="article-author">By
     
       <a href="http://www.lstop.pub" title="Zong">Zong</a>
     </p>
   <p class="article-time">
-    <time datetime="2018-06-05T03:11:42.000Z" itemprop="datePublished">2018-06-05</time>
+    <time datetime="2021-09-07T03:45:25.000Z" itemprop="datePublished">2021-09-07</time>
     
   </p>
 </header>
@@ -91,29 +90,22 @@
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#证书"><span class="toc-number">1.</span> <span class="toc-text">证书</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#traefik配置"><span class="toc-number">2.</span> <span class="toc-text">traefik配置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#k8s-ingress"><span class="toc-number">3.</span> <span class="toc-text">k8s ingress</span></a></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#思路一，启动时候就做好C2吧"><span class="toc-number">1.</span> <span class="toc-text">思路一，启动时候就做好C2吧</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#思路二，放弃C2吧"><span class="toc-number">2.</span> <span class="toc-text">思路二，放弃C2吧</span></a></li></ol>
 		</div>
 		
-		<p>ssl双向认证简单来说就是服务端需要认证客户端证书，客户端也需要认证服务端证书。通常应用于安全等级很高的内部系统，保证能访问系统的客户端都是授信任的。</p>
-<h1 id="证书"><a href="#证书" class="headerlink" title="证书"></a>证书</h1><p>通常我们可以使用ca自签来颁发服务端和客户端证书，值得注意的是生成服务端签名申请（csr）中的Common Name值需要填写真实访问的域名，最后生成的p12证书需要导入到客户端浏览器</p>
-<p>具体步骤可以参照下面的文章<br><a href="https://blog.yoodb.com/yoodb/article/detail/1433" target="_blank" rel="noopener">openssl生成ca证书配置ssl双向认证</a><br><a href="http://blog.51cto.com/colinzhouyj/1670634" target="_blank" rel="noopener">openssl签署自己的泛域名（通配符）证书</a></p>
-<h1 id="traefik配置"><a href="#traefik配置" class="headerlink" title="traefik配置"></a>traefik配置</h1><p>因为是双向认证，为了和普通的单向认证区分，我们新配一个entry point名为secure</p>
+		<p>最近通过阿里的arthas观察到java进程经常因为”C2 CompilerThread”导致cpu使用率波动，就因为这个进程容器cpu经常彪高到告警线。<br>网上查的资料都感觉不靠谱，推荐方法要么用jmeter压（成本高），去尽快把代码优化成C2；要么启动多个C2进程快点完成编译（cpu更吃紧了）。<br>这里必须要吐槽一下JIT的机制了，对我们k8s上跑的java不友好，一般根据业务负载，我们限制单个容器500-1000m的cpu就够用了，结果不知道什么时候就来个C2把cpu搞起来，严重情况下会造成业务卡顿。。。<br>这里总体思路是放弃JIT编译优化，稳定为先。</p>
+<h1 id="思路一，启动时候就做好C2吧"><a href="#思路一，启动时候就做好C2吧" class="headerlink" title="思路一，启动时候就做好C2吧"></a>思路一，启动时候就做好C2吧</h1><p>java启动加上参数：-XX:-TieredCompilation， -server<br>这个参数是能关闭C1的level 1-3级，想当然以为跑起来就是C2优化好的。<br>结果：不理想，还是观察到有”C2 CompilerThread”，而且貌似cpu波动更高了。。。</p>
+<h1 id="思路二，放弃C2吧"><a href="#思路二，放弃C2吧" class="headerlink" title="思路二，放弃C2吧"></a>思路二，放弃C2吧</h1><p>java启动加上参数：-XX:TieredStopAtLevel=1<br>限制编译层级到level 1，虽然代码没有C2编译优化理论上运行效率打折扣，但是还是稳定优先吧。<br>结果：达到预期，没有观察到”C2 CompilerThread”了，cpu能稳定运行不会上蹿下跳。</p>
 <blockquote>
-<p>optional = false 表示要验证客户端证书是否经过ca签名</p>
+<p>JIT及编译层级参考：<br><a href="https://www.baeldung.com/jvm-tiered-compilation" target="_blank" rel="noopener">Tiered Compilation in JVM</a><br><a href="https://stackoverflow.com/questions/38721235/what-exactly-does-xx-tieredcompilation-do" target="_blank" rel="noopener">What exactly does -XX:-TieredCompilation do?</a><br><a href="https://www.cnblogs.com/lbser/p/3703967.html" target="_blank" rel="noopener">发布或重启线上服务时抖动问题解决方案</a></p>
 </blockquote>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">defaultEntryPoints = [&quot;http&quot;, &quot;https&quot;]</span><br><span class="line">[entryPoints]</span><br><span class="line">  [entryPoints.http]</span><br><span class="line">  address = &quot;:80&quot;</span><br><span class="line">  [entryPoints.https]</span><br><span class="line">  address = &quot;:443&quot;</span><br><span class="line">  [entryPoints.secure]</span><br><span class="line">  address = &quot;:8443&quot;</span><br><span class="line">  [entryPoints.secure.tls]</span><br><span class="line">    [entryPoints.secure.tls.ClientCA]</span><br><span class="line">    files = [&quot;/etc/traefikssl/clientca.crt&quot;]</span><br><span class="line">    optional = false</span><br><span class="line">    [[entryPoints.secure.tls.certificates]]</span><br><span class="line">    certFile = &quot;/etc/traefikssl/bxr.cn.crt&quot;</span><br><span class="line">    keyFile = &quot;/etc/traefikssl/bxr.cn.key&quot;</span><br></pre></td></tr></table></figure>
-
-<h1 id="k8s-ingress"><a href="#k8s-ingress" class="headerlink" title="k8s ingress"></a>k8s ingress</h1><p>在ing中使用Annotations标记使用secure entry point</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: extensions/v1beta1</span><br><span class="line">kind: Ingress</span><br><span class="line">metadata:</span><br><span class="line">  annotations:</span><br><span class="line">    traefik.ingress.kubernetes.io/frontend-entry-points: secure</span><br><span class="line">  name: kubernetes-dashboard</span><br><span class="line">  namespace: kube-system</span><br><span class="line">spec:</span><br><span class="line">  rules:</span><br><span class="line">  - host: k8s.bxr.cn</span><br><span class="line">    http:</span><br><span class="line">      paths:</span><br><span class="line">      - backend:</span><br><span class="line">          serviceName: kubernetes-dashboard</span><br><span class="line">          servicePort: 9090</span><br></pre></td></tr></table></figure>
-
-<p>访问 <a href="https://k8s.bxr.cn:8443" target="_blank" rel="noopener">https://k8s.bxr.cn:8443</a> 浏览器就会要求你提供证书（之前生成的p12证书），没有证书不能访问。</p>
   
 	</div>
 		<footer class="article-footer clearfix">
 
   <div class="article-tags">
   
-  <span></span> <a href="/tags/traefik/">traefik</a><a href="/tags/安全/">安全</a>
+  <span></span> <a href="/tags/java/">java</a>
   </div>
 
 
@@ -126,7 +118,7 @@
 
 <div class="article-share" id="share">
 
-  <div data-url="http://www.lstop.pub/2018/06/05/traefik实现ssl双向认证/" data-title="traefik实现ssl双向认证 | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  <div data-url="http://www.lstop.pub/2021/09/07/jvm编译器参数及踩坑/" data-title="jvm编译器参数及踩坑-弃用C2 | Zong&#39;s blog" data-tsina="" class="share clearfix">
   </div>
 
 </div>
@@ -135,19 +127,11 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
- <a href="/2019/04/11/OpenWrt-DNS-over-Https纯净上网/" title="OpenWrt DNS-over-Https纯净上网">
-  <strong>PREVIOUS:</strong><br/>
-  <span>
-  OpenWrt DNS-over-Https纯净上网</span>
-</a>
-</div>
-
 
 <div class="next">
-<a href="/2018/05/02/Kubernetes高可用集群部署/"  title="Kubernetes高可用集群部署">
+<a href="/2021/03/31/cfssl创建ssl证书/"  title="cfssl创建ssl证书">
  <strong>NEXT:</strong><br/> 
- <span>Kubernetes高可用集群部署
+ <span>cfssl创建ssl证书
 </span>
 </a>
 </div>
@@ -160,7 +144,7 @@
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#证书"><span class="toc-number">1.</span> <span class="toc-text">证书</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#traefik配置"><span class="toc-number">2.</span> <span class="toc-text">traefik配置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#k8s-ingress"><span class="toc-number">3.</span> <span class="toc-text">k8s ingress</span></a></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#思路一，启动时候就做好C2吧"><span class="toc-number">1.</span> <span class="toc-text">思路一，启动时候就做好C2吧</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#思路二，放弃C2吧"><span class="toc-number">2.</span> <span class="toc-text">思路二，放弃C2吧</span></a></li></ol>
   </div>
 
 <div id="asidepart">
