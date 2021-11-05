@@ -1,0 +1,371 @@
+
+ <!DOCTYPE HTML>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+  
+    <title>使用statefulset实现zk集群 | Zong&#39;s blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Zong">
+    
+    <meta name="description" content="相对于deployment来说statefulset就是有状态的一组容器，适合用来配置有状态集群。状态就是容器名固定，容器ip固定，挂载硬盘固定。zookeeper集群相对来说比较简单，使用它来验证一下。
+改造enterpoint参考zookeeper的官方docker镜像的配置方式，他是使用doc">
+    
+    
+    
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/pacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
+    
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/zong400/zong400/css/style.css">
+</head>
+</html>
+  <body>
+    <header>
+      <div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.svg" alt="Zong&#39;s blog" title="Zong&#39;s blog"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="Zong&#39;s blog">Zong&#39;s blog</a></h1>
+				<h2 class="blog-motto">日常积累，技术分享</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+						<li><a href="/categories/运维">运维</a></li>
+					
+						<li><a href="/categories/容器架构">容器架构</a></li>
+					
+					<li>
+					
+					<form class="search" action="//baidu.com/s" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="text" id="search" name="wd" autocomplete="off" maxlength="20" placeholder="Search" />
+                        <input name=tn type=hidden value="bds">
+                        <input name=cl type=hidden value="3">
+                        <input name=ct type=hidden value="2097152">
+						<input type="hidden" name="si" value="www.lstop.pub">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2021/11/05/使用statefulset实现zk集群/" title="使用statefulset实现zk集群" itemprop="url">使用statefulset实现zk集群</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://www.lstop.pub" title="Zong">Zong</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2021-11-05T07:24:40.000Z" itemprop="datePublished">2021-11-05</time>
+    
+  </p>
+</header>
+
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">Contents</strong>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#改造enterpoint"><span class="toc-number">1.</span> <span class="toc-text">改造enterpoint</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#statefulset配置"><span class="toc-number">2.</span> <span class="toc-text">statefulset配置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#观察状态"><span class="toc-number">3.</span> <span class="toc-text">观察状态</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#pod重启后ip保持不变"><span class="toc-number">3.1.</span> <span class="toc-text">pod重启后ip保持不变</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#pvc静态化"><span class="toc-number">3.2.</span> <span class="toc-text">pvc静态化</span></a></li></ol></li></ol>
+		</div>
+		
+		<p>相对于deployment来说statefulset就是有状态的一组容器，适合用来配置有状态集群。状态就是容器名固定，容器ip固定，挂载硬盘固定。<br>zookeeper集群相对来说比较简单，使用它来验证一下。</p>
+<h1 id="改造enterpoint"><a href="#改造enterpoint" class="headerlink" title="改造enterpoint"></a>改造enterpoint</h1><p>参考zookeeper的官方docker镜像的配置方式，他是使用docker-entrypoint.sh作为入口，结合传入容器的环境变量实时生成zoo.cfg配置的。<br>那我们可以参考一下并做改动，使脚本符合我们生成集群配置的需求<br>docker-entrypoint.sh 改动后：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line">#!/bin/bash</span><br><span class="line"># ZOO_SERVICE_NAME=k8s headless svc</span><br><span class="line"># ZOO_COUNT=replicas num，新建一个zoocunt文件，内容是节点数</span><br><span class="line">set -e</span><br><span class="line"></span><br><span class="line"># Allow the container to be started with `--user`</span><br><span class="line">if [[ &quot;$1&quot; = &apos;zkServer.sh&apos; &amp;&amp; &quot;$(id -u)&quot; = &apos;0&apos; ]]; then</span><br><span class="line">    if [ &quot;$ZOO_DATA_DIR&quot;x != &quot;/data&quot;x ]; then</span><br><span class="line">        mkdir -p $ZOO_DATA_DIR</span><br><span class="line">        mkdir -p $ZOO_DATA_LOG_DIR</span><br><span class="line">    fi</span><br><span class="line">    chown -R zookeeper &quot;$ZOO_DATA_DIR&quot; &quot;$ZOO_DATA_LOG_DIR&quot; &quot;$ZOO_LOG_DIR&quot;</span><br><span class="line">    exec gosu zookeeper &quot;$0&quot; &quot;$@&quot;</span><br><span class="line">fi</span><br><span class="line"></span><br><span class="line"># Generate the config only if it doesn&apos;t exist</span><br><span class="line">if [[ ! -f &quot;$ZOO_CONF_DIR/zoo.cfg&quot; ]]; then</span><br><span class="line">    CONFIG=&quot;$ZOO_CONF_DIR/zoo.cfg&quot;</span><br><span class="line">    &#123;</span><br><span class="line">        echo &quot;dataDir=$ZOO_DATA_DIR&quot; </span><br><span class="line">        echo &quot;dataLogDir=$ZOO_DATA_LOG_DIR&quot;</span><br><span class="line"></span><br><span class="line">        echo &quot;tickTime=$ZOO_TICK_TIME&quot;</span><br><span class="line">        echo &quot;initLimit=$ZOO_INIT_LIMIT&quot;</span><br><span class="line">        echo &quot;syncLimit=$ZOO_SYNC_LIMIT&quot;</span><br><span class="line"></span><br><span class="line">        echo &quot;autopurge.snapRetainCount=$ZOO_AUTOPURGE_SNAPRETAINCOUNT&quot;</span><br><span class="line">        echo &quot;autopurge.purgeInterval=$ZOO_AUTOPURGE_PURGEINTERVAL&quot;</span><br><span class="line">        echo &quot;maxClientCnxns=$ZOO_MAX_CLIENT_CNXNS&quot;</span><br><span class="line">        echo &quot;standaloneEnabled=$ZOO_STANDALONE_ENABLED&quot;</span><br><span class="line">        echo &quot;admin.enableServer=$ZOO_ADMINSERVER_ENABLED&quot;</span><br><span class="line">    &#125; &gt;&gt; &quot;$CONFIG&quot;</span><br><span class="line"></span><br><span class="line">    if [[ -n $ZOO_4LW_COMMANDS_WHITELIST ]]; then</span><br><span class="line">        echo &quot;4lw.commands.whitelist=$ZOO_4LW_COMMANDS_WHITELIST&quot; &gt;&gt; &quot;$CONFIG&quot;</span><br><span class="line">    fi</span><br><span class="line"></span><br><span class="line">    for cfg_extra_entry in $ZOO_CFG_EXTRA; do</span><br><span class="line">        echo &quot;$cfg_extra_entry&quot; &gt;&gt; &quot;$CONFIG&quot;</span><br><span class="line">    done</span><br><span class="line">    </span><br><span class="line">    name=$&#123;HOSTNAME%%-*&#125;</span><br><span class="line">    if [ ! $ZOO_SERVICE_NAME ]; then</span><br><span class="line">        ZOO_SERVICE_NAME=$name</span><br><span class="line">    fi</span><br><span class="line">    </span><br><span class="line">    # 根据节点数计算出集群的节点配置</span><br><span class="line">    ZOO_COUNT=`cat /zoocount`</span><br><span class="line">    for id in $(seq 1 $ZOO_COUNT); do</span><br><span class="line">        podid=$[id-1]</span><br><span class="line">        server=&quot;server.$&#123;id&#125;=$&#123;name&#125;-$&#123;podid&#125;.$&#123;ZOO_SERVICE_NAME&#125;:2888:3888;2181&quot;</span><br><span class="line">        echo &quot;$server&quot; &gt;&gt; &quot;$CONFIG&quot;</span><br><span class="line">    done</span><br><span class="line">fi</span><br><span class="line"></span><br><span class="line"># Write myid only if it doesn&apos;t exist</span><br><span class="line">PODID=$&#123;HOSTNAME##*-&#125;</span><br><span class="line">ZOO_MY_ID=$[PODID+1]</span><br><span class="line">if [[ ! -f &quot;$ZOO_DATA_DIR/myid&quot; ]]; then</span><br><span class="line">    echo &quot;$&#123;ZOO_MY_ID:-1&#125;&quot; &gt; &quot;$ZOO_DATA_DIR/myid&quot;</span><br><span class="line">fi</span><br><span class="line"></span><br><span class="line">sleep 180</span><br><span class="line">exec &quot;$@&quot;</span><br></pre></td></tr></table></figure>
+
+<p>新建一个zoocunt文件，内容是节点数，与上面脚本一起生成configmap之后挂载到pod</p>
+<h1 id="statefulset配置"><a href="#statefulset配置" class="headerlink" title="statefulset配置"></a>statefulset配置</h1><p>statefulset的使用必须有持久化，可以用nfs或者其他，这里使用云硬盘。另外需要配置headless service，使dns能解析每个节点的ip。<br>headless service配置：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Service       # 对象类型为Service</span><br><span class="line">metadata:</span><br><span class="line">  name: zksvc</span><br><span class="line">  labels:</span><br><span class="line">    app: zookeeper</span><br><span class="line">spec:</span><br><span class="line">  ports:</span><br><span class="line">    - name: zk     # Pod间通信的端口名称</span><br><span class="line">      port: 2181        # Pod间通信的端口号</span><br><span class="line">    - name: zk2888</span><br><span class="line">      port: 2888</span><br><span class="line">    - name: zk3888</span><br><span class="line">      port: 3888</span><br><span class="line">  selector:</span><br><span class="line">    app: zookeeper        # 选择标签为app:zookeeper的Pod</span><br><span class="line">  clusterIP: None     # 必须设置为None，表示Headless Service</span><br></pre></td></tr></table></figure>
+
+<p>statefulset配置：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: apps/v1</span><br><span class="line">kind: StatefulSet</span><br><span class="line">metadata:</span><br><span class="line">  name: zk</span><br><span class="line">spec:</span><br><span class="line">  serviceName: zksvc                             # headless service的名称</span><br><span class="line">  replicas: 3</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      app: zookeeper</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        app: zookeeper</span><br><span class="line">    spec:</span><br><span class="line">      containers:</span><br><span class="line">        - name: zookeeper</span><br><span class="line">          image: zookeeper:3.6.3</span><br><span class="line">          env:</span><br><span class="line">          - name: ZOO_SERVICE_NAME          # headless service的名称，传给entrypoint组合集群节点的hostname</span><br><span class="line">            value: zksvc</span><br><span class="line">          - name: ZOO_DATA_DIR</span><br><span class="line">            value: /zkdata/data</span><br><span class="line">          - name: ZOO_DATA_LOG_DIR</span><br><span class="line">            value: /zkdata/datalog</span><br><span class="line">          - name: ZOO_MAX_CLIENT_CNXNS</span><br><span class="line">            value: &quot;600&quot;</span><br><span class="line">          - name: ZOO_STANDALONE_ENABLED</span><br><span class="line">            value: &quot;false&quot;</span><br><span class="line">          - name: ZOO_ADMINSERVER_ENABLED</span><br><span class="line">            value: &quot;false&quot;</span><br><span class="line">          - name: ZOO_AUTOPURGE_SNAPRETAINCOUNT</span><br><span class="line">            value: &quot;3&quot;</span><br><span class="line">          - name: ZOO_AUTOPURGE_PURGEINTERVAL</span><br><span class="line">            value: &quot;24&quot;</span><br><span class="line">          - name: ZOO_4LW_COMMANDS_WHITELIST</span><br><span class="line">            value: &quot;ruok,srvr&quot;</span><br><span class="line">          - name: JVMFLAGS</span><br><span class="line">            value: &quot;-Xms128m -Xmx128m&quot;</span><br><span class="line">          ports:</span><br><span class="line">          - containerPort: 2181</span><br><span class="line">          resources:</span><br><span class="line">            limits:</span><br><span class="line">              cpu: 100m</span><br><span class="line">              memory: 200Mi</span><br><span class="line">            requests:</span><br><span class="line">              cpu: 100m</span><br><span class="line">              memory: 200Mi</span><br><span class="line">          livenessProbe:</span><br><span class="line">            failureThreshold: 3</span><br><span class="line">            initialDelaySeconds: 10</span><br><span class="line">            periodSeconds: 30</span><br><span class="line">            successThreshold: 1</span><br><span class="line">            exec:</span><br><span class="line">              command: </span><br><span class="line">              - |</span><br><span class="line">                /bin/bash &lt;&lt;&apos;EOF&apos;</span><br><span class="line">                ok=`echo ruok|nc localhost 2181`</span><br><span class="line">                if [ &quot;$ok&quot;x = &quot;imok&quot;x ]</span><br><span class="line">                then</span><br><span class="line">                  echo 0</span><br><span class="line">                else</span><br><span class="line">                  echo 1</span><br><span class="line">                if    </span><br><span class="line">                EOF</span><br><span class="line">            timeoutSeconds: 1</span><br><span class="line">          volumeMounts:                           # Pod挂载的存储</span><br><span class="line">          - name: data</span><br><span class="line">            mountPath: /zkdata</span><br><span class="line">          - name: zkentrypoint</span><br><span class="line">            mountPath: /zoocount</span><br><span class="line">            subPath: zoocount</span><br><span class="line">          - name: zkentrypoint</span><br><span class="line">            mountPath: /docker-entrypoint.sh</span><br><span class="line">            subPath: docker-entrypoint.sh</span><br><span class="line">      volumes:</span><br><span class="line">        - name: zkentrypoint</span><br><span class="line">          configMap:</span><br><span class="line">            name: zkcm</span><br><span class="line">            defaultMode: 360</span><br><span class="line">      securityContext:</span><br><span class="line">        fsGroup: 1000</span><br><span class="line">  volumeClaimTemplates:</span><br><span class="line">  - metadata:</span><br><span class="line">      name: data</span><br><span class="line">    spec:</span><br><span class="line">      accessModes:</span><br><span class="line">      - ReadWriteOnce</span><br><span class="line">      resources:</span><br><span class="line">        requests:</span><br><span class="line">          storage: 10Gi</span><br><span class="line">      storageClassName: cbs-premium                   # 持久化存储的类型</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>fsGroup指定磁盘挂载后的属组，没有指定就是root</li>
+<li>defaultMode指定entrypoint挂载之后的属性，注意给他执行权限，需要进行十进制到八进制转化，这里360相当于八进制550</li>
+<li>volumeClaimTemplates是动态创建pvc，需要先配置好storage class</li>
+</ul>
+<p>使用kustomize组织一下就可以运行创建zk集群了。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">cat &lt;&lt;EOF &gt;./kustomization.yaml</span><br><span class="line">namespace: default</span><br><span class="line">resources:</span><br><span class="line">- zksvc.yml</span><br><span class="line">- zkcluster.yml</span><br><span class="line">configMapGenerator:</span><br><span class="line">- name: zkcm</span><br><span class="line">  files:</span><br><span class="line">  - docker-entrypoint.sh</span><br><span class="line">  - zoocount</span><br><span class="line">EOF</span><br></pre></td></tr></table></figure>
+
+<h1 id="观察状态"><a href="#观察状态" class="headerlink" title="观察状态"></a>观察状态</h1><h2 id="pod重启后ip保持不变"><a href="#pod重启后ip保持不变" class="headerlink" title="pod重启后ip保持不变"></a>pod重启后ip保持不变</h2><p>pod命名规则{statefulset name}-{id}</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">ubuntu@k8s-dev-m1:~$ kubectl get po -o wide</span><br><span class="line">NAME                       READY   STATUS    RESTARTS   AGE     IP             NODE             NOMINATED NODE   READINESS GATES</span><br><span class="line">zk-0                       1/1     Running   0          29m     172.31.0.11    k8s-dev-node4    &lt;none&gt;           &lt;none&gt;</span><br><span class="line">zk-1                       1/1     Running   0          29m     172.31.0.129   k8s-dev-node6    &lt;none&gt;           &lt;none&gt;</span><br><span class="line">zk-2                       1/1     Running   0          81s     172.31.0.41    k8s-dev-node4    &lt;none&gt;           &lt;none&gt;</span><br><span class="line">ubuntu@k8s-dev-m1:~$ </span><br><span class="line">ubuntu@k8s-dev-m1:~$ kubectl get po -o wide</span><br><span class="line">NAME                       READY   STATUS    RESTARTS   AGE    IP             NODE             NOMINATED NODE   READINESS GATES</span><br><span class="line">zk-0                       1/1     Running   1          130m   172.31.0.11    k8s-dev-node4    &lt;none&gt;           &lt;none&gt;</span><br><span class="line">zk-1                       1/1     Running   1          129m   172.31.0.129   k8s-dev-node6    &lt;none&gt;           &lt;none&gt;</span><br><span class="line">zk-2                       1/1     Running   0          102m   172.31.0.41    k8s-dev-node4    &lt;none&gt;           &lt;none&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="pvc静态化"><a href="#pvc静态化" class="headerlink" title="pvc静态化"></a>pvc静态化</h2><p>pvc命名有一定规则，{volumeClaimTemplates name}-{statefulset name}-{id}</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">NAME                STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE</span><br><span class="line">data-zk-0           Bound    pvc-0dfd9fa6-9540-4f90-adca-1a62eb9dd6ec   10Gi       RWO            cbs-premium    7h2m</span><br><span class="line">data-zk-1           Bound    pvc-e70c6a5a-48d2-465d-b235-ae1835ad3ec7   10Gi       RWO            cbs-premium    6h50m</span><br><span class="line">data-zk-2           Bound    pvc-28d360a8-9577-4e2b-bbec-20fbdd146dd9   10Gi       RWO            cbs-premium    5h30m</span><br></pre></td></tr></table></figure>  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/K8s/">K8s</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/运维/">运维</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://www.lstop.pub/2021/11/05/使用statefulset实现zk集群/" data-title="使用statefulset实现zk集群 | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2021/10/29/腾讯云cbs-csi接口测试/"  title="腾讯云cbs-csi接口测试">
+ <strong>NEXT:</strong><br/> 
+ <span>腾讯云cbs-csi接口测试
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#改造enterpoint"><span class="toc-number">1.</span> <span class="toc-text">改造enterpoint</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#statefulset配置"><span class="toc-number">2.</span> <span class="toc-text">statefulset配置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#观察状态"><span class="toc-number">3.</span> <span class="toc-text">观察状态</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#pod重启后ip保持不变"><span class="toc-number">3.1.</span> <span class="toc-text">pod重启后ip保持不变</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#pvc静态化"><span class="toc-number">3.2.</span> <span class="toc-text">pvc静态化</span></a></li></ol></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+
+  
+<div class="tagslist">
+	<p class="asidetitle">Tags</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/Airtest/" title="Airtest">Airtest<sup>1</sup></a></li>
+		
+			<li><a href="/tags/DNS/" title="DNS">DNS<sup>1</sup></a></li>
+		
+			<li><a href="/tags/GitLab/" title="GitLab">GitLab<sup>1</sup></a></li>
+		
+			<li><a href="/tags/K8s/" title="K8s">K8s<sup>10</sup></a></li>
+		
+			<li><a href="/tags/Linux/" title="Linux">Linux<sup>1</sup></a></li>
+		
+			<li><a href="/tags/MongoDB/" title="MongoDB">MongoDB<sup>2</sup></a></li>
+		
+			<li><a href="/tags/OpenWrt/" title="OpenWrt">OpenWrt<sup>1</sup></a></li>
+		
+			<li><a href="/tags/Python/" title="Python">Python<sup>2</sup></a></li>
+		
+			<li><a href="/tags/RabbitMQ/" title="RabbitMQ">RabbitMQ<sup>1</sup></a></li>
+		
+			<li><a href="/tags/calico/" title="calico">calico<sup>1</sup></a></li>
+		
+			<li><a href="/tags/cdn/" title="cdn">cdn<sup>1</sup></a></li>
+		
+			<li><a href="/tags/docker/" title="docker">docker<sup>3</sup></a></li>
+		
+			<li><a href="/tags/docker-registry/" title="docker registry">docker registry<sup>1</sup></a></li>
+		
+			<li><a href="/tags/elasticsearch/" title="elasticsearch">elasticsearch<sup>3</sup></a></li>
+		
+			<li><a href="/tags/elk/" title="elk">elk<sup>3</sup></a></li>
+		
+			<li><a href="/tags/java/" title="java">java<sup>1</sup></a></li>
+		
+			<li><a href="/tags/k8s/" title="k8s">k8s<sup>4</sup></a></li>
+		
+			<li><a href="/tags/kubernetes/" title="kubernetes">kubernetes<sup>1</sup></a></li>
+		
+			<li><a href="/tags/nginx/" title="nginx">nginx<sup>1</sup></a></li>
+		
+			<li><a href="/tags/python/" title="python">python<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">Links</p>
+    <ul>
+      <li><a href="http://www.v2ex.com/?r=zong400" target="_blank" title="V2EX">V2EX</a></li>
+      <li><a href="http://hexo.io" target="_blank" title="Hexo">Hexo</a></li>
+	  <li><a href="https://promotion.aliyun.com/ntms/yunparter/invite.html?userCode=s0bh6uzq" target="_blank" title="阿里云">阿里云</a></li>
+	  <li><a href="https://cloud.tencent.com/redirect.php?redirect=1014&cps_key=5bd9deb84d4d9f34b65fb934e12d03e3&from=console" target="_blank" title="腾讯云">腾讯云</a></li>
+    </ul>
+</div>
+
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+	</div>
+		<p class="copyright">Hosted by <a href="https://github.com/" target="_blank" title="GitHub Pages">GitHub Pages</a></p>
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wizicer/iceman" target="_blank" title="Iceman">Iceman</a> © 2021 
+		
+		<a href="http://www.lstop.pub" target="_blank" title="Zong">Zong</a>
+		
+		</p>
+</div>
+</footer>
+    <script src="//cdn.staticfile.org/jquery/2.1.0/jquery.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+
+
+
+  </body>
+</html>
+
