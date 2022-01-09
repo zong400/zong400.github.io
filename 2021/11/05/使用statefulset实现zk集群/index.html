@@ -147,7 +147,7 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">ubuntu@k8s-dev-m1:~$ kubectl get po -o wide</span><br><span class="line">NAME                       READY   STATUS    RESTARTS   AGE     IP             NODE             NOMINATED NODE   READINESS GATES</span><br><span class="line">zk-0                       1/1     Running   0          3h17m   172.31.0.57    k8s-dev-node4    &lt;none&gt;           &lt;none&gt;</span><br><span class="line">zk-1                       1/1     Running   0          3h18m   172.31.0.184   k8s-dev-node6    &lt;none&gt;           &lt;none&gt;</span><br><span class="line">zk-2                       1/1     Running   0          3h18m   172.31.0.43    k8s-dev-node4    &lt;none&gt;           &lt;none&gt;</span><br></pre></td></tr></table></figure>
 
 <p>模拟node6故障下线后，zk-1顺利漂移到了其他node</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">NAME                       READY   STATUS    RESTARTS   AGE     IP             NODE                   NOMINATED NODE   READINESS GATES</span><br><span class="line">zk-0                       1/1     Running   0          4h41m   172.31.0.57    k8s-dev-node4          &lt;none&gt;           &lt;none&gt;</span><br><span class="line">zk-1                       1/1     Running   0          65s     172.31.0.113   k8s-dev-node3.bxr.cn   &lt;none&gt;           &lt;none&gt;</span><br><span class="line">zk-2                       1/1     Running   0          4h42m   172.31.0.43    k8s-dev-node4          &lt;none&gt;           &lt;none&gt;</span><br></pre></td></tr></table></figure>  
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">NAME                       READY   STATUS    RESTARTS   AGE     IP             NODE            NOMINATED NODE   READINESS GATES</span><br><span class="line">zk-0                       1/1     Running   0          4h41m   172.31.0.57    k8s-dev-node4   &lt;none&gt;           &lt;none&gt;</span><br><span class="line">zk-1                       1/1     Running   0          65s     172.31.0.113   k8s-dev-node3   &lt;none&gt;           &lt;none&gt;</span><br><span class="line">zk-2                       1/1     Running   0          4h42m   172.31.0.43    k8s-dev-node4   &lt;none&gt;           &lt;none&gt;</span><br></pre></td></tr></table></figure>  
 	</div>
 		<footer class="article-footer clearfix">
 
@@ -175,6 +175,14 @@
 	
 <nav class="article-nav clearfix">
  
+ <div class="prev" >
+ <a href="/2022/01/09/testcos/" title="testcos">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  testcos</span>
+</a>
+</div>
+
 
 <div class="next">
 <a href="/2021/10/29/腾讯云cbs-csi接口测试/"  title="腾讯云cbs-csi接口测试">
@@ -272,7 +280,7 @@
 		
 	</div>
 		<p class="copyright">Hosted by <a href="https://github.com/" target="_blank" title="GitHub Pages">GitHub Pages</a></p>
-		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wizicer/iceman" target="_blank" title="Iceman">Iceman</a> © 2021 
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wizicer/iceman" target="_blank" title="Iceman">Iceman</a> © 2022 
 		
 		<a href="http://www.lstop.pub" target="_blank" title="Zong">Zong</a>
 		
