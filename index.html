@@ -72,6 +72,24 @@
 
   <section class="post" itemscope itemprop="blogPost">
   
+    <a href="/2022/01/20/K8s-service故障排查/" title="K8s service故障排查" itemprop="url">
+  
+    <h1 itemprop="name">K8s service故障排查</h1>
+    
+     
+           <p itemprop="description" >故障现象
+容器启动报连接zookeeper time out，容器不断重启重试。
+只有某一台机出现这个情况，其他节点正常。
+
+初步排查zk容器ip和zk service如下，尝试在故障节点telnet这两个ip的2181端口，发现容器端口可以通，service端口不通。这个情况初</p>
+        
+    
+    <time datetime="2022-01-20T02:27:11.000Z" itemprop="datePublished">2022-01-20</time>
+  </a>
+</section>
+
+  <section class="post" itemscope itemprop="blogPost">
+  
     <a href="/2021/11/05/使用statefulset实现zk集群/" title="使用statefulset实现zk集群" itemprop="url">
   
     <h1 itemprop="name">使用statefulset实现zk集群</h1>
@@ -209,20 +227,6 @@
   </a>
 </section>
 
-  <section class="post" itemscope itemprop="blogPost">
-  
-    <a href="/2020/01/08/容器界新势力cri-o/" title="容器界新势力cri-o" itemprop="url">
-  
-    <h1 itemprop="name">容器界新势力cri-o</h1>
-    
-     
-           <p itemprop="description" >一 介绍CRI-O - OCI-based implementation of Kubernetes Container Runtime Interface这是cri-o的github标题，符合OCI基准实现的Kubernetes容器运行时接口，从这个标题很容易看出，这是一个专门</p>
-        
-    
-    <time datetime="2020-01-08T06:29:46.000Z" itemprop="datePublished">2020-01-08</time>
-  </a>
-</section>
-
 
   <nav id="page-nav" class="clearfix">
     <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/2/">Next &raquo;</a>
@@ -266,7 +270,7 @@
 		
 			<li><a href="/tags/docker-registry/" title="docker registry">docker registry<sup>1</sup></a></li>
 		
-			<li><a href="/tags/elasticsearch/" title="elasticsearch">elasticsearch<sup>3</sup></a></li>
+			<li><a href="/tags/elasticsearch/" title="elasticsearch">elasticsearch<sup>4</sup></a></li>
 		
 			<li><a href="/tags/elk/" title="elk">elk<sup>3</sup></a></li>
 		

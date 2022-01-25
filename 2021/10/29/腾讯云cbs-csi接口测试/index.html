@@ -144,6 +144,8 @@
 <p>报错： Cannot bind to requested volume “disk-7naj0icr”: storageClassName does not match</p>
 </blockquote>
 </li>
+<li><p>metric端口与calico冲突导致节点网络不通<br>默认metric端口是9099，解决方法是启动cbs加参数 -metric_port=19099 或者禁用 -enable_metrics_server=false<br>calico node报错日志</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">2022-01-21 07:33:49.433 [INFO][58] ipsets.go 304: Finished resync family=&quot;inet&quot; numInconsistenciesFound=0 resyncDuration=1.018007ms</span><br><span class="line">2022-01-21 07:33:49.433 [INFO][58] int_dataplane.go 765: Finished applying updates to dataplane. msecToApply=1.285159</span><br><span class="line">2022-01-21 07:33:50.015 [ERROR][58] health.go 196: Health endpoint failed, trying to restart it... error=listen tcp 127.0.0.1:9099: bind: address already in use</span><br><span class="line">2022-01-21 07:33:51.016 [ERROR][58] health.go 196: Health endpoint failed, trying to restart it... error=listen tcp 127.0.0.1:9099: bind: address already in use</span><br></pre></td></tr></table></figure></li>
 </ol>
   
 	</div>
@@ -236,7 +238,7 @@
 		
 			<li><a href="/tags/docker-registry/" title="docker registry">docker registry<sup>1</sup></a></li>
 		
-			<li><a href="/tags/elasticsearch/" title="elasticsearch">elasticsearch<sup>3</sup></a></li>
+			<li><a href="/tags/elasticsearch/" title="elasticsearch">elasticsearch<sup>4</sup></a></li>
 		
 			<li><a href="/tags/elk/" title="elk">elk<sup>3</sup></a></li>
 		
