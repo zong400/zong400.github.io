@@ -133,7 +133,7 @@ $10=request_time（毫秒）cdn字段详细解析
 </tr>
 <tr>
 <td>NF</td>
-<td>字段数量变量</td>
+<td>字段数量变量，$NF就是最后一列</td>
 </tr>
 <tr>
 <td>NR</td>
@@ -223,12 +223,12 @@ $10=request_time（毫秒）cdn字段详细解析
 <blockquote>
 <p>语法知识<br>x[a[1]] += $5 ，x数组使用a[1]作为下标累加流量值（$5）<br>for(i in x){print i, x[i]}， for i循环获取x数组下标并打印<br>END， END前代码处理完所有行，再用END后代码打印<br>sort -k2 ,按第二列排序</p>
 </blockquote>
-<h2 id="url平均耗时"><a href="#url平均耗时" class="headerlink" title="url平均耗时"></a>url平均耗时</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">gawk -F, &apos;NF == 3 &#123; sum[$2] += $3; N[$2]++ &#125; </span><br><span class="line">          END     &#123; for (key in sum) &#123;</span><br><span class="line">                        avg = sum[key] / N[key];</span><br><span class="line">                        printf &quot;%s %d\n&quot;, key, int(avg);</span><br><span class="line">                    &#125; &#125;&apos; filename | sort</span><br></pre></td></tr></table></figure>
+<h2 id="url平均耗时"><a href="#url平均耗时" class="headerlink" title="url平均耗时"></a>url平均耗时</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">gawk -F, &apos;NF == 3 &#123; sum[$2] += $3; N[$2]++ &#125; </span><br><span class="line">          END     &#123; for (key in sum) &#123;</span><br><span class="line">                        avg = sum[key] / N[key];</span><br><span class="line">                        printf &quot;%s %d\n&quot;, key, int(avg);</span><br><span class="line">                    &#125; &#125;&apos; filename | sort -n</span><br></pre></td></tr></table></figure>
 
 <blockquote>
 <p>语法知识<br>N[$2]++， 自增<br>avg = sum[key] / N[key]， 计算平均值 = 总数/次数</p>
 </blockquote>
-<h2 id="url访问次数排序"><a href="#url访问次数排序" class="headerlink" title="url访问次数排序"></a>url访问次数排序</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cat 30a.txt |awk &apos;&#123;split($4,a,&quot;?&quot;); N[a[1]]++&#125; END &#123;for(i in N)&#123;print i, N[i]&#125;&#125;&apos; | sort -k2 -n</span><br></pre></td></tr></table></figure>
+<h2 id="url访问次数排序"><a href="#url访问次数排序" class="headerlink" title="url访问次数排序"></a>url访问次数排序</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cat 30a.txt |awk &apos;&#123;split($4,a,&quot;?&quot;); u=a[1]; N[u]++&#125; END &#123;for(i in N)&#123;print i, N[i]&#125;&#125;&apos; | sort -k2 -n</span><br></pre></td></tr></table></figure>
 
   
 	</div>
