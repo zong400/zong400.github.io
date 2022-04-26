@@ -221,7 +221,9 @@ $10=request_time（毫秒）cdn字段详细解析
 <h2 id="筛选url"><a href="#筛选url" class="headerlink" title="筛选url"></a>筛选url</h2><p>筛选包含base关键字的url</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">awk &apos;/base/&#123;if($10&gt;500)&#123;split($4,a,&quot;?&quot;);print $1,a[1],$10&#125;&#125;&apos; 30a.txt</span><br></pre></td></tr></table></figure>
 
-
+<blockquote>
+<p>语法知识<br>/正则/ 筛选的内容<br>$5~/base/ ，第5列匹配base</p>
+</blockquote>
 <h2 id="根据url分组求和（每个url消耗流量）"><a href="#根据url分组求和（每个url消耗流量）" class="headerlink" title="根据url分组求和（每个url消耗流量）"></a>根据url分组求和（每个url消耗流量）</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cat 30a.txt |awk &apos;&#123;split($4,a,&quot;?&quot;); x[a[1]] += $5&#125;END&#123;for(i in x)&#123;print i, x[i]&#125;&#125;&apos;|sort -k2 -n</span><br></pre></td></tr></table></figure>
 
 <blockquote>
