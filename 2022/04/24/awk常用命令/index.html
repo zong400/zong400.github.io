@@ -9,13 +9,13 @@
     
     <meta name="author" content="Zong">
     
-    <meta name="description" content="基础说明基本用于简单统计各种log数据，特别是access log以解析腾讯cdn的access log格式为例
+    <meta name="description" content="基础说明基本用于简单统计各种log数据，特别是access log以解析腾讯cdn的access log格式为例另外awk要全面学好不容易，这里只是简单涉及一些常用语法
 log字段含义
 $4=url
 $5=字节数大小
 $10=request_time（毫秒）cdn字段详细解析
 
-基本语法awk -F|-f|-v ‘BEGIN{ } / / {comand">
+基本语法awk -F">
     
     
     
@@ -96,10 +96,10 @@ $10=request_time（毫秒）cdn字段详细解析
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#基础说明"><span class="toc-number">1.</span> <span class="toc-text">基础说明</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#log字段含义"><span class="toc-number">1.1.</span> <span class="toc-text">log字段含义</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#基本语法"><span class="toc-number">2.</span> <span class="toc-text">基本语法</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#特殊符号"><span class="toc-number">2.1.</span> <span class="toc-text">特殊符号</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#常用命令"><span class="toc-number">3.</span> <span class="toc-text">常用命令</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#慢url"><span class="toc-number">3.1.</span> <span class="toc-text">慢url</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#根据url分组求和（每个url消耗流量）"><span class="toc-number">3.2.</span> <span class="toc-text">根据url分组求和（每个url消耗流量）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#url平均耗时"><span class="toc-number">3.3.</span> <span class="toc-text">url平均耗时</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#url访问次数排序"><span class="toc-number">3.4.</span> <span class="toc-text">url访问次数排序</span></a></li></ol></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#基础说明"><span class="toc-number">1.</span> <span class="toc-text">基础说明</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#log字段含义"><span class="toc-number">1.1.</span> <span class="toc-text">log字段含义</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#基本语法"><span class="toc-number">2.</span> <span class="toc-text">基本语法</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#特殊符号"><span class="toc-number">2.1.</span> <span class="toc-text">特殊符号</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#常用命令"><span class="toc-number">3.</span> <span class="toc-text">常用命令</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#慢url"><span class="toc-number">3.1.</span> <span class="toc-text">慢url</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#筛选url"><span class="toc-number">3.2.</span> <span class="toc-text">筛选url</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#根据url分组求和（每个url消耗流量）"><span class="toc-number">3.3.</span> <span class="toc-text">根据url分组求和（每个url消耗流量）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#url平均耗时"><span class="toc-number">3.4.</span> <span class="toc-text">url平均耗时</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#url访问次数排序"><span class="toc-number">3.5.</span> <span class="toc-text">url访问次数排序</span></a></li></ol></li></ol>
 		</div>
 		
-		<h1 id="基础说明"><a href="#基础说明" class="headerlink" title="基础说明"></a>基础说明</h1><p>基本用于简单统计各种log数据，特别是access log<br>以解析腾讯cdn的access log格式为例</p>
+		<h1 id="基础说明"><a href="#基础说明" class="headerlink" title="基础说明"></a>基础说明</h1><p>基本用于简单统计各种log数据，特别是access log<br>以解析腾讯cdn的access log格式为例<br>另外awk要全面学好不容易，这里只是简单涉及一些常用语法</p>
 <h2 id="log字段含义"><a href="#log字段含义" class="headerlink" title="log字段含义"></a>log字段含义</h2><ul>
 <li>$4=url</li>
 <li>$5=字节数大小</li>
@@ -213,11 +213,15 @@ $10=request_time（毫秒）cdn字段详细解析
 </tr>
 </tbody></table>
 <h1 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h1><h2 id="慢url"><a href="#慢url" class="headerlink" title="慢url"></a>慢url</h2><p>request time &gt; 500ms 的url</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cat 2021083021-bxr.banxiaoer.com |awk &apos;($10&gt;500)&#123;split($4,a,&quot;?&quot;);print $1,a[1],$10&#125;&apos;| sed &apos;s/ /,/g&apos; &gt; slowurl.csv</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">awk &apos;($10&gt;500)&#123;split($4,a,&quot;?&quot;);print $1,a[1],$10&#125;&apos; 30a.txt</span><br><span class="line">awk &apos;&#123;if($10&gt;500)&#123;split($4,a,&quot;?&quot;);print $1,a[1],$10&#125;&#125;&apos; 30a.txt</span><br></pre></td></tr></table></figure>
 
 <blockquote>
 <p>语法知识<br>split($4,a,”?”) 使用？分割后存放在数组a</p>
 </blockquote>
+<h2 id="筛选url"><a href="#筛选url" class="headerlink" title="筛选url"></a>筛选url</h2><p>筛选包含base关键字的url</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">awk &apos;/base/&#123;if($10&gt;500)&#123;split($4,a,&quot;?&quot;);print $1,a[1],$10&#125;&#125;&apos; 30a.txt</span><br></pre></td></tr></table></figure>
+
+
 <h2 id="根据url分组求和（每个url消耗流量）"><a href="#根据url分组求和（每个url消耗流量）" class="headerlink" title="根据url分组求和（每个url消耗流量）"></a>根据url分组求和（每个url消耗流量）</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cat 30a.txt |awk &apos;&#123;split($4,a,&quot;?&quot;); x[a[1]] += $5&#125;END&#123;for(i in x)&#123;print i, x[i]&#125;&#125;&apos;|sort -k2 -n</span><br></pre></td></tr></table></figure>
 
 <blockquote>
@@ -275,7 +279,7 @@ $10=request_time（毫秒）cdn字段详细解析
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#基础说明"><span class="toc-number">1.</span> <span class="toc-text">基础说明</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#log字段含义"><span class="toc-number">1.1.</span> <span class="toc-text">log字段含义</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#基本语法"><span class="toc-number">2.</span> <span class="toc-text">基本语法</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#特殊符号"><span class="toc-number">2.1.</span> <span class="toc-text">特殊符号</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#常用命令"><span class="toc-number">3.</span> <span class="toc-text">常用命令</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#慢url"><span class="toc-number">3.1.</span> <span class="toc-text">慢url</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#根据url分组求和（每个url消耗流量）"><span class="toc-number">3.2.</span> <span class="toc-text">根据url分组求和（每个url消耗流量）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#url平均耗时"><span class="toc-number">3.3.</span> <span class="toc-text">url平均耗时</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#url访问次数排序"><span class="toc-number">3.4.</span> <span class="toc-text">url访问次数排序</span></a></li></ol></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#基础说明"><span class="toc-number">1.</span> <span class="toc-text">基础说明</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#log字段含义"><span class="toc-number">1.1.</span> <span class="toc-text">log字段含义</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#基本语法"><span class="toc-number">2.</span> <span class="toc-text">基本语法</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#特殊符号"><span class="toc-number">2.1.</span> <span class="toc-text">特殊符号</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#常用命令"><span class="toc-number">3.</span> <span class="toc-text">常用命令</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#慢url"><span class="toc-number">3.1.</span> <span class="toc-text">慢url</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#筛选url"><span class="toc-number">3.2.</span> <span class="toc-text">筛选url</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#根据url分组求和（每个url消耗流量）"><span class="toc-number">3.3.</span> <span class="toc-text">根据url分组求和（每个url消耗流量）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#url平均耗时"><span class="toc-number">3.4.</span> <span class="toc-text">url平均耗时</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#url访问次数排序"><span class="toc-number">3.5.</span> <span class="toc-text">url访问次数排序</span></a></li></ol></li></ol>
   </div>
 
 <div id="asidepart">
