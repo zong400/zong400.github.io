@@ -1,7 +1,7 @@
 
  <!DOCTYPE HTML>
-<html>
-<head><meta name="generator" content="Hexo 3.9.0">
+<html >
+<head>
   <meta charset="UTF-8">
   
     <title>calico tunl ip冲突 | Zong&#39;s blog</title>
@@ -11,7 +11,7 @@
     
     <meta name="description" content="集群新增2个node，完了之后发现网络有问题，其中一个节点和pod网络不通，经过一轮排查，发现新增的两个node分配的tunl0 ip是一样的，就是出现问题的原因。如图：
 通过 calicoctl get node 和 kubectl get no 对比发现节点域名不一致
-解决方法：删除 /var/">
+解决方法：删除 &amp;#x2F">
     
     
     
@@ -23,9 +23,11 @@
     <link rel="apple-touch-icon" href="/img/pacman.jpg">
     <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
     
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-</html>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
   <body>
     <header>
       <div>
@@ -95,9 +97,9 @@
 		
 		</div>
 		
-		<p>集群新增2个node，完了之后发现网络有问题，其中一个节点和pod网络不通，经过一轮排查，发现新增的两个node分配的tunl0 ip是一样的，就是出现问题的原因。<br>如图：<br><img src="http://qnimg.banxiaoer.net/yw/k8s/node1-docker-ip.png" alt><br><img src="http://qnimg.banxiaoer.net/yw/k8s/node8-docker-ip.png" alt></p>
+		<p>集群新增2个node，完了之后发现网络有问题，其中一个节点和pod网络不通，经过一轮排查，发现新增的两个node分配的tunl0 ip是一样的，就是出现问题的原因。<br>如图：<br><img src="http://qnimg.banxiaoer.net/yw/k8s/node1-docker-ip.png"><br><img src="http://qnimg.banxiaoer.net/yw/k8s/node8-docker-ip.png"></p>
 <p>通过 calicoctl get node 和 kubectl get no 对比发现节点域名不一致</p>
-<p>解决方法：<br>删除 /var/lib/calico/nodename，重启对应节点的calico node<br>此问题疑似由于node8是克隆自node1，待验证</p>
+<p>解决方法：<br>删除 &#x2F;var&#x2F;lib&#x2F;calico&#x2F;nodename，重启对应节点的calico node<br>此问题疑似由于node8是克隆自node1，待验证</p>
   
 	</div>
 		<footer class="article-footer clearfix">
@@ -110,14 +112,14 @@
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/容器架构/">容器架构</a>
+  <a class="article-category-link" href="/categories/%E5%AE%B9%E5%99%A8%E6%9E%B6%E6%9E%84/">容器架构</a>
 </div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://www.lstop.pub/2019/12/31/calico-tunl-ip冲突/" data-title="calico tunl ip冲突 | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  <div data-url="http://www.lstop.pub/2019/12/31/calico-tunl-ip%E5%86%B2%E7%AA%81/" data-title="calico tunl ip冲突 | Zong&#39;s blog" data-tsina="" class="share clearfix">
   </div>
 
 </div>

@@ -1,7 +1,7 @@
 
  <!DOCTYPE HTML>
-<html>
-<head><meta name="generator" content="Hexo 3.9.0">
+<html >
+<head>
   <meta charset="UTF-8">
   
     <title>安装GitLab的一些记录 | Zong&#39;s blog</title>
@@ -21,9 +21,11 @@
     <link rel="apple-touch-icon" href="/img/pacman.jpg">
     <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
     
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-</html>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
   <body>
     <header>
       <div>
@@ -94,10 +96,9 @@
 		</div>
 		
 		<p>这两天测试了几个git服务端的安装，踩了一下坑，开贴记录一下<br>一开始使用了gitosis和gitolite，这两个很轻量，gitosis已经不更新了，gitolite还在更新，所以如果这两个选择的话还是gitolite吧，而且gitolite能把权限细分到branch。<br>其实这两个本质上说都是对服务端authorized_keys文件的管理，客户端必须生成rsa key对，把public key提交到keydir然后gitolite负责把key导入到authorized_keys，这样客户端就能通过ssh协议访问git服务器。<br>这两个都没web界面，还要配合gitweb，但是gitweb功能简单而且丑。<br>最大的缺陷是这两个东西貌似对提交者管理不太严谨，提交者是谁大可以通过命令在客户端修改</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git config --global user.name &apos;你猜我是谁&apos;</span><br></pre></td></tr></table></figure>
-
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git config --global user.name &#x27;你猜我是谁&#x27;</span><br></pre></td></tr></table></figure>
 <p>最后没有完整的安装测试，因为gitweb实在是太丑。。。</p>
-<h1 id="Gitlab"><a href="#Gitlab" class="headerlink" title="Gitlab"></a>Gitlab</h1><p>GitLab就复杂很多了，可以看作GitHub的开源版，其中GitLab-CE是社区版可以免费用，我装的就这个。<br>我是用源码安装的，感觉用源码安装可以更加深入学习一下<br>全程跟着官网教程：<br><a href="https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/install/installation.md" target="_blank" rel="noopener">GitLab-CE 安装教程</a></p>
+<h1 id="Gitlab"><a href="#Gitlab" class="headerlink" title="Gitlab"></a>Gitlab</h1><p>GitLab就复杂很多了，可以看作GitHub的开源版，其中GitLab-CE是社区版可以免费用，我装的就这个。<br>我是用源码安装的，感觉用源码安装可以更加深入学习一下<br>全程跟着官网教程：<br><a target="_blank" rel="noopener" href="https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/install/installation.md">GitLab-CE 安装教程</a></p>
 <blockquote>
 <p>特别要说<br>Ruby 版本一定要跟着教程使用2.3.3的，2.4在后面bundle构建环境时候会报json的错<br>Redis教程里面使用了unix socket，需要改一下配置文件<br>node和yarn可以使用淘宝的 淘宝 NPM 镜像<br>node用源码，yarn可以用cnpm</p>
 <blockquote>
@@ -106,18 +107,16 @@
 </blockquote>
 <p>这样就安装好gitlab了，可以新建一个project测试</p>
 <p>克隆repo使用的命令格式是这样：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone git@your.git.server:your/repo.git</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone git@your.git.server:your/repo.git</span><br></pre></td></tr></table></figure>
 
-<p>这里<a href="mailto:git@your.git.server" target="_blank" rel="noopener">git@your.git.server</a>是指你使用git服务器的git user登录，因为你的public key已经导入authorized_keys了，所以这里应该不需要密码，如果提示输入密码那肯定是有问题了。<br>可以使用ssh命令测试一下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ ssh -T git@your.git.server</span><br><span class="line">Welcome to GitLab, USER!</span><br></pre></td></tr></table></figure>
-
+<p>这里<a href="mailto:&#x67;&#x69;&#116;&#64;&#x79;&#x6f;&#x75;&#114;&#46;&#103;&#x69;&#116;&#46;&#115;&#101;&#x72;&#118;&#101;&#114;">&#x67;&#x69;&#116;&#64;&#x79;&#x6f;&#x75;&#114;&#46;&#103;&#x69;&#116;&#46;&#115;&#101;&#x72;&#118;&#101;&#114;</a>是指你使用git服务器的git user登录，因为你的public key已经导入authorized_keys了，所以这里应该不需要密码，如果提示输入密码那肯定是有问题了。<br>可以使用ssh命令测试一下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ ssh -T git@your.git.server</span><br><span class="line">Welcome to GitLab, USER!</span><br></pre></td></tr></table></figure>
 <p>正确的话会显示登录信息。</p>
-<p>另外如果使用了多个rsa密钥对，需要在.ssh/config做一下配置</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Host your.git.server</span><br><span class="line">        HostName your.git.server</span><br><span class="line">        User git</span><br><span class="line">        IdentityFile /path/of/your/private/key</span><br></pre></td></tr></table></figure>
-
-<p>还有个简单的安装方法，这里选择操作系统版本，例如ubuntu，之后安装比较简单<br><a href="https://www.gitlab.cc/downloads/" target="_blank" rel="noopener">安装 GitLab CE</a></p>
-<p>GitLab的project界面，比较清新<br><img src="http://qnimg.banxiaoer.net/yw/gitlab/ddt.jpg_blogpic.jpg" alt></p>
-<p>权限管理界面member<br>要获得repo的push权限，需要把member添加进来才行<br>如果要push到master就给master权限，否则只给devlop权限就可以push到分支<br><img src="http://qnimg.banxiaoer.net/yw/gitlab/ddt1.jpg_blogpic.jpg" alt></p>
+<p>另外如果使用了多个rsa密钥对，需要在.ssh&#x2F;config做一下配置</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Host your.git.server</span><br><span class="line">        HostName your.git.server</span><br><span class="line">        User git</span><br><span class="line">        IdentityFile /path/of/your/private/key</span><br></pre></td></tr></table></figure>
+<p>还有个简单的安装方法，这里选择操作系统版本，例如ubuntu，之后安装比较简单<br><a target="_blank" rel="noopener" href="https://www.gitlab.cc/downloads/">安装 GitLab CE</a></p>
+<p>GitLab的project界面，比较清新<br><img src="http://qnimg.banxiaoer.net/yw/gitlab/ddt.jpg_blogpic.jpg"></p>
+<p>权限管理界面member<br>要获得repo的push权限，需要把member添加进来才行<br>如果要push到master就给master权限，否则只给devlop权限就可以push到分支<br><img src="http://qnimg.banxiaoer.net/yw/gitlab/ddt1.jpg_blogpic.jpg"></p>
   
 	</div>
 		<footer class="article-footer clearfix">
@@ -130,14 +129,14 @@
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/运维/">运维</a>
+  <a class="article-category-link" href="/categories/%E8%BF%90%E7%BB%B4/">运维</a>
 </div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://www.lstop.pub/2017/02/24/安装GitLab的一些记录/" data-title="安装GitLab的一些记录 | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  <div data-url="http://www.lstop.pub/2017/02/24/%E5%AE%89%E8%A3%85GitLab%E7%9A%84%E4%B8%80%E4%BA%9B%E8%AE%B0%E5%BD%95/" data-title="安装GitLab的一些记录 | Zong&#39;s blog" data-tsina="" class="share clearfix">
   </div>
 
 </div>

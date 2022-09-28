@@ -1,7 +1,7 @@
 
  <!DOCTYPE HTML>
-<html>
-<head><meta name="generator" content="Hexo 3.9.0">
+<html >
+<head>
   <meta charset="UTF-8">
   
     <title>kubelet config和认证 | Zong&#39;s blog</title>
@@ -23,9 +23,11 @@
     <link rel="apple-touch-icon" href="/img/pacman.jpg">
     <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
     
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-</html>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
   <body>
     <header>
       <div>
@@ -92,31 +94,30 @@
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Kubelet-Configuration"><span class="toc-number">1.</span> <span class="toc-text">Kubelet Configuration</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#kubelet-认证"><span class="toc-number">2.</span> <span class="toc-text">kubelet 认证</span></a></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Kubelet-Configuration"><span class="toc-number">1.</span> <span class="toc-text">Kubelet Configuration</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#kubelet-%E8%AE%A4%E8%AF%81"><span class="toc-number">2.</span> <span class="toc-text">kubelet 认证</span></a></li></ol>
 		</div>
 		
 		<h1 id="Kubelet-Configuration"><a href="#Kubelet-Configuration" class="headerlink" title="Kubelet Configuration"></a>Kubelet Configuration</h1><p>kubelet是安装在k8s节点上负责启动销毁容器的重要组件，其启动参数我一直是通过systemctl使用参数形式传入的，但是根据文档和其自身help的说明来看，很多参数标注了DEPRECATED。</p>
 <blockquote>
-<p>例如：      –fail-swap-on<br>Makes the Kubelet fail to start if swap is enabled on the node.  (default true) (DEPRECATED: This parameter should be set via the config file specified by the Kubelet’s –config flag. See <a href="https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/" target="_blank" rel="noopener">https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/</a> for more information.)</p>
+<p>例如：      –fail-swap-on<br>Makes the Kubelet fail to start if swap is enabled on the node.  (default true) (DEPRECATED: This parameter should be set via the config file specified by the Kubelet’s –config flag. See <a target="_blank" rel="noopener" href="https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/">https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/</a> for more information.)</p>
 </blockquote>
-<p>这些参数已经不推荐直接用命令传参的方式使用了，而是引入了Kubelet Configuration。<a href="https://kubernetes.io/zh/docs/tasks/administer-cluster/kubelet-config-file/" target="_blank" rel="noopener">官方说明</a><br>以下是一个例子</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">kind: KubeletConfiguration</span><br><span class="line">apiVersion: kubelet.config.k8s.io/v1beta1</span><br><span class="line">port: 10250</span><br><span class="line">readOnlyPort: 10255</span><br><span class="line">cgroupDriver: cgroupfs</span><br><span class="line">clusterDNS: </span><br><span class="line">- 192.168.0.2</span><br><span class="line">clusterDomain: k8s.local</span><br><span class="line">failSwapOn: true</span><br><span class="line">authentication:</span><br><span class="line">  anonymous:</span><br><span class="line">    enabled: false</span><br><span class="line">  x509:</span><br><span class="line">    clientCAFile: /etc/kubernetes/pki/kubelet-ca.pem</span><br><span class="line">staticPodPath: /etc/kubernetes/staticPods</span><br><span class="line">imageGcHighThreshold: 70</span><br><span class="line">imageGcLowThreshold: 50</span><br><span class="line">featureGates: </span><br><span class="line">  RotateKubeletClientCertificate: true</span><br><span class="line">  RotateKubeletServerCertificate: true</span><br><span class="line">rotateCertificates: true</span><br></pre></td></tr></table></figure>
+<p>这些参数已经不推荐直接用命令传参的方式使用了，而是引入了Kubelet Configuration。<a target="_blank" rel="noopener" href="https://kubernetes.io/zh/docs/tasks/administer-cluster/kubelet-config-file/">官方说明</a><br>以下是一个例子</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">kind: KubeletConfiguration</span><br><span class="line">apiVersion: kubelet.config.k8s.io/v1beta1</span><br><span class="line">port: 10250</span><br><span class="line">readOnlyPort: 10255</span><br><span class="line">cgroupDriver: cgroupfs</span><br><span class="line">clusterDNS: </span><br><span class="line">- 192.168.0.2</span><br><span class="line">clusterDomain: k8s.local</span><br><span class="line">failSwapOn: true</span><br><span class="line">authentication:</span><br><span class="line">  anonymous:</span><br><span class="line">    enabled: false</span><br><span class="line">  x509:</span><br><span class="line">    clientCAFile: /etc/kubernetes/pki/kubelet-ca.pem</span><br><span class="line">staticPodPath: /etc/kubernetes/staticPods</span><br><span class="line">imageGcHighThreshold: 70</span><br><span class="line">imageGcLowThreshold: 50</span><br><span class="line">featureGates: </span><br><span class="line">  RotateKubeletClientCertificate: true</span><br><span class="line">  RotateKubeletServerCertificate: true</span><br><span class="line">rotateCertificates: true</span><br></pre></td></tr></table></figure>
 
 <p>使用–config参数指定这个kubelet config文件，原本的命令参数变成：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">KUBELET_ARGS=&quot;--bootstrap-kubeconfig=/etc/kubernetes/bootstrap.kubeconfig \</span><br><span class="line">--kubeconfig=/etc/kubernetes/kubelet.kubeconfig \</span><br><span class="line">--cert-dir=/etc/kubernetes/pki \</span><br><span class="line">--network-plugin=cni \</span><br><span class="line">--node-labels=node.kubernetes.io/role=k8s-node \</span><br><span class="line">--pod-infra-container-image=ccr.ccs.tencentyun.com/google_container/pause-amd64:3.1 \</span><br><span class="line">--config=/etc/kubernetes/kubeletConfig \</span><br><span class="line">--logtostderr=false --log-dir=/var/log/kubernetes --v=2&quot;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">KUBELET_ARGS=&quot;--bootstrap-kubeconfig=/etc/kubernetes/bootstrap.kubeconfig \</span><br><span class="line">--kubeconfig=/etc/kubernetes/kubelet.kubeconfig \</span><br><span class="line">--cert-dir=/etc/kubernetes/pki \</span><br><span class="line">--network-plugin=cni \</span><br><span class="line">--node-labels=node.kubernetes.io/role=k8s-node \</span><br><span class="line">--pod-infra-container-image=ccr.ccs.tencentyun.com/google_container/pause-amd64:3.1 \</span><br><span class="line">--config=/etc/kubernetes/kubeletConfig \</span><br><span class="line">--logtostderr=false --log-dir=/var/log/kubernetes --v=2&quot;</span><br></pre></td></tr></table></figure>
 
 <p>可以看到变化比较大，简洁很多。而且KubeletConfiguration还能做成configMap，这样就能重用。</p>
 <h1 id="kubelet-认证"><a href="#kubelet-认证" class="headerlink" title="kubelet 认证"></a>kubelet 认证</h1><p>通过上面的方式改变成kubelet参数文件后，有个很大的变化是authentication.anonymous，这个参数默认是true也就是允许匿名。在旧的命令行参数方式没什么问题，但是现在在k8s master上运行kubectl logs或者kubectl exec就会出现报错</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Error from server (Forbidden): Forbidden (user=system:anonymous, verb=get, resource=nodes,subresource=proxy)</span><br></pre></td></tr></table></figure>
-
-<p>明显看出匿名权限问题，网上也有一些解决方法是直接给system:anonymous赋权的，但是毕竟生产环境这样做存在隐患，解决方法是禁用匿名认证，创建一个x509证书认证。<br>怎么创建证书就不说了，配置x509文件的关键是在kubelet配置ca证书，在apiserver配置client证书，然后给证书用户赋权。<a href="https://k8smeetup.github.io/docs/admin/kubelet-authentication-authorization/" target="_blank" rel="noopener">官方说明</a><br>kubelet配置：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">authentication:</span><br><span class="line">  anonymous:</span><br><span class="line">    enabled: false</span><br><span class="line">  x509:</span><br><span class="line">    clientCAFile: /etc/kubernetes/pki/kubelet-ca.pem</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Error from server (Forbidden): Forbidden (user=system:anonymous, verb=get, resource=nodes,subresource=proxy)</span><br></pre></td></tr></table></figure>
+<p>明显看出匿名权限问题，网上也有一些解决方法是直接给system:anonymous赋权的，但是毕竟生产环境这样做存在隐患，解决方法是禁用匿名认证，创建一个x509证书认证。<br>怎么创建证书就不说了，配置x509文件的关键是在kubelet配置ca证书，在apiserver配置client证书，然后给证书用户赋权。<a target="_blank" rel="noopener" href="https://k8smeetup.github.io/docs/admin/kubelet-authentication-authorization/">官方说明</a><br>kubelet配置：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">authentication:</span><br><span class="line">  anonymous:</span><br><span class="line">    enabled: false</span><br><span class="line">  x509:</span><br><span class="line">    clientCAFile: /etc/kubernetes/pki/kubelet-ca.pem</span><br></pre></td></tr></table></figure>
 
 <p>apiserver配置：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">--kubelet-client-certificate=/etc/kubernetes/pki/kubelet-client.pem</span><br><span class="line">--kubelet-client-key=/etc/kubernetes/pki/kubelet-client-key.pem</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">--kubelet-client-certificate=/etc/kubernetes/pki/kubelet-client.pem</span><br><span class="line">--kubelet-client-key=/etc/kubernetes/pki/kubelet-client-key.pem</span><br></pre></td></tr></table></figure>
 
 <p>证书用户是kubeletadmin，rbac赋权：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: rbac.authorization.k8s.io/v1</span><br><span class="line">kind: ClusterRole</span><br><span class="line">metadata:</span><br><span class="line">  name: kubelet-admin</span><br><span class="line">rules:</span><br><span class="line">- apiGroups: [&quot;&quot;]</span><br><span class="line">  resources: [&quot;nodes/proxy&quot;,&quot;nodes/stats&quot;,&quot;nodes/log&quot;,&quot;nodes/spec&quot;,&quot;nodes/metrics&quot;]</span><br><span class="line">  verbs: [&quot;*&quot;]</span><br><span class="line">---</span><br><span class="line">apiVersion: rbac.authorization.k8s.io/v1</span><br><span class="line">kind: ClusterRoleBinding</span><br><span class="line">metadata:</span><br><span class="line">  name: kubelet-admin</span><br><span class="line">roleRef:</span><br><span class="line">  apiGroup: rbac.authorization.k8s.io</span><br><span class="line">  kind: ClusterRole</span><br><span class="line">  name: kubelet-admin</span><br><span class="line">subjects:</span><br><span class="line">- apiGroup: rbac.authorization.k8s.io</span><br><span class="line">  kind: User</span><br><span class="line">  name: kubeletadmin</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: rbac.authorization.k8s.io/v1</span><br><span class="line">kind: ClusterRole</span><br><span class="line">metadata:</span><br><span class="line">  name: kubelet-admin</span><br><span class="line">rules:</span><br><span class="line">- apiGroups: [&quot;&quot;]</span><br><span class="line">  resources: [&quot;nodes/proxy&quot;,&quot;nodes/stats&quot;,&quot;nodes/log&quot;,&quot;nodes/spec&quot;,&quot;nodes/metrics&quot;]</span><br><span class="line">  verbs: [&quot;*&quot;]</span><br><span class="line">---</span><br><span class="line">apiVersion: rbac.authorization.k8s.io/v1</span><br><span class="line">kind: ClusterRoleBinding</span><br><span class="line">metadata:</span><br><span class="line">  name: kubelet-admin</span><br><span class="line">roleRef:</span><br><span class="line">  apiGroup: rbac.authorization.k8s.io</span><br><span class="line">  kind: ClusterRole</span><br><span class="line">  name: kubelet-admin</span><br><span class="line">subjects:</span><br><span class="line">- apiGroup: rbac.authorization.k8s.io</span><br><span class="line">  kind: User</span><br><span class="line">  name: kubeletadmin</span><br></pre></td></tr></table></figure>
 
 <p>这样就配置好kubelet认证，然后还有授权，默认是AlwaysAllow，这里不改了。</p>
   
@@ -131,14 +132,14 @@
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/容器架构/">容器架构</a>
+  <a class="article-category-link" href="/categories/%E5%AE%B9%E5%99%A8%E6%9E%B6%E6%9E%84/">容器架构</a>
 </div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://www.lstop.pub/2020/05/19/kubelet-config和认证/" data-title="kubelet config和认证 | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  <div data-url="http://www.lstop.pub/2020/05/19/kubelet-config%E5%92%8C%E8%AE%A4%E8%AF%81/" data-title="kubelet config和认证 | Zong&#39;s blog" data-tsina="" class="share clearfix">
   </div>
 
 </div>
@@ -172,7 +173,7 @@
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Kubelet-Configuration"><span class="toc-number">1.</span> <span class="toc-text">Kubelet Configuration</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#kubelet-认证"><span class="toc-number">2.</span> <span class="toc-text">kubelet 认证</span></a></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Kubelet-Configuration"><span class="toc-number">1.</span> <span class="toc-text">Kubelet Configuration</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#kubelet-%E8%AE%A4%E8%AF%81"><span class="toc-number">2.</span> <span class="toc-text">kubelet 认证</span></a></li></ol>
   </div>
 
 <div id="asidepart">

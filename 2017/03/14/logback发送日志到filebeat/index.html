@@ -1,7 +1,7 @@
 
  <!DOCTYPE HTML>
-<html>
-<head><meta name="generator" content="Hexo 3.9.0">
+<html >
+<head>
   <meta charset="UTF-8">
   
     <title>logback发送日志到filebeat | Zong&#39;s blog</title>
@@ -21,9 +21,11 @@
     <link rel="apple-touch-icon" href="/img/pacman.jpg">
     <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
     
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-</html>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
   <body>
     <header>
       <div>
@@ -90,23 +92,23 @@
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#干掉logstash"><span class="toc-number">1.</span> <span class="toc-text">干掉logstash</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#直接用logback发送日志"><span class="toc-number">2.</span> <span class="toc-text">直接用logback发送日志</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#filebeat接收udp数据"><span class="toc-number">3.</span> <span class="toc-text">filebeat接收udp数据</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#filebeat-socat（内容太老废弃）"><span class="toc-number">4.</span> <span class="toc-text">filebeat + socat（内容太老废弃）</span></a></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%B9%B2%E6%8E%89logstash"><span class="toc-number">1.</span> <span class="toc-text">干掉logstash</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%9B%B4%E6%8E%A5%E7%94%A8logback%E5%8F%91%E9%80%81%E6%97%A5%E5%BF%97"><span class="toc-number">2.</span> <span class="toc-text">直接用logback发送日志</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#filebeat%E6%8E%A5%E6%94%B6udp%E6%95%B0%E6%8D%AE"><span class="toc-number">3.</span> <span class="toc-text">filebeat接收udp数据</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#filebeat-socat%EF%BC%88%E5%86%85%E5%AE%B9%E5%A4%AA%E8%80%81%E5%BA%9F%E5%BC%83%EF%BC%89"><span class="toc-number">4.</span> <span class="toc-text">filebeat + socat（内容太老废弃）</span></a></li></ol>
 		</div>
 		
 		<h1 id="干掉logstash"><a href="#干掉logstash" class="headerlink" title="干掉logstash"></a>干掉logstash</h1><p>传统ELK模式在收集日志方面使用logstash，在应用端创建一个java进程读取应用日志传送出去。<br>这种方式其实是比较臃肿和消耗资源的，假设有50个服务器就最少需要50个logstash进程，如果每个服务器有多个需要收集的log文件（不同的java进程），也要考虑每个文件的日志格式，特别是前期没有考虑ELK的情况，可能需要做很多工作让这些文件格式一致，若不能达成一致则可能要多个logstash解析。<br>针对这种情况，我们最好能有一个解决方案，把logstash去除掉，无缝衔接应用，解决log格式差异，而且对业务本身透明。</p>
 <h1 id="直接用logback发送日志"><a href="#直接用logback发送日志" class="headerlink" title="直接用logback发送日志"></a>直接用logback发送日志</h1><p>要干掉logstash，必须改变日志收集方式，我们找到了开源项目logstash-logback-encoder。<br>logstash-logback-encoder是logback的扩展，它的主要工作是帮我们把日志格式化成ELK标准的json格式，并且通过它发送到ELK。<br>通过maven把它构建进你的项目，要注意logback版本需要1.2.0或以上。<br>然后在你的logback.xml配置加上如下appender:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&lt;appender name=&quot;stash&quot; class=&quot;net.logstash.logback.appender.LogstashSocketAppender&quot;&gt;</span><br><span class="line">    &lt;host&gt;filebeat-server&lt;/host&gt;</span><br><span class="line">    &lt;port&gt;5111&lt;/port&gt;</span><br><span class="line">    &lt;includeContext&gt;false&lt;/includeContext&gt;</span><br><span class="line">    &lt;customFields&gt;&#123;&quot;appname&quot;:&quot;your app name&quot;,&quot;host&quot;:&quot;$&#123;HOSTNAME&#125;&quot;&#125;&lt;/customFields&gt;</span><br><span class="line">    &lt;suffix class=&quot;ch.qos.logback.classic.PatternLayout&quot;&gt;</span><br><span class="line">       &lt;pattern&gt;%n&lt;/pattern&gt;</span><br><span class="line">    &lt;/suffix&gt;</span><br><span class="line">&lt;/appender&gt;</span><br><span class="line">&lt;root level=&quot;INFO&quot;&gt;   </span><br><span class="line">    &lt;appender-ref ref=&quot;STDOUT&quot; /&gt;   </span><br><span class="line">    &lt;appender-ref ref=&quot;stash&quot; /&gt; </span><br><span class="line">&lt;/root&gt;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&lt;appender name=&quot;stash&quot; class=&quot;net.logstash.logback.appender.LogstashSocketAppender&quot;&gt;</span><br><span class="line">    &lt;host&gt;filebeat-server&lt;/host&gt;</span><br><span class="line">    &lt;port&gt;5111&lt;/port&gt;</span><br><span class="line">    &lt;includeContext&gt;false&lt;/includeContext&gt;</span><br><span class="line">    &lt;customFields&gt;&#123;&quot;appname&quot;:&quot;your app name&quot;,&quot;host&quot;:&quot;$&#123;HOSTNAME&#125;&quot;&#125;&lt;/customFields&gt;</span><br><span class="line">    &lt;suffix class=&quot;ch.qos.logback.classic.PatternLayout&quot;&gt;</span><br><span class="line">       &lt;pattern&gt;%n&lt;/pattern&gt;</span><br><span class="line">    &lt;/suffix&gt;</span><br><span class="line">&lt;/appender&gt;</span><br><span class="line">&lt;root level=&quot;INFO&quot;&gt;   </span><br><span class="line">    &lt;appender-ref ref=&quot;STDOUT&quot; /&gt;   </span><br><span class="line">    &lt;appender-ref ref=&quot;stash&quot; /&gt; </span><br><span class="line">&lt;/root&gt;</span><br></pre></td></tr></table></figure>
 
 <ul>
 <li>customFields 自定义的字段，推荐加上HOSTNAME，便于在负载均衡的情况下分辨具体的服务器。</li>
-<li>Prefix/Suffix 在行首/行末增加点东西，这里表示在行末增加换行符，否则所有json格式日志写在一行，filebeat不认。</li>
+<li>Prefix&#x2F;Suffix 在行首&#x2F;行末增加点东西，这里表示在行末增加换行符，否则所有json格式日志写在一行，filebeat不认。</li>
 </ul>
 <p>上面的配置使用udp方式把日志发送到filebeat server，udp相对于tcp来说对程序和业务基本无影响，就算接收端不能访问也不会阻塞网络或者进程，在内网传输推荐使用udp。</p>
 <h1 id="filebeat接收udp数据"><a href="#filebeat接收udp数据" class="headerlink" title="filebeat接收udp数据"></a>filebeat接收udp数据</h1><p>新版filebeat 7.6.0 可以接收udp数据包，直接创建配置文件</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">filebeat.inputs:</span><br><span class="line">- type: udp</span><br><span class="line">  max_message_size: 20KiB</span><br><span class="line">  read_buffer: 50MiB</span><br><span class="line">  host: &quot;0.0.0.0:5111&quot;</span><br><span class="line"></span><br><span class="line">processors:</span><br><span class="line">- decode_json_fields:</span><br><span class="line">    fields: [&quot;@timestamp&quot;, &quot;message&quot;, &quot;logger_name&quot;, &quot;thread_name&quot;, &quot;level&quot;, &quot;level_value&quot;, &quot;appname&quot;, &quot;podname&quot;]</span><br><span class="line">    process_array: false</span><br><span class="line">    max_depth: 1</span><br><span class="line">    target: &quot;&quot; </span><br><span class="line">    overwrite_keys: true</span><br><span class="line">    add_error_key: true</span><br><span class="line"></span><br><span class="line">queue.mem:</span><br><span class="line">  events: 10240</span><br><span class="line">  flush.min_events: 512</span><br><span class="line">  flush.timeout: 5s</span><br><span class="line"></span><br><span class="line">output.elasticsearch:</span><br><span class="line">  hosts: [&quot;10.22.0.44:9200&quot;,&quot;10.22.0.18:9200&quot;]</span><br><span class="line">  index: &quot;filebeat-bxr-app-pro-%&#123;+yyyy.MM.dd&#125;&quot;</span><br><span class="line">  worker: 2</span><br><span class="line">  compression_leveledit: 1</span><br><span class="line"></span><br><span class="line">setup.template:</span><br><span class="line">  name: &quot;filebeat-bxr-app-pro&quot;</span><br><span class="line">  pattern: &quot;filebeat-bxr-app-pro-*&quot;</span><br><span class="line">  enabled: false </span><br><span class="line"></span><br><span class="line">setup.ilm.enabled: false</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">filebeat.inputs:</span><br><span class="line">- type: udp</span><br><span class="line">  max_message_size: 20KiB</span><br><span class="line">  read_buffer: 50MiB</span><br><span class="line">  host: &quot;0.0.0.0:5111&quot;</span><br><span class="line"></span><br><span class="line">processors:</span><br><span class="line">- decode_json_fields:</span><br><span class="line">    fields: [&quot;@timestamp&quot;, &quot;message&quot;, &quot;logger_name&quot;, &quot;thread_name&quot;, &quot;level&quot;, &quot;level_value&quot;, &quot;appname&quot;, &quot;podname&quot;]</span><br><span class="line">    process_array: false</span><br><span class="line">    max_depth: 1</span><br><span class="line">    target: &quot;&quot; </span><br><span class="line">    overwrite_keys: true</span><br><span class="line">    add_error_key: true</span><br><span class="line"></span><br><span class="line">queue.mem:</span><br><span class="line">  events: 10240</span><br><span class="line">  flush.min_events: 512</span><br><span class="line">  flush.timeout: 5s</span><br><span class="line"></span><br><span class="line">output.elasticsearch:</span><br><span class="line">  hosts: [&quot;10.22.0.44:9200&quot;,&quot;10.22.0.18:9200&quot;]</span><br><span class="line">  index: &quot;filebeat-bxr-app-pro-%&#123;+yyyy.MM.dd&#125;&quot;</span><br><span class="line">  worker: 2</span><br><span class="line">  compression_leveledit: 1</span><br><span class="line"></span><br><span class="line">setup.template:</span><br><span class="line">  name: &quot;filebeat-bxr-app-pro&quot;</span><br><span class="line">  pattern: &quot;filebeat-bxr-app-pro-*&quot;</span><br><span class="line">  enabled: false </span><br><span class="line"></span><br><span class="line">setup.ilm.enabled: false </span><br></pre></td></tr></table></figure>
 
 <h1 id="filebeat-socat（内容太老废弃）"><a href="#filebeat-socat（内容太老废弃）" class="headerlink" title="filebeat + socat（内容太老废弃）"></a><del>filebeat + socat（内容太老废弃）</del></h1><p><del>filebeat 我们之前在做nginx access log传输的时候使用过，对他的处理能力比较认可，最新5.2版和5.0版配置有点差别。<br>实现logback直接发送日志后，我们需要在远端搭建filebeat接收udp数据并且转发给Elasticsearch。<br>其实也可以使用logstash，但是logstash是java开发的，对比filebeat使用go开发，并发性能理论上差点，我们做多个服务器日志转发所以选择并发性和处理能力较好的。<br>filebeat本身不支持监听udp端口，我们需要一个辅助工具：socat<br>socat负责监听udp并把数据转到标准输出，filebeat使用stdin输入数据：</del></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">socat -u -lf/var/log/socat.log udp-listen:5111,fork - | filebeat.sh -c /etc/filebeat/filebeat-dev.yml</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">socat -u -lf/var/log/socat.log udp-listen:5111,fork - | filebeat.sh -c /etc/filebeat/filebeat-dev.yml</span><br></pre></td></tr></table></figure>
 
 <ul>
 <li><del>-u 表示单向传输数据，从udp 5111端口到标准输出，默认双向传输</del></li>
@@ -117,14 +119,14 @@
 <p><del>ps：测试过nc，在接收长日志，比如带stack trace的java ERROR日志，会接收不完整。</del></p>
 </blockquote>
 <p><del>ilebeat5.2配置：</del></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">filebeat.prospectors:</span><br><span class="line">- input_type: stdin </span><br><span class="line">  json.message_key:</span><br><span class="line">  json.keys_under_root: true</span><br><span class="line">  json.overwrite_keys: true </span><br><span class="line">output.kafka:</span><br><span class="line">  enabled: true </span><br><span class="line">  hosts: [&quot;your_kafka:9092&quot;]</span><br><span class="line">  topic: your_topic_name</span><br><span class="line">  worker: 2</span><br><span class="line">  keep_alive: 20s</span><br><span class="line">output.console:</span><br><span class="line">  enabled: false</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">filebeat.prospectors:</span><br><span class="line">- input_type: stdin </span><br><span class="line">  json.message_key:</span><br><span class="line">  json.keys_under_root: true</span><br><span class="line">  json.overwrite_keys: true </span><br><span class="line">output.kafka:</span><br><span class="line">  enabled: true </span><br><span class="line">  hosts: [&quot;your_kafka:9092&quot;]</span><br><span class="line">  topic: your_topic_name</span><br><span class="line">  worker: 2</span><br><span class="line">  keep_alive: 20s</span><br><span class="line">output.console:</span><br><span class="line">  enabled: false</span><br></pre></td></tr></table></figure>
 
 <ul>
 <li><del>json.message_key 接收json格式数据</del></li>
 <li><del>json.keys_under_root 把接收到的json字段放在顶端</del></li>
 <li><del>json.overwrite_keys 字段相同则覆盖</del></li>
 <li><del>output.kafka 输出到kafka，还有其他选择，比如logstash，redis，Elasticsearch等，具体参考文档</del></li>
-<li><del>output.console 输出到console，调试用 ~</del></li>
+<li>~~output.console 输出到console，调试用 ~~</li>
 </ul>
 <p>ok，现在应该可以在kibana看到你传输的java日志了。</p>
   
@@ -139,14 +141,14 @@
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/运维/">运维</a>
+  <a class="article-category-link" href="/categories/%E8%BF%90%E7%BB%B4/">运维</a>
 </div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://www.lstop.pub/2017/03/14/logback发送日志到filebeat/" data-title="logback发送日志到filebeat | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  <div data-url="http://www.lstop.pub/2017/03/14/logback%E5%8F%91%E9%80%81%E6%97%A5%E5%BF%97%E5%88%B0filebeat/" data-title="logback发送日志到filebeat | Zong&#39;s blog" data-tsina="" class="share clearfix">
   </div>
 
 </div>
@@ -180,7 +182,7 @@
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#干掉logstash"><span class="toc-number">1.</span> <span class="toc-text">干掉logstash</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#直接用logback发送日志"><span class="toc-number">2.</span> <span class="toc-text">直接用logback发送日志</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#filebeat接收udp数据"><span class="toc-number">3.</span> <span class="toc-text">filebeat接收udp数据</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#filebeat-socat（内容太老废弃）"><span class="toc-number">4.</span> <span class="toc-text">filebeat + socat（内容太老废弃）</span></a></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%B9%B2%E6%8E%89logstash"><span class="toc-number">1.</span> <span class="toc-text">干掉logstash</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%9B%B4%E6%8E%A5%E7%94%A8logback%E5%8F%91%E9%80%81%E6%97%A5%E5%BF%97"><span class="toc-number">2.</span> <span class="toc-text">直接用logback发送日志</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#filebeat%E6%8E%A5%E6%94%B6udp%E6%95%B0%E6%8D%AE"><span class="toc-number">3.</span> <span class="toc-text">filebeat接收udp数据</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#filebeat-socat%EF%BC%88%E5%86%85%E5%AE%B9%E5%A4%AA%E8%80%81%E5%BA%9F%E5%BC%83%EF%BC%89"><span class="toc-number">4.</span> <span class="toc-text">filebeat + socat（内容太老废弃）</span></a></li></ol>
   </div>
 
 <div id="asidepart">

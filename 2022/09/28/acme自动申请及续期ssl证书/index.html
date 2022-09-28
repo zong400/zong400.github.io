@@ -1,0 +1,412 @@
+
+ <!DOCTYPE HTML>
+<html >
+<head>
+  <meta charset="UTF-8">
+  
+    <title>acme自动申请及续期ssl证书 | Zong&#39;s blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Zong">
+    
+    <meta name="description" content="前言这是学习部署Xray接触到的技术，感觉挺有用，记录一下现在申请阿里和腾讯的免费证书需要手动去控制台操作，证书1年有效，手动续期，用这个acme技术就可以全命令行和自动续期以下文章多处参考Xray相关文档
+安装在linux安装运行下面命令就ok
+1wget -O -  https://get.ac">
+    
+    
+    
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/pacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
+    
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.svg" alt="Zong&#39;s blog" title="Zong&#39;s blog"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="Zong&#39;s blog">Zong&#39;s blog</a></h1>
+				<h2 class="blog-motto">日常积累，技术分享</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+						<li><a href="/categories/运维">运维</a></li>
+					
+						<li><a href="/categories/容器架构">容器架构</a></li>
+					
+					<li>
+					
+					<form class="search" action="//baidu.com/s" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="text" id="search" name="wd" autocomplete="off" maxlength="20" placeholder="Search" />
+                        <input name=tn type=hidden value="bds">
+                        <input name=cl type=hidden value="3">
+                        <input name=ct type=hidden value="2097152">
+						<input type="hidden" name="si" value="www.lstop.pub">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2022/09/28/acme自动申请及续期ssl证书/" title="acme自动申请及续期ssl证书" itemprop="url">acme自动申请及续期ssl证书</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://www.lstop.pub" title="Zong">Zong</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2022-09-28T01:22:45.000Z" itemprop="datePublished">2022-09-28</time>
+    
+  </p>
+</header>
+
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">Contents</strong>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%89%E8%A3%85"><span class="toc-number">2.</span> <span class="toc-text">安装</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%BC%80%E5%A7%8B%E4%B9%8B%E5%89%8D"><span class="toc-number">3.</span> <span class="toc-text">开始之前</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%94%AF%E6%8C%81acme%E5%8D%8F%E8%AE%AE%E7%9A%84ca"><span class="toc-number">3.1.</span> <span class="toc-text">支持acme协议的ca</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E7%94%B3%E8%AF%B7%E8%AF%81%E4%B9%A6"><span class="toc-number">3.2.</span> <span class="toc-text">测试申请证书</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E7%94%B3%E8%AF%B7ECC%E8%AF%81%E4%B9%A6"><span class="toc-number">3.2.1.</span> <span class="toc-text">测试申请ECC证书</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%94%B3%E8%AF%B7%E6%AD%A3%E5%BC%8F%E8%AF%81%E4%B9%A6"><span class="toc-number">4.</span> <span class="toc-text">申请正式证书</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8url%E9%AA%8C%E8%AF%81"><span class="toc-number">4.1.</span> <span class="toc-text">使用url验证</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8dns%E9%AA%8C%E8%AF%81"><span class="toc-number">4.2.</span> <span class="toc-text">使用dns验证</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E8%AF%81%E4%B9%A6"><span class="toc-number">5.</span> <span class="toc-text">安装证书</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%9B%B4%E6%96%B0%E8%AF%81%E4%B9%A6"><span class="toc-number">6.</span> <span class="toc-text">更新证书</span></a></li></ol>
+		</div>
+		
+		<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>这是学习部署Xray接触到的技术，感觉挺有用，记录一下<br>现在申请阿里和腾讯的免费证书需要手动去控制台操作，证书1年有效，手动续期，用这个acme技术就可以全命令行和自动续期<br>以下文章多处参考<a target="_blank" rel="noopener" href="https://xtls.github.io/document/level-0/ch06-certificates.html#_6-1-%E7%94%B3%E8%AF%B7-tls-%E8%AF%81%E4%B9%A6">Xray相关文档</a></p>
+<h1 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h1><p>在linux安装运行下面命令就ok</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wget -O -  https://get.acme.sh | sh</span><br></pre></td></tr></table></figure>
+
+<p>执行完后需要更新一下环境变量，可以断开连接重新登录系统，也可用下面命令</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">. .bashrc</span><br></pre></td></tr></table></figure>
+
+<p>自动更新acme.sh</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">acme.sh --upgrade --auto-upgrade</span><br></pre></td></tr></table></figure>
+
+<h1 id="开始之前"><a href="#开始之前" class="headerlink" title="开始之前"></a>开始之前</h1><h2 id="支持acme协议的ca"><a href="#支持acme协议的ca" class="headerlink" title="支持acme协议的ca"></a>支持acme协议的ca</h2><p>acme.sh支持的ca可以看<a target="_blank" rel="noopener" href="https://github.com/acmesh-official/acme.sh/wiki/Server">官方文档</a><br>目前acme.sh默认ca是zerossl，但是我试过用这个ca申请失败</p>
+<p>更换默认ca</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">acme.sh  --set-default-ca  --server letsencrypt</span><br></pre></td></tr></table></figure>
+
+<p>在命令中指定ca需要加参数，例如： –server letsencrypt</p>
+<h2 id="测试申请证书"><a href="#测试申请证书" class="headerlink" title="测试申请证书"></a>测试申请证书</h2><p>在正式申请证书之前，我们先用测试命令(–issue –test)来验证是否可以成功申请，验证通过后再正式申请，过程中有报错的话就加(–debug)参数看看</p>
+<h3 id="测试申请ECC证书"><a href="#测试申请ECC证书" class="headerlink" title="测试申请ECC证书"></a>测试申请ECC证书</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">acme.sh --issue --server letsencrypt --test -d 二级域名.你的域名.com -w /home/vpsadmin/www/webpage --keylength ec-256</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>ECC证书的主要优势在于它的 Keysize 更小，意味着同等大小下安全性的提升和加密解密速度的加快。如 ECC-256bit 的强度大约相当于 RSA-3072bit，何乐而不为呢？当然，有人说 ECC 证书握手会明显更快，这我觉得就有些夸张了，因为 RSA 握手也没有太慢，就算有差别应该也是毫秒级，很难直接感知。</p>
+<p>另外，如果有些网站确实需要兼容某些古老设备的，那也还是请按需选择RSA证书。</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">[Wed 30 Dec 2022 04:25:12 AM EST] Using ACME_DIRECTORY: https://acme-staging-v02.api.letsencrypt.org/directory</span><br><span class="line">[Wed 30 Dec 2022 04:25:13 AM EST] Using CA: https://acme-staging-v02.api.letsencrypt.org/directory</span><br><span class="line">[Wed 30 Dec 2022 04:25:13 AM EST] Create account key ok.</span><br><span class="line">[Wed 30 Dec 2022 04:25:13 AM EST] Registering account: https://acme-staging-v02.api.letsencrypt.org/directory</span><br><span class="line">[Wed 30 Dec 2022 04:25:13 AM EST] Registered</span><br><span class="line">[Wed 30 Dec 2022 04:25:13 AM EST] ACCOUNT_THUMBPRINT=&#x27;CU6qmPKuRqhyTAIrF4swosR375194z_1ddUlWef8xDc&#x27;</span><br><span class="line">[Wed 30 Dec 2022 04:25:13 AM EST] Creating domain key</span><br><span class="line">[Wed 30 Dec 2022 04:25:13 AM EST] The domain key is here: /home/vpsadmin/.acme.sh/二级域名.你的域名.com_ecc/二级域名.你的域名.com.key</span><br><span class="line">[Wed 30 Dec 2022 04:25:13 AM EST] Single domain=&#x27;二级域名.你的域名.com&#x27;</span><br><span class="line">[Wed 30 Dec 2022 04:25:13 AM EST] Getting domain auth token for each domain</span><br><span class="line">[Wed 30 Dec 2022 04:25:14 AM EST] Getting webroot for domain=&#x27;二级域名.你的域名.com&#x27;</span><br><span class="line">[Wed 30 Dec 2022 04:25:14 AM EST] Verifying: 二级域名.你的域名.com</span><br><span class="line">[Wed 30 Dec 2022 04:25:23 AM EST] Pending</span><br><span class="line">[Wed 30 Dec 2022 04:25:25 AM EST] Success</span><br><span class="line">[Wed 30 Dec 2022 04:25:25 AM EST] Verify finished, start to sign.</span><br><span class="line">[Wed 30 Dec 2022 04:25:25 AM EST] Lets finalize the order.</span><br><span class="line">[Wed 30 Dec 2022 04:25:25 AM EST] Le_OrderFinalize=&#x27;https://acme-staging-v02.api.letsencrypt.org/acme/finalize/490205995/7730242871&#x27;</span><br><span class="line">[Wed 30 Dec 2022 04:25:25 AM EST] Downloading cert.</span><br><span class="line">[Wed 30 Dec 2022 04:25:25 AM EST] Le_LinkCert=&#x27;https://acme-staging-v02.api.letsencrypt.org/acme/cert/xujss5xt8i38waubafz2xujss5xt8i38waubz2&#x27;</span><br><span class="line">[Wed 30 Dec 2022 15:21:52 AM EST] Cert success.</span><br><span class="line">--BEGIN CERTIFICAT--</span><br><span class="line">sxlYqPvWreKgD5b8JyOQX0Yg2MLoRUoDyqVkd31PthIiwzdckoh5eD3JU7ysYBtN</span><br><span class="line">cTFK4LGOfjqi8Ks87EVJdK9IaSAu7ZC6h5to0eqpJ5PLhaM3e6yJBbHmYA8w1Smp</span><br><span class="line">wAb3tdoHZ9ttUIm9CrSzvDBt6BBT6GqYdDamMyCYBLooMyDEM4CUFsOzCRrEqqvC</span><br><span class="line">2mTTEmhvpojo5rhdTSJxibozyNWTGwoTj0v9pTUeQcGqLIzqi4DowjBHD5guwRid</span><br><span class="line">SjAFnm6JT2xUQgWFm58A1gv1OhbH1TRPUUmtE1nFEN7YiSjI4xgxqAXT3CLD2EUb</span><br><span class="line">wXlUrO6c75zSsQP4bRMzgOjJUqHtSb6IEqELzt4M7KzL5iCOruCChCo2DZxUwvVX</span><br><span class="line">...</span><br><span class="line">haiRNICyC6UfsCJ94a8vcNyMosPv3xBLMp19WXgiFYqEFQkntkv1FLRI35fjeJmg</span><br><span class="line">0fmD9VG9bkzGPHihJgQLRlCHasGf6XrdfkSsODAyCUHUHJ0RzqF4YEZMcxDxzuQ2</span><br><span class="line">YO7bFwj7S3mUdVPZ6MPasjxdyBjJgEBMch2uy4AhmudXfEBQBye8W6ZI4ztZjLVV</span><br><span class="line">FmP4SIuaNUmMe20TjR8b9NVC96AhxOanWT3mRROsdokpKQGTJvl27EHH8KuAbUOc</span><br><span class="line">G6KtPy4wslNZNXWcBy9n63RcWak12r7kAIFn38tZxmlw2WUKoRSMAH64GcDTjRQd</span><br><span class="line">Am65hBHzvGrj93wEuVNIebvNIsJOlng3HFjpIxVqKGMCIfWIKGDE3YzK3p4LbGZ6</span><br><span class="line">NZFQWYJLNVf2M9CCJfbEImPYgvctrxl39H6KVYPCw1SAdaj9NneUqmREOQkKoEB0</span><br><span class="line">x6PmNirbMscHhQPSC0JQaqUgaQFgba1ALmzRYAnYhNb0twkTxWbY7DBkAarxqMIp</span><br><span class="line">yiLKcBFc5H7dgJCImo7us7aJeftC44uWkPIjw9AKH=</span><br><span class="line">--END CERTIFICAT--</span><br><span class="line">[Wed 30 Dec 2022 15:21:52 AM EST] Your cert is in  /home/vpsadmin/.acme.sh/二级域名.你的域名.com_ecc/二级域名.你的域名.com.cer</span><br><span class="line">[Wed 30 Dec 2022 15:21:52 AM EST] Your cert key is in  /home/vpsadmin/.acme.sh/二级域名.你的域名.com_ecc/二级域名.你的域名.com.key</span><br><span class="line">[Wed 30 Dec 2022 15:21:52 AM EST] The intermediate CA cert is in  /home/vpsadmin/.acme.sh/二级域名.你的域名.com_ecc/ca.cer</span><br><span class="line">[Wed 30 Dec 2022 15:21:52 AM EST] And the full chain certs is there:  /home/vpsadmin/.acme.sh/二级域名.你的域名.com_ecc/fullchain.cer</span><br></pre></td></tr></table></figure>
+
+<h1 id="申请正式证书"><a href="#申请正式证书" class="headerlink" title="申请正式证书"></a>申请正式证书</h1><p>申请过程中需要验证这个域名的所有权，就是你不能随便申请不属于你的域名，这种验证方式有2种，一是在你的网址添加一个随机url，ca验证这个url能否访问，二是通过在dns新增一个TXT记录指向，ca通过dns验证。两种方式看你的实际情况选择。<br>acme.sh支持阿里，dnspod（腾讯）的api，可以自动添加删除dns记录。</p>
+<h2 id="使用url验证"><a href="#使用url验证" class="headerlink" title="使用url验证"></a>使用url验证</h2><p>需提供你网站的root目录</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">acme.sh --issue -d 二级域名.你的域名.com -w /home/vpsadmin/www/webpage --keylength ec-256 --force</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>–force 参数的意思就是，在现有证书到期前，手动（强行）更新证书。上一步我们从“测试服”申请的证书虽然不能直接用，但是它本身是尚未过期的，所以需要用到这个参数。</p>
+</blockquote>
+<p>申请成功的输出大概是这样</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">vpsadmin@vps-server:~$ acme.sh --issue -d 二级域名.你的域名.com -w /home/vpsadmin/www/webpage --keylength ec-256</span><br><span class="line">[Wed 30 Dec 2022 15:22:51 AM EST] Using CA: https://acme-v02.api.letsencrypt.org/directory</span><br><span class="line">[Wed 30 Dec 2022 15:22:51 AM EST] Creating domain key</span><br><span class="line">[Wed 30 Dec 2022 15:22:51 AM EST] The domain key is here: /home/vpsadmin/.acme.sh/二级域名.你的域名.com_ecc/二级域名.你的域名.com.key</span><br><span class="line">[Wed 30 Dec 2022 15:22:51 AM EST] Single domain=&#x27;二级域名.你的域名.com&#x27;</span><br><span class="line">[Wed 30 Dec 2022 15:22:51 AM EST] Getting domain auth token for each domain</span><br><span class="line">[Wed 30 Dec 2022 15:22:51 AM EST] Getting webroot for domain=&#x27;二级域名.你的域名.com&#x27;</span><br><span class="line">[Wed 30 Dec 2022 15:22:51 AM EST] Verifying: 二级域名.你的域名.com</span><br><span class="line">[Wed 30 Dec 2022 15:22:51 AM EST] Pending</span><br><span class="line">[Wed 30 Dec 2022 15:22:51 AM EST] Success</span><br><span class="line">[Wed 30 Dec 2022 15:22:51 AM EST] Verify finished, start to sign.</span><br><span class="line">[Wed 30 Dec 2022 15:22:51 AM EST] Lets finalize the order.</span><br><span class="line">[Wed 30 Dec 2022 15:22:51 AM EST] Le_OrderFinalize=&#x27;https://acme-v02.api.letsencrypt.org/acme/finalize/490205996/7730242872&#x27;</span><br><span class="line">[Wed 30 Dec 2022 15:22:51 AM EST] Downloading cert.</span><br><span class="line">[Wed 30 Dec 2022 15:22:51 AM EST] Le_LinkCert=&#x27;https://acme-v02.api.letsencrypt.org/acme/cert/vsxvk0oldnuobe51ayxz4dms62sk2dwmw9zhuw&#x27;</span><br><span class="line">[Wed 30 Dec 2022 15:22:51 AM EST] Cert success.</span><br><span class="line">--BEGIN CERTIFICAT--</span><br><span class="line">sxlYqPvWreKgD5b8JyOQX0Yg2MLoRUoDyqVkd31PthIiwzdckoh5eD3JU7ysYBtN</span><br><span class="line">cTFK4LGOfjqi8Ks87EVJdK9IaSAu7ZC6h5to0eqpJ5PLhaM3e6yJBbHmYA8w1Smp</span><br><span class="line">wAb3tdoHZ9ttUIm9CrSzvDBt6BBT6GqYdDamMyCYBLooMyDEM4CUFsOzCRrEqqvC</span><br><span class="line">2mTTEmhvpojo5rhdTSJxibozyNWTGwoTj0v9pTUeQcGqLIzqi4DowjBHD5guwRid</span><br><span class="line">SjAFnm6JT2xUQgWFm58A1gv1OhbH1TRPUUmtE1nFEN7YiSjI4xgxqAXT3CLD2EUb</span><br><span class="line">...</span><br><span class="line">tYw9HKR5QCMK66fa0z4aJoFVFLK0IIOGEZOanRFUCnkLUDd3QZ3YU8lEcrj7Uxos</span><br><span class="line">haiRNICyC6UfsCJ94a8vcNyMosPv3xBLMp19WXgiFYqEFQkntkv1FLRI35fjeJmg</span><br><span class="line">0fmD9VG9bkzGPHihJgQLRlCHasGf6XrdfkSsODAyCUHUHJ0RzqF4YEZMcxDxzuQ2</span><br><span class="line">YO7bFwj7S3mUdVPZ6MPasjxdyBjJgEBMch2uy4AhmudXfEBQBye8W6ZI4ztZjLVV</span><br><span class="line">FmP4SIuaNUmMe20TjR8b9NVC96AhxOanWT3mRROsdokpKQGTJvl27EHH8KuAbUOc</span><br><span class="line">G6KtPy4wslNZNXWcBy9n63RcWak12r7kAIFn38tZxmlw2WUKoRSMAH64GcDTjRQd</span><br><span class="line">Am65hBHzvGrj93wEuVNIebvNIsJOlng3HFjpIxVqKGMCIfWIKGDE3YzK3p4LbGZ6</span><br><span class="line">NZFQWYJLNVf2M9CCJfbEImPYgvctrxl39H6KVYPCw1SAdaj9NneUqmREOQkKoEB0</span><br><span class="line">x6PmNirbMscHhQPSC0JQaqUgaQFgba1ALmzRYAnYhNb0twkTxWbY7DBkAarxqMIp</span><br><span class="line">yiLKcBFc5H7dgJCImo7us7aJeftC44uWkPM=</span><br><span class="line">--END CERTIFICAT--</span><br><span class="line">[Wed 30 Dec 2022 15:22:52 AM EST] Your cert is in  /home/vpsadmin/.acme.sh/二级域名.你的域名.com_ecc/二级域名.你的域名.com.cer</span><br><span class="line">[Wed 30 Dec 2022 15:22:52 AM EST] Your cert key is in  /home/vpsadmin/.acme.sh/二级域名.你的域名.com_ecc/二级域名.你的域名.com.key</span><br><span class="line">[Wed 30 Dec 2022 15:22:52 AM EST] The intermediate CA cert is in  /home/vpsadmin/.acme.sh/二级域名.你的域名.com_ecc/ca.cer</span><br><span class="line">[Wed 30 Dec 2022 15:22:52 AM EST] And the full chain certs is there:  /home/vpsadmin/.acme.sh/二级域名.你的域名.com_ecc/fullchain.cer</span><br></pre></td></tr></table></figure>
+
+<h2 id="使用dns验证"><a href="#使用dns验证" class="headerlink" title="使用dns验证"></a>使用dns验证</h2><p>以阿里为例，需要在控制台申请一个子账号，给予操作api角色，授权dns权限</p>
+<p>创建一个自定义权限策略，我们只需要dns的增删查权限</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;Version&quot;: &quot;1&quot;,</span><br><span class="line">    &quot;Statement&quot;: [</span><br><span class="line">        &#123;</span><br><span class="line">            &quot;Effect&quot;: &quot;Allow&quot;,</span><br><span class="line">            &quot;Action&quot;: [</span><br><span class="line">                &quot;alidns:AddDomainRecord&quot;,</span><br><span class="line">                &quot;alidns:DeleteDomainRecord&quot;,</span><br><span class="line">                &quot;alidns:DescribeDomainRecords&quot;</span><br><span class="line">            ],</span><br><span class="line">            &quot;Resource&quot;: &quot;acs:alidns:*:你的阿里云账号ID:domain/你的域名&quot;</span><br><span class="line">        &#125;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>这里如果看不懂，也可以用阿里预定义的 AliyunDNSFullAccess 权限，这个权限就大很多。</p>
+</blockquote>
+<p>把这个权限策略授予你的子账号。</p>
+<p>在服务器添加阿里账号的key和secret，只需要export一次，acme.sh会记录好key和secret</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">export Ali_Key=&quot;LTAI5tMpUof13213213132&quot;</span><br><span class="line">export Ali_Secret=&quot;hA34543636457547IjwBP3LchvvFFf&quot;</span><br></pre></td></tr></table></figure>
+
+<p>通过dns申请证书</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">acme.sh --issue --server letsencrypt --dns dns_ali -d 你的域名 --keylength ec-256</span><br></pre></td></tr></table></figure>
+
+<p>输出大概是这样</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">[Tue Sep 27 22:16:58 EDT 2022] Using CA: https://acme-v02.api.letsencrypt.org/directory</span><br><span class="line">[Tue Sep 27 22:16:58 EDT 2022] Creating domain key</span><br><span class="line">[Tue Sep 27 22:16:59 EDT 2022] The domain key is here: /root/.acme.sh/你的域名_ecc/你的域名.key</span><br><span class="line">[Tue Sep 27 22:16:59 EDT 2022] Single domain=&#x27;你的域名&#x27;</span><br><span class="line">[Tue Sep 27 22:16:59 EDT 2022] Getting domain auth token for each domain</span><br><span class="line">[Tue Sep 27 22:16:59 EDT 2022] Getting webroot for domain=&#x27;你的域名&#x27;</span><br><span class="line">[Tue Sep 27 22:16:59 EDT 2022] Adding txt value: NI5emgtlL67Hhg-50Hq2kLF_Fb1YTHJ7C9vs6GxWNDo for domain:  _acme-challenge.你的域名</span><br><span class="line">[Tue Sep 27 22:17:04 EDT 2022] The txt record is added: Success.</span><br><span class="line">[Tue Sep 27 22:17:04 EDT 2022] Let&#x27;s check each DNS record now. Sleep 20 seconds first.</span><br><span class="line">[Tue Sep 27 22:17:25 EDT 2022] You can use &#x27;--dnssleep&#x27; to disable public dns checks.</span><br><span class="line">[Tue Sep 27 22:17:25 EDT 2022] See: https://github.com/acmesh-official/acme.sh/wiki/dnscheck</span><br><span class="line">[Tue Sep 27 22:17:25 EDT 2022] Checking 你的域名 for _acme-challenge.你的域名</span><br><span class="line">[Tue Sep 27 22:17:27 EDT 2022] Domain 你的域名 &#x27;_acme-challenge.你的域名&#x27; success.</span><br><span class="line">[Tue Sep 27 22:17:27 EDT 2022] All success, let&#x27;s return</span><br><span class="line">[Tue Sep 27 22:17:27 EDT 2022] Verifying: 你的域名</span><br><span class="line">[Tue Sep 27 22:17:27 EDT 2022] Pending, The CA is processing your order, please just wait. (1/30)</span><br><span class="line">[Tue Sep 27 22:17:31 EDT 2022] Success</span><br><span class="line">[Tue Sep 27 22:17:31 EDT 2022] Removing DNS records.</span><br><span class="line">[Tue Sep 27 22:17:31 EDT 2022] Removing txt: NI5emgtlL67Hhg-50Hq2kLF_Fb1YTHJ7C9vs6GxWNDo for domain: _acme-challenge.你的域名</span><br><span class="line">[Tue Sep 27 22:17:37 EDT 2022] Removed: Success</span><br><span class="line">[Tue Sep 27 22:17:37 EDT 2022] Verify finished, start to sign.</span><br><span class="line">[Tue Sep 27 22:17:37 EDT 2022] Lets finalize the order.</span><br><span class="line">[Tue Sep 27 22:17:37 EDT 2022] Le_OrderFinalize=&#x27;https://acme-v02.api.letsencrypt.org/acme/finalize/748519887/129511009687&#x27;</span><br><span class="line">[Tue Sep 27 22:17:38 EDT 2022] Downloading cert.</span><br><span class="line">[Tue Sep 27 22:17:38 EDT 2022] Le_LinkCert=&#x27;https://acme-v02.api.letsencrypt.org/acme/cert/049ed602b81004f577acb96016a59e992eef&#x27;</span><br><span class="line">[Tue Sep 27 22:17:38 EDT 2022] Cert success.</span><br><span class="line">-----BEGIN CERTIFICATE-----</span><br><span class="line">MIIEWDCCA0CgAwIBAgISBJ7WArgQBPV3rLlgFqWemS7vMA0GCSqGSIb3DQEBCwUA</span><br><span class="line">MDIxCzAJBgNVBAYTAlVTMRYwFAYDVQQKEw1MZXQncyBFbmNyeXB0MQswCQYDVQQD</span><br><span class="line">EwJSMzAeFw0yMjA5MjgwMTE3MzdaFw0yMjEyMjcwMTE3MzZaMBkxFzAVBgNVBAMT</span><br><span class="line">DnRlc3QubHN0b3AucHViMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEqwZl3PAr</span><br><span class="line">QONDemYxCP+a510fWwGWf4CcENS2tOwjos+R8KD9evXA+4G85R+UjpO2iqHrJ1CA</span><br><span class="line">gj5YvZwtVom5b6OCAkowggJGMA4GA1UdDwEB/wQEAwIHgDAdBgNVHSUEFjAUBggr</span><br><span class="line">BgEFBQcDAQYIKwYBBQUHAwIwDAYDVR0TAQH/BAIwADAdBgNVHQ4EFgQUVgO5EHhY</span><br><span class="line">yATz3tY16PTymj6R8rwwHwYDVR0jBBgwFoAUFC6zF7dYVsuuUAlA5h+vnYsUwsYw</span><br><span class="line">...</span><br><span class="line">8vQRlEu16si2qu1erQQmgv1qK0OQ2VIhOj2IAptaDfvtrG96YTNvdxqT4+wxcJg8</span><br><span class="line">iQeXpttDOeDdReq7FJZ69w4uwPcp64kfVjWpjKGhtfmNTXIAYVF6SHhmjNoCZVF6</span><br><span class="line">E4UP5LhubHnTZdvGChGTsXoRjYZNyrgVTc/A+KJV7bafgARvcTlMnsdUqVkmbYdX</span><br><span class="line">9H154cOr0sKFO2Lp0T3ceTwvPG2A5B36uPfZHFdyB6uFRahAq7RsWXyfapBPwISZ</span><br><span class="line">RFLH+VtY82Ghxe1m</span><br><span class="line">-----END CERTIFICATE-----</span><br><span class="line">[Tue Sep 27 22:17:38 EDT 2022] Your cert is in: /root/.acme.sh/你的域名_ecc/你的域名.cer</span><br><span class="line">[Tue Sep 27 22:17:38 EDT 2022] Your cert key is in: /root/.acme.sh/你的域名_ecc/你的域名.key</span><br><span class="line">[Tue Sep 27 22:17:38 EDT 2022] The intermediate CA cert is in: /root/.acme.sh/你的域名_ecc/ca.cer</span><br><span class="line">[Tue Sep 27 22:17:38 EDT 2022] And the full chain certs is there: /root/.acme.sh/你的域名_ecc/fullchain.cer</span><br></pre></td></tr></table></figure>
+
+<h1 id="安装证书"><a href="#安装证书" class="headerlink" title="安装证书"></a>安装证书</h1><p>申请好正式的证书后，要把证书放到合适位置，可能还需要重启一下你的进程，acme.sh</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">acme.sh --install-cert --ecc -d 二级域名.你的域名.com --cert-file /你要安装到的位置/cert.crt \</span><br><span class="line">--key-file /你要安装到的位置/cert.key \</span><br><span class="line">--fullchain-file /你要安装到的位置/fullchain.crt \</span><br><span class="line">--reloadcmd     &quot;sudo systemctl restart xray&quot;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>fullchain ontains your certificate and all cas up to the root ca. 从root到该ca完整的证书链，因为ca可能有分级，不同设备内置的ca证书可能会没有中间证书，例如我申请的zerossl证书，使用cert证书部署后，在oppo手机上就不认，但是在pc没问题。换成fullchain证书部署，oppo就认了。</p>
+</blockquote>
+<h1 id="更新证书"><a href="#更新证书" class="headerlink" title="更新证书"></a>更新证书</h1><p>letsencrypt 证书有效期一般为90天，acme.sh帮我们做好了cron任务，每晚执行检查一下证书是否快过期需要更新，还会执行安装，这样就解决了证书长期使用问题。</p>
+<p>尝试执行一下看看他做了什么，有多个域名都会一起检查</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">root@vps:~# &quot;/root/.acme.sh&quot;/acme.sh --cron --home &quot;/root/.acme.sh&quot;</span><br><span class="line">[Tue Sep 27 22:36:11 EDT 2022] ===Starting cron===</span><br><span class="line">[Tue Sep 27 22:36:11 EDT 2022] Already uptodate!</span><br><span class="line">[Tue Sep 27 22:36:11 EDT 2022] Upgrade success!</span><br><span class="line">[Tue Sep 27 22:36:11 EDT 2022] Auto upgraded to: 3.0.5</span><br><span class="line">[Tue Sep 27 22:36:11 EDT 2022] Renew: &#x27;blog.你的域名&#x27;</span><br><span class="line">[Tue Sep 27 22:36:11 EDT 2022] Renew to Le_API=https://acme.ssl.com/sslcom-dv-ecc</span><br><span class="line">[Tue Sep 27 22:36:11 EDT 2022] Skip, Next renewal time is: 2022-11-25T07:33:23Z</span><br><span class="line">[Tue Sep 27 22:36:11 EDT 2022] Add &#x27;--force&#x27; to force to renew.</span><br><span class="line">[Tue Sep 27 22:36:11 EDT 2022] Skipped blog.你的域名_ecc</span><br><span class="line">[Tue Sep 27 22:36:11 EDT 2022] Renew: &#x27;test.你的域名&#x27;</span><br><span class="line">[Tue Sep 27 22:36:11 EDT 2022] Renew to Le_API=https://acme-v02.api.letsencrypt.org/directory</span><br><span class="line">[Tue Sep 27 22:36:11 EDT 2022] Skip, Next renewal time is: 2022-11-26T02:17:38Z</span><br><span class="line">[Tue Sep 27 22:36:11 EDT 2022] Add &#x27;--force&#x27; to force to renew.</span><br><span class="line">[Tue Sep 27 22:36:11 EDT 2022] Skipped test.你的域名_ecc</span><br><span class="line">[Tue Sep 27 22:36:11 EDT 2022] ===End cron===</span><br></pre></td></tr></table></figure>
+
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/ssl/">ssl</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/%E8%BF%90%E7%BB%B4/">运维</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://www.lstop.pub/2022/09/28/acme%E8%87%AA%E5%8A%A8%E7%94%B3%E8%AF%B7%E5%8F%8A%E7%BB%AD%E6%9C%9Fssl%E8%AF%81%E4%B9%A6/" data-title="acme自动申请及续期ssl证书 | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2022/04/24/awk常用命令/"  title="awk常用命令">
+ <strong>NEXT:</strong><br/> 
+ <span>awk常用命令
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%89%E8%A3%85"><span class="toc-number">2.</span> <span class="toc-text">安装</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%BC%80%E5%A7%8B%E4%B9%8B%E5%89%8D"><span class="toc-number">3.</span> <span class="toc-text">开始之前</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%94%AF%E6%8C%81acme%E5%8D%8F%E8%AE%AE%E7%9A%84ca"><span class="toc-number">3.1.</span> <span class="toc-text">支持acme协议的ca</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E7%94%B3%E8%AF%B7%E8%AF%81%E4%B9%A6"><span class="toc-number">3.2.</span> <span class="toc-text">测试申请证书</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E7%94%B3%E8%AF%B7ECC%E8%AF%81%E4%B9%A6"><span class="toc-number">3.2.1.</span> <span class="toc-text">测试申请ECC证书</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%94%B3%E8%AF%B7%E6%AD%A3%E5%BC%8F%E8%AF%81%E4%B9%A6"><span class="toc-number">4.</span> <span class="toc-text">申请正式证书</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8url%E9%AA%8C%E8%AF%81"><span class="toc-number">4.1.</span> <span class="toc-text">使用url验证</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8dns%E9%AA%8C%E8%AF%81"><span class="toc-number">4.2.</span> <span class="toc-text">使用dns验证</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E8%AF%81%E4%B9%A6"><span class="toc-number">5.</span> <span class="toc-text">安装证书</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%9B%B4%E6%96%B0%E8%AF%81%E4%B9%A6"><span class="toc-number">6.</span> <span class="toc-text">更新证书</span></a></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+
+  
+<div class="tagslist">
+	<p class="asidetitle">Tags</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/Airtest/" title="Airtest">Airtest<sup>1</sup></a></li>
+		
+			<li><a href="/tags/DNS/" title="DNS">DNS<sup>1</sup></a></li>
+		
+			<li><a href="/tags/GitLab/" title="GitLab">GitLab<sup>1</sup></a></li>
+		
+			<li><a href="/tags/K8s/" title="K8s">K8s<sup>10</sup></a></li>
+		
+			<li><a href="/tags/Linux/" title="Linux">Linux<sup>1</sup></a></li>
+		
+			<li><a href="/tags/MongoDB/" title="MongoDB">MongoDB<sup>2</sup></a></li>
+		
+			<li><a href="/tags/OpenWrt/" title="OpenWrt">OpenWrt<sup>1</sup></a></li>
+		
+			<li><a href="/tags/Python/" title="Python">Python<sup>2</sup></a></li>
+		
+			<li><a href="/tags/RabbitMQ/" title="RabbitMQ">RabbitMQ<sup>1</sup></a></li>
+		
+			<li><a href="/tags/bash/" title="bash">bash<sup>1</sup></a></li>
+		
+			<li><a href="/tags/calico/" title="calico">calico<sup>1</sup></a></li>
+		
+			<li><a href="/tags/cdn/" title="cdn">cdn<sup>1</sup></a></li>
+		
+			<li><a href="/tags/docker/" title="docker">docker<sup>3</sup></a></li>
+		
+			<li><a href="/tags/docker-registry/" title="docker registry">docker registry<sup>1</sup></a></li>
+		
+			<li><a href="/tags/elasticsearch/" title="elasticsearch">elasticsearch<sup>4</sup></a></li>
+		
+			<li><a href="/tags/elk/" title="elk">elk<sup>3</sup></a></li>
+		
+			<li><a href="/tags/java/" title="java">java<sup>1</sup></a></li>
+		
+			<li><a href="/tags/k8s/" title="k8s">k8s<sup>4</sup></a></li>
+		
+			<li><a href="/tags/kubernetes/" title="kubernetes">kubernetes<sup>1</sup></a></li>
+		
+			<li><a href="/tags/nginx/" title="nginx">nginx<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">Links</p>
+    <ul>
+      <li><a href="http://www.v2ex.com/?r=zong400" target="_blank" title="V2EX">V2EX</a></li>
+      <li><a href="http://hexo.io" target="_blank" title="Hexo">Hexo</a></li>
+	  <li><a href="https://promotion.aliyun.com/ntms/yunparter/invite.html?userCode=s0bh6uzq" target="_blank" title="阿里云">阿里云</a></li>
+	  <li><a href="https://cloud.tencent.com/redirect.php?redirect=1014&cps_key=5bd9deb84d4d9f34b65fb934e12d03e3&from=console" target="_blank" title="腾讯云">腾讯云</a></li>
+    </ul>
+</div>
+
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+	</div>
+		<p class="copyright">Hosted by <a href="https://github.com/" target="_blank" title="GitHub Pages">GitHub Pages</a></p>
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wizicer/iceman" target="_blank" title="Iceman">Iceman</a> © 2022 
+		
+		<a href="http://www.lstop.pub" target="_blank" title="Zong">Zong</a>
+		
+		</p>
+</div>
+</footer>
+    <script src="//cdn.staticfile.org/jquery/2.1.0/jquery.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+
+
+
+  </body>
+</html>
+

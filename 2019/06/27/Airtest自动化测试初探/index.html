@@ -1,7 +1,7 @@
 
  <!DOCTYPE HTML>
-<html>
-<head><meta name="generator" content="Hexo 3.9.0">
+<html >
+<head>
   <meta charset="UTF-8">
   
     <title>Airtest自动化测试初探 | Zong&#39;s blog</title>
@@ -25,9 +25,11 @@
     <link rel="apple-touch-icon" href="/img/pacman.jpg">
     <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
     
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-</html>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
   <body>
     <header>
       <div>
@@ -94,7 +96,7 @@
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#安装和配置手机"><span class="toc-number">1.</span> <span class="toc-text">安装和配置手机</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#界面"><span class="toc-number">2.</span> <span class="toc-text">界面</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#touch"><span class="toc-number">2.1.</span> <span class="toc-text">touch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#swipe"><span class="toc-number">2.2.</span> <span class="toc-text">swipe</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#实际测试"><span class="toc-number">3.</span> <span class="toc-text">实际测试</span></a></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E5%92%8C%E9%85%8D%E7%BD%AE%E6%89%8B%E6%9C%BA"><span class="toc-number">1.</span> <span class="toc-text">安装和配置手机</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%95%8C%E9%9D%A2"><span class="toc-number">2.</span> <span class="toc-text">界面</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#touch"><span class="toc-number">2.1.</span> <span class="toc-text">touch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#swipe"><span class="toc-number">2.2.</span> <span class="toc-text">swipe</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%9E%E9%99%85%E6%B5%8B%E8%AF%95"><span class="toc-number">3.</span> <span class="toc-text">实际测试</span></a></li></ol>
 		</div>
 		
 		<p>Airtest是网易游戏内部工具团队开放出来的一个自动化测试工具，AirtestIDE 是一个跨平台的UI自动化测试编辑器，适用于游戏和App。</p>
@@ -104,7 +106,7 @@
 <li>支持基于UI控件搜索的Poco框架，适用于Unity3d，Cocos2d与Android App</li>
 <li>访问官网通过视频查看更多特性</li>
 </ul>
-<p>这里是<a href="https://airtest.netease.com/docs/docs_AirtestIDE-zh_CN/index.html" target="_blank" rel="noopener">官方doc</a><br>最近接触了一下测试工作，所以对自动化测试这个领域有点好奇，就上网找了一下，发现这个貌似不错，接下来试用一下。</p>
+<p>这里是<a target="_blank" rel="noopener" href="https://airtest.netease.com/docs/docs_AirtestIDE-zh_CN/index.html">官方doc</a><br>最近接触了一下测试工作，所以对自动化测试这个领域有点好奇，就上网找了一下，发现这个貌似不错，接下来试用一下。</p>
 <h1 id="安装和配置手机"><a href="#安装和配置手机" class="headerlink" title="安装和配置手机"></a>安装和配置手机</h1><p>软件是绿色版，解压就能用，这个点赞<br>配置手机比较复杂一点，大致分几步：</p>
 <ol>
 <li>安卓需要打开USB调试，这个各个品牌不一样，自己上网搜一下。</li>
@@ -112,14 +114,14 @@
 <li>手机用USB线连电脑并确认授权</li>
 <li>Airtest会在手机上安装一些软件，poco和输入法</li>
 </ol>
-<p>详细步骤看<a href="https://airtest.netease.com/docs/docs_AirtestIDE-zh_CN/2_device_connection/1_android_phone_connection.html" target="_blank" rel="noopener">这里</a></p>
+<p>详细步骤看<a target="_blank" rel="noopener" href="https://airtest.netease.com/docs/docs_AirtestIDE-zh_CN/2_device_connection/1_android_phone_connection.html">这里</a></p>
 <h1 id="界面"><a href="#界面" class="headerlink" title="界面"></a>界面</h1><p>左侧这里是Airtest辅助窗，上面是动作按钮，基本上就靠这些动作组合完成自动化测试，比如点击、拖拉、对比等。<br><img src="http://qnimg.banxiaoer.net/yw/airtest/airtest%E8%BE%85%E5%8A%A9%E7%AA%97.jpg_blog640.jpg" alt="airtest辅助窗"></p>
 <h2 id="touch"><a href="#touch" class="headerlink" title="touch"></a>touch</h2><p>点击动作，平常的点按钮，点APP<br>方法参数可以是个图片，代码长这样：<br><img src="http://qnimg.banxiaoer.net/yw/airtest/touch.jpg_blog640.jpg" alt="touch"></p>
 <h2 id="swipe"><a href="#swipe" class="headerlink" title="swipe"></a>swipe</h2><p>拖放操作，可以利用截图或者坐标轴定位</p>
 <p>还有其他动作没细测。</p>
 <h1 id="实际测试"><a href="#实际测试" class="headerlink" title="实际测试"></a>实际测试</h1><p>打开一个微信小程序，进行一定操作<br><img src="http://qnimg.banxiaoer.net/yw/airtest/bate1.gifairtest%E6%B5%8B%E8%AF%95.gif" alt="wx"></p>
 <p>输入文本那里有点小问题，不过这个自动化测试体验还算顺利，脚本类似python形式，以后可以深入研究一下。</p>
-<p>参考链接：<br><a href="https://testerhome.com/topics/14736" target="_blank" rel="noopener">使用 Airtest 进行微信小程序自动化测试 (Android &amp; iOS)</a><br><a href="https://testerhome.com/topics/12265" target="_blank" rel="noopener">网易游戏新开源的 UI 自动化测试项目 [Airtest Project]</a><br><a href="https://airtest.netease.com/docs/docs_AirtestIDE-zh_CN/index.html" target="_blank" rel="noopener">官方doc</a></p>
+<p>参考链接：<br><a target="_blank" rel="noopener" href="https://testerhome.com/topics/14736">使用 Airtest 进行微信小程序自动化测试 (Android &amp; iOS)</a><br><a target="_blank" rel="noopener" href="https://testerhome.com/topics/12265">网易游戏新开源的 UI 自动化测试项目 [Airtest Project]</a><br><a target="_blank" rel="noopener" href="https://airtest.netease.com/docs/docs_AirtestIDE-zh_CN/index.html">官方doc</a></p>
   
 	</div>
 		<footer class="article-footer clearfix">
@@ -132,14 +134,14 @@
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/测试/">测试</a>
+  <a class="article-category-link" href="/categories/%E6%B5%8B%E8%AF%95/">测试</a>
 </div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://www.lstop.pub/2019/06/27/Airtest自动化测试初探/" data-title="Airtest自动化测试初探 | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  <div data-url="http://www.lstop.pub/2019/06/27/Airtest%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8B%E8%AF%95%E5%88%9D%E6%8E%A2/" data-title="Airtest自动化测试初探 | Zong&#39;s blog" data-tsina="" class="share clearfix">
   </div>
 
 </div>
@@ -173,7 +175,7 @@
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#安装和配置手机"><span class="toc-number">1.</span> <span class="toc-text">安装和配置手机</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#界面"><span class="toc-number">2.</span> <span class="toc-text">界面</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#touch"><span class="toc-number">2.1.</span> <span class="toc-text">touch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#swipe"><span class="toc-number">2.2.</span> <span class="toc-text">swipe</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#实际测试"><span class="toc-number">3.</span> <span class="toc-text">实际测试</span></a></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E5%92%8C%E9%85%8D%E7%BD%AE%E6%89%8B%E6%9C%BA"><span class="toc-number">1.</span> <span class="toc-text">安装和配置手机</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%95%8C%E9%9D%A2"><span class="toc-number">2.</span> <span class="toc-text">界面</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#touch"><span class="toc-number">2.1.</span> <span class="toc-text">touch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#swipe"><span class="toc-number">2.2.</span> <span class="toc-text">swipe</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%9E%E9%99%85%E6%B5%8B%E8%AF%95"><span class="toc-number">3.</span> <span class="toc-text">实际测试</span></a></li></ol>
   </div>
 
 <div id="asidepart">

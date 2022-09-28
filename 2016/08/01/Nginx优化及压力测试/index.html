@@ -1,7 +1,7 @@
 
  <!DOCTYPE HTML>
-<html>
-<head><meta name="generator" content="Hexo 3.9.0">
+<html >
+<head>
   <meta charset="UTF-8">
   
     <title>Nginx优化及压力测试 | Zong&#39;s blog</title>
@@ -22,9 +22,11 @@
     <link rel="apple-touch-icon" href="/img/pacman.jpg">
     <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
     
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-</html>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
   <body>
     <header>
       <div>
@@ -91,12 +93,12 @@
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#一、测试内容"><span class="toc-number">1.</span> <span class="toc-text">一、测试内容</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#二、测试方法"><span class="toc-number">2.</span> <span class="toc-text">二、测试方法</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#三、测试环境"><span class="toc-number">3.</span> <span class="toc-text">三、测试环境</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#四、参数及名词解析"><span class="toc-number">4.</span> <span class="toc-text">四、参数及名词解析</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#五、测试数据"><span class="toc-number">5.</span> <span class="toc-text">五、测试数据</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#测试一"><span class="toc-number">5.1.</span> <span class="toc-text">测试一</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#测试二"><span class="toc-number">5.2.</span> <span class="toc-text">测试二</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#测试三"><span class="toc-number">5.3.</span> <span class="toc-text">测试三</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#测试四"><span class="toc-number">5.4.</span> <span class="toc-text">测试四</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#六、结论"><span class="toc-number">6.</span> <span class="toc-text">六、结论</span></a></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%B5%8B%E8%AF%95%E5%86%85%E5%AE%B9"><span class="toc-number">1.</span> <span class="toc-text">一、测试内容</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E6%B5%8B%E8%AF%95%E6%96%B9%E6%B3%95"><span class="toc-number">2.</span> <span class="toc-text">二、测试方法</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E6%B5%8B%E8%AF%95%E7%8E%AF%E5%A2%83"><span class="toc-number">3.</span> <span class="toc-text">三、测试环境</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E5%8F%82%E6%95%B0%E5%8F%8A%E5%90%8D%E8%AF%8D%E8%A7%A3%E6%9E%90"><span class="toc-number">4.</span> <span class="toc-text">四、参数及名词解析</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E6%B5%8B%E8%AF%95%E6%95%B0%E6%8D%AE"><span class="toc-number">5.</span> <span class="toc-text">五、测试数据</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E4%B8%80"><span class="toc-number">5.1.</span> <span class="toc-text">测试一</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E4%BA%8C"><span class="toc-number">5.2.</span> <span class="toc-text">测试二</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E4%B8%89"><span class="toc-number">5.3.</span> <span class="toc-text">测试三</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E5%9B%9B"><span class="toc-number">5.4.</span> <span class="toc-text">测试四</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E7%BB%93%E8%AE%BA"><span class="toc-number">6.</span> <span class="toc-text">六、结论</span></a></li></ol>
 		</div>
 		
 		<h1 id="一、测试内容"><a href="#一、测试内容" class="headerlink" title="一、测试内容"></a>一、测试内容</h1><p>本次压力测试针对微校平台的nginx前端处理能力进行，评估nginx处理吞吐量</p>
 <h1 id="二、测试方法"><a href="#二、测试方法" class="headerlink" title="二、测试方法"></a>二、测试方法</h1><p>测试方法采用apache ab软件，在3台client发起对单一nginx服务的压测，模拟大并发html访问。<br>每个client启动500并发，发起50000次请求。每次测试总共处理1500并发，150000次请求。<br>ab命令：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ab -n 50000 -c 500 http://10.136.50.242/mmts/ab.html</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ab -n 50000 -c 500 http://10.136.50.242/mmts/ab.html</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <h1 id="三、测试环境"><a href="#三、测试环境" class="headerlink" title="三、测试环境"></a>三、测试环境</h1><p>所有测试服务器都是金山云虚拟主机<br>Nginx服务器：wx-dev-web，2核cpu，4g内存<br>Client服务器：wx-dev-test01，wx-dev-test02，wx-dev-officia，每服务器2核cpu，4g内存<br>网络带宽：千兆内网</p>
 <h1 id="四、参数及名词解析"><a href="#四、参数及名词解析" class="headerlink" title="四、参数及名词解析"></a>四、参数及名词解析</h1><ol>
@@ -105,8 +107,8 @@
 <blockquote>
 <ul>
 <li>Requests per second（QPS）：吞吐量，即每秒处理请求的数量。</li>
-<li>Transfer rate：传输流量，单位KB/s，反映网络传输压力</li>
-<li>统计均值：取每次测试样本的三个host的和除以样本数，取得的均值，公式：（样本1+样本2+样本3）/3</li>
+<li>Transfer rate：传输流量，单位KB&#x2F;s，反映网络传输压力</li>
+<li>统计均值：取每次测试样本的三个host的和除以样本数，取得的均值，公式：（样本1+样本2+样本3）&#x2F;3</li>
 </ul>
 </blockquote>
 <ol start="2">
@@ -117,7 +119,7 @@
 <li>worker_processes：nginx 进程数，建议按照cpu 数目来指定。</li>
 <li>worker_cpu_affinity：为每个进程分配cpu。</li>
 <li>worker_rlimit_nofile：一个nginx 进程打开的最多文件描述符数目，使用系统参数ulimit -n指定也可以。</li>
-<li>use epoll：使用epoll 的I/O 模型，Linux内核2.6版本及以后的系统推荐使用。</li>
+<li>use epoll：使用epoll 的I&#x2F;O 模型，Linux内核2.6版本及以后的系统推荐使用。</li>
 <li>worker_connections：每个进程允许的最多连接数， 理论上每台nginx 服务器的最大连接数为worker_processes*worker_connections</li>
 <li>accept_mutex：一个请求到达后，由所有worker争抢还是指定worker处理。</li>
 <li>access_log off：关闭access log写入，能减少一点io等待压力。</li>
@@ -158,7 +160,7 @@
 <th>Max</th>
 <th>Error %</th>
 <th>Throughput</th>
-<th>KB/sec</th>
+<th>KB&#x2F;sec</th>
 </tr>
 </thead>
 <tbody><tr>
@@ -247,7 +249,7 @@
 <th>Max</th>
 <th>Error %</th>
 <th>Throughput</th>
-<th>KB/sec</th>
+<th>KB&#x2F;sec</th>
 </tr>
 </thead>
 <tbody><tr>
@@ -322,12 +324,12 @@
 </tr>
 </tbody></table>
 <p>nginx参数文件：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line">#user  nobody;</span><br><span class="line">worker_processes  2;</span><br><span class="line">#error_log  logs/error.log;</span><br><span class="line">error_log  logs/error.log  notice;</span><br><span class="line">#error_log  logs/error.log  info;</span><br><span class="line">#pid        logs/nginx.pid;</span><br><span class="line">events &#123;</span><br><span class="line">    use epoll;</span><br><span class="line">    worker_connections  65530;</span><br><span class="line">    accept_mutex off;</span><br><span class="line">&#125;</span><br><span class="line">http &#123;</span><br><span class="line">        include       /usr/sbin/nginx/conf/mime.types;</span><br><span class="line">        default_type  application/octet-stream;</span><br><span class="line">    #lua_package_path &apos;/usr/sbin/nginx/lua/?.lua;;/path/to/lua-resty-kafka/lib/?.lua;;/path/to/lua-resty-redis/lib/?.lua;;&apos;;</span><br><span class="line">    #access_log logs/access.log;</span><br><span class="line">    access_log off;</span><br><span class="line">    error_log off;</span><br><span class="line">        </span><br><span class="line">    #General Options</span><br><span class="line">    </span><br><span class="line">    server_names_hash_bucket_size 128;</span><br><span class="line">    client_header_buffer_size 64k;</span><br><span class="line">    large_client_header_buffers 4 128k;</span><br><span class="line">    server_tokens off;</span><br><span class="line">    ignore_invalid_headers   on;</span><br><span class="line">    recursive_error_pages    on;</span><br><span class="line">    server_name_in_redirect off; </span><br><span class="line">    #</span><br><span class="line">    sendfile        on;</span><br><span class="line">    </span><br><span class="line">    #TCP Options</span><br><span class="line">    tcp_nopush  on;</span><br><span class="line">    tcp_nodelay on;</span><br><span class="line">     </span><br><span class="line">    keepalive_timeout  65;</span><br><span class="line">    #size limits</span><br><span class="line">    gzip on;</span><br><span class="line">    gzip_min_length  1k;</span><br><span class="line">    gzip_buffers     4 16k;</span><br><span class="line">    gzip_http_version 1.0;</span><br><span class="line">    gzip_comp_level 2;</span><br><span class="line">    gzip_types       text/plain application/x-javascript text/css application/xml;</span><br><span class="line">    gzip_vary on;</span><br><span class="line">    #cache begin</span><br><span class="line">    proxy_buffering on;</span><br><span class="line">    proxy_cache_valid any 10m;</span><br><span class="line">    proxy_cache_path /data/nginxcache levels=1:2 keys_zone=ng-cache:8m max_size=1000m inactive=600m;</span><br><span class="line">    proxy_temp_path /data/nginxtemp;</span><br><span class="line">    proxy_buffer_size 4k;</span><br><span class="line">    proxy_buffers 100 8k;</span><br><span class="line">    open_file_cache max=65535 inactive=60s;</span><br><span class="line">    open_file_cache_valid 80s;</span><br><span class="line">    open_file_cache_min_uses 1;</span><br><span class="line">        server &#123;</span><br><span class="line">                listen       80;</span><br><span class="line">                server_name  localhost;</span><br><span class="line">                location / &#123;</span><br><span class="line">                    index  index.html index.htm;</span><br><span class="line">                    root  /data/nginx/html/;</span><br><span class="line">                    proxy_cache ng-cache;</span><br><span class="line">                    proxy_cache_valid 200 1h;</span><br><span class="line">                    #aio threads;</span><br><span class="line">                &#125;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line">#user  nobody;</span><br><span class="line">worker_processes  2;</span><br><span class="line">#error_log  logs/error.log;</span><br><span class="line">error_log  logs/error.log  notice;</span><br><span class="line">#error_log  logs/error.log  info;</span><br><span class="line">#pid        logs/nginx.pid;</span><br><span class="line">events &#123;</span><br><span class="line">    use epoll;</span><br><span class="line">    worker_connections  65530;</span><br><span class="line">    accept_mutex off;</span><br><span class="line">&#125;</span><br><span class="line">http &#123;</span><br><span class="line">        include       /usr/sbin/nginx/conf/mime.types;</span><br><span class="line">        default_type  application/octet-stream;</span><br><span class="line">    #lua_package_path &#x27;/usr/sbin/nginx/lua/?.lua;;/path/to/lua-resty-kafka/lib/?.lua;;/path/to/lua-resty-redis/lib/?.lua;;&#x27;;</span><br><span class="line">    #access_log logs/access.log;</span><br><span class="line">    access_log off;</span><br><span class="line">    error_log off;</span><br><span class="line">        </span><br><span class="line">    #General Options</span><br><span class="line">    </span><br><span class="line">    server_names_hash_bucket_size 128;</span><br><span class="line">    client_header_buffer_size 64k;</span><br><span class="line">    large_client_header_buffers 4 128k;</span><br><span class="line">    server_tokens off;</span><br><span class="line">    ignore_invalid_headers   on;</span><br><span class="line">    recursive_error_pages    on;</span><br><span class="line">    server_name_in_redirect off; </span><br><span class="line">    #</span><br><span class="line">    sendfile        on;</span><br><span class="line">    </span><br><span class="line">    #TCP Options</span><br><span class="line">    tcp_nopush  on;</span><br><span class="line">    tcp_nodelay on;</span><br><span class="line">     </span><br><span class="line">    keepalive_timeout  65;</span><br><span class="line">    #size limits</span><br><span class="line">    gzip on;</span><br><span class="line">    gzip_min_length  1k;</span><br><span class="line">    gzip_buffers     4 16k;</span><br><span class="line">    gzip_http_version 1.0;</span><br><span class="line">    gzip_comp_level 2;</span><br><span class="line">    gzip_types       text/plain application/x-javascript text/css application/xml;</span><br><span class="line">    gzip_vary on;</span><br><span class="line">    #cache begin</span><br><span class="line">    proxy_buffering on;</span><br><span class="line">    proxy_cache_valid any 10m;</span><br><span class="line">    proxy_cache_path /data/nginxcache levels=1:2 keys_zone=ng-cache:8m max_size=1000m inactive=600m;</span><br><span class="line">    proxy_temp_path /data/nginxtemp;</span><br><span class="line">    proxy_buffer_size 4k;</span><br><span class="line">    proxy_buffers 100 8k;</span><br><span class="line">    open_file_cache max=65535 inactive=60s;</span><br><span class="line">    open_file_cache_valid 80s;</span><br><span class="line">    open_file_cache_min_uses 1;</span><br><span class="line">        server &#123;</span><br><span class="line">                listen       80;</span><br><span class="line">                server_name  localhost;</span><br><span class="line">                location / &#123;</span><br><span class="line">                    index  index.html index.htm;</span><br><span class="line">                    root  /data/nginx/html/;</span><br><span class="line">                    proxy_cache ng-cache;</span><br><span class="line">                    proxy_cache_valid 200 1h;</span><br><span class="line">                    #aio threads;</span><br><span class="line">                &#125;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>OS内核参数:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">net.ipv4.tcp_keepalive_time = 600</span><br><span class="line">net.ipv4.ip_local_port_range = 1024 65535</span><br><span class="line">net.ipv4.tcp_tw_reuse = 1</span><br><span class="line">net.ipv4.tcp_tw_recycle = 1</span><br><span class="line">net.ipv4.tcp_fin_timeout = 30</span><br><span class="line">net.ipv4.tcp_mem = 786432 1048576 1572864</span><br><span class="line">net.core.wmem_max = 873200</span><br><span class="line">net.core.rmem_max = 873200</span><br><span class="line">net.core.somaxconn = 262144 </span><br><span class="line">net.ipv4.tcp_wmem = 8192 436600 873200</span><br><span class="line">net.ipv4.tcp_rmem = 32768 436600 873200</span><br><span class="line">net.ipv4.tcp_max_syn_backlog = 2048</span><br><span class="line">net.ipv4.tcp_retries2 = 3</span><br><span class="line">net.ipv4.tcp_keepalive_intvl = 30</span><br><span class="line">net.ipv4.tcp_keepalive_probes = 3</span><br><span class="line">net.core.netdev_max_backlog = 262144</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">net.ipv4.tcp_keepalive_time = 600</span><br><span class="line">net.ipv4.ip_local_port_range = 1024 65535</span><br><span class="line">net.ipv4.tcp_tw_reuse = 1</span><br><span class="line">net.ipv4.tcp_tw_recycle = 1</span><br><span class="line">net.ipv4.tcp_fin_timeout = 30</span><br><span class="line">net.ipv4.tcp_mem = 786432 1048576 1572864</span><br><span class="line">net.core.wmem_max = 873200</span><br><span class="line">net.core.rmem_max = 873200</span><br><span class="line">net.core.somaxconn = 262144 </span><br><span class="line">net.ipv4.tcp_wmem = 8192 436600 873200</span><br><span class="line">net.ipv4.tcp_rmem = 32768 436600 873200</span><br><span class="line">net.ipv4.tcp_max_syn_backlog = 2048</span><br><span class="line">net.ipv4.tcp_retries2 = 3</span><br><span class="line">net.ipv4.tcp_keepalive_intvl = 30</span><br><span class="line">net.ipv4.tcp_keepalive_probes = 3</span><br><span class="line">net.core.netdev_max_backlog = 262144</span><br></pre></td></tr></table></figure>
 
-<h2 id="测试三"><a href="#测试三" class="headerlink" title="测试三"></a>测试三</h2><p>不使用apt的nginx，使用源码编译nginx，加入CPU，gcc等编译优化，增加Google tcmollac支持，nginx参数使用测试二参数。<br>测试使用的参数文件见测试二，Google tcmollac是一个内存分配器，管理堆内存，主要影响malloc和free，用于降低频繁分配、释放内存造成的性能损耗，并且有效地控制内存碎片。使用tcmollac代替glibc默认的内存管理能提升nginx的内存使用效率。<br>参考链接：<a href="http://blog.itpub.net/29510932/viewspace-1130106" target="_blank" rel="noopener">Nginx和TCMalloc</a><br>从结果看，QPS有约7%提升，同时CPU消耗稍稍下降。</p>
+<h2 id="测试三"><a href="#测试三" class="headerlink" title="测试三"></a>测试三</h2><p>不使用apt的nginx，使用源码编译nginx，加入CPU，gcc等编译优化，增加Google tcmollac支持，nginx参数使用测试二参数。<br>测试使用的参数文件见测试二，Google tcmollac是一个内存分配器，管理堆内存，主要影响malloc和free，用于降低频繁分配、释放内存造成的性能损耗，并且有效地控制内存碎片。使用tcmollac代替glibc默认的内存管理能提升nginx的内存使用效率。<br>参考链接：<a target="_blank" rel="noopener" href="http://blog.itpub.net/29510932/viewspace-1130106">Nginx和TCMalloc</a><br>从结果看，QPS有约7%提升，同时CPU消耗稍稍下降。</p>
 <table>
 <thead>
 <tr>
@@ -342,7 +344,7 @@
 <th>Max</th>
 <th>Error %</th>
 <th>Throughput</th>
-<th>KB/sec</th>
+<th>KB&#x2F;sec</th>
 </tr>
 </thead>
 <tbody><tr>
@@ -431,7 +433,7 @@
 <th>Max</th>
 <th>Error %</th>
 <th>Throughput</th>
-<th>KB/sec</th>
+<th>KB&#x2F;sec</th>
 </tr>
 </thead>
 <tbody><tr>
@@ -520,7 +522,7 @@
 <th>Max</th>
 <th>Error %</th>
 <th>Throughput</th>
-<th>KB/sec</th>
+<th>KB&#x2F;sec</th>
 </tr>
 </thead>
 <tbody><tr>
@@ -599,7 +601,7 @@
 <li>并发继续增大后nginx遇到的第一个瓶颈在CPU。</li>
 <li>使用源码进行重新编译nginx可以使性能得到有效提升。</li>
 <li>taobao tengine性能提升在此次测试环境没有特别明显，但是动态加载模块在运维中有实际意义。</li>
-<li>有技术文档提到nginx1.9新版本支持SO_REUSEPORT 特性，性能比传统方式提高2倍，需要linux 3.9版本内核才支持，待测试。参考链接：<a href="http://www.oschina.net/translate/socket-sharding-nginx-release-1-9-1?print" target="_blank" rel="noopener">NGINX 1.9.1 中的 Socket 切分</a></li>
+<li>有技术文档提到nginx1.9新版本支持SO_REUSEPORT 特性，性能比传统方式提高2倍，需要linux 3.9版本内核才支持，待测试。参考链接：<a target="_blank" rel="noopener" href="http://www.oschina.net/translate/socket-sharding-nginx-release-1-9-1?print">NGINX 1.9.1 中的 Socket 切分</a></li>
 </ul>
   
 	</div>
@@ -613,14 +615,14 @@
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/运维/">运维</a>
+  <a class="article-category-link" href="/categories/%E8%BF%90%E7%BB%B4/">运维</a>
 </div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://www.lstop.pub/2016/08/01/Nginx优化及压力测试/" data-title="Nginx优化及压力测试 | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  <div data-url="http://www.lstop.pub/2016/08/01/Nginx%E4%BC%98%E5%8C%96%E5%8F%8A%E5%8E%8B%E5%8A%9B%E6%B5%8B%E8%AF%95/" data-title="Nginx优化及压力测试 | Zong&#39;s blog" data-tsina="" class="share clearfix">
   </div>
 
 </div>
@@ -654,7 +656,7 @@
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#一、测试内容"><span class="toc-number">1.</span> <span class="toc-text">一、测试内容</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#二、测试方法"><span class="toc-number">2.</span> <span class="toc-text">二、测试方法</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#三、测试环境"><span class="toc-number">3.</span> <span class="toc-text">三、测试环境</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#四、参数及名词解析"><span class="toc-number">4.</span> <span class="toc-text">四、参数及名词解析</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#五、测试数据"><span class="toc-number">5.</span> <span class="toc-text">五、测试数据</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#测试一"><span class="toc-number">5.1.</span> <span class="toc-text">测试一</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#测试二"><span class="toc-number">5.2.</span> <span class="toc-text">测试二</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#测试三"><span class="toc-number">5.3.</span> <span class="toc-text">测试三</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#测试四"><span class="toc-number">5.4.</span> <span class="toc-text">测试四</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#六、结论"><span class="toc-number">6.</span> <span class="toc-text">六、结论</span></a></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%B5%8B%E8%AF%95%E5%86%85%E5%AE%B9"><span class="toc-number">1.</span> <span class="toc-text">一、测试内容</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E6%B5%8B%E8%AF%95%E6%96%B9%E6%B3%95"><span class="toc-number">2.</span> <span class="toc-text">二、测试方法</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E6%B5%8B%E8%AF%95%E7%8E%AF%E5%A2%83"><span class="toc-number">3.</span> <span class="toc-text">三、测试环境</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E5%8F%82%E6%95%B0%E5%8F%8A%E5%90%8D%E8%AF%8D%E8%A7%A3%E6%9E%90"><span class="toc-number">4.</span> <span class="toc-text">四、参数及名词解析</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E6%B5%8B%E8%AF%95%E6%95%B0%E6%8D%AE"><span class="toc-number">5.</span> <span class="toc-text">五、测试数据</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E4%B8%80"><span class="toc-number">5.1.</span> <span class="toc-text">测试一</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E4%BA%8C"><span class="toc-number">5.2.</span> <span class="toc-text">测试二</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E4%B8%89"><span class="toc-number">5.3.</span> <span class="toc-text">测试三</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E5%9B%9B"><span class="toc-number">5.4.</span> <span class="toc-text">测试四</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E7%BB%93%E8%AE%BA"><span class="toc-number">6.</span> <span class="toc-text">六、结论</span></a></li></ol>
   </div>
 
 <div id="asidepart">

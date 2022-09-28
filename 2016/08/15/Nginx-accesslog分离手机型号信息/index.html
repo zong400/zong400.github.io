@@ -1,7 +1,7 @@
 
  <!DOCTYPE HTML>
-<html>
-<head><meta name="generator" content="Hexo 3.9.0">
+<html >
+<head>
   <meta charset="UTF-8">
   
     <title>Nginx accesslog分离手机型号信息 | Zong&#39;s blog</title>
@@ -21,9 +21,11 @@
     <link rel="apple-touch-icon" href="/img/pacman.jpg">
     <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
     
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-</html>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
   <body>
     <header>
       <div>
@@ -94,38 +96,38 @@
 		</div>
 		
 		<p>最近在玩elk，虽然没有自己搭建环境，但在配置收集log方面也有一些小心得值得记录一下。<br>今天先记录一下这个，就是把access log里面http_user_agent字段中关于手机型号的信息分离出来，新增一个字段。<br>首先，为了把nginx的access log导入elk，已经对其格式进行了json化：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;@timestamp&quot;: &quot;2016-08-15T09:58:54+08:00&quot;,</span><br><span class="line">    &quot;remote_addr&quot;: &quot;117.25.139.53&quot;,</span><br><span class="line">    &quot;remote_user&quot;: &quot;-&quot;,</span><br><span class="line">    &quot;body_bytes_sent&quot;: 87,</span><br><span class="line">    &quot;request_time&quot;: 0.089,</span><br><span class="line">    &quot;status&quot;: &quot;200&quot;,</span><br><span class="line">    &quot;request&quot;: &quot;POST /index.html&quot;,</span><br><span class="line">    &quot;request_method&quot;: &quot;POST&quot;,</span><br><span class="line">    &quot;http_referrer&quot;: &quot;http://www.lstop.pub/index.html&quot;,</span><br><span class="line">    &quot;http_x_forwarded_for&quot;: &quot;125.93.83.94&quot;,</span><br><span class="line">    &quot;http_x_real_ip&quot;: &quot;125.93.83.94&quot;,</span><br><span class="line">    &quot;bytes_sent&quot;: 256,</span><br><span class="line">    &quot;upstream_response_time&quot;: 0.089,</span><br><span class="line">    &quot;http_user_agent&quot;: &quot;Mozilla/5.0 (Linux; Android 5.1; OPPO R9tm Build/LMY47I) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/37.0.0.0 Mobile MQQBrowser/6.2 TBS/036555 Safari/537.36 MicroMessenger/6.3.23.840 NetType/WIFI Language/zh_CN&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;@timestamp&quot;: &quot;2016-08-15T09:58:54+08:00&quot;,</span><br><span class="line">    &quot;remote_addr&quot;: &quot;117.25.139.53&quot;,</span><br><span class="line">    &quot;remote_user&quot;: &quot;-&quot;,</span><br><span class="line">    &quot;body_bytes_sent&quot;: 87,</span><br><span class="line">    &quot;request_time&quot;: 0.089,</span><br><span class="line">    &quot;status&quot;: &quot;200&quot;,</span><br><span class="line">    &quot;request&quot;: &quot;POST /index.html&quot;,</span><br><span class="line">    &quot;request_method&quot;: &quot;POST&quot;,</span><br><span class="line">    &quot;http_referrer&quot;: &quot;http://www.lstop.pub/index.html&quot;,</span><br><span class="line">    &quot;http_x_forwarded_for&quot;: &quot;125.93.83.94&quot;,</span><br><span class="line">    &quot;http_x_real_ip&quot;: &quot;125.93.83.94&quot;,</span><br><span class="line">    &quot;bytes_sent&quot;: 256,</span><br><span class="line">    &quot;upstream_response_time&quot;: 0.089,</span><br><span class="line">    &quot;http_user_agent&quot;: &quot;Mozilla/5.0 (Linux; Android 5.1; OPPO R9tm Build/LMY47I) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/37.0.0.0 Mobile MQQBrowser/6.2 TBS/036555 Safari/537.36 MicroMessenger/6.3.23.840 NetType/WIFI Language/zh_CN&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>可以看到，如果访问的客户端是手机的话，user agent是这么一大串</p>
 <blockquote>
-<p>“http_user_agent”: “Mozilla/5.0 (Linux; Android 5.1; OPPO R9tm Build/LMY47I) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/37.0.0.0 Mobile MQQBrowser/6.2 TBS/036555 Safari/537.36 MicroMessenger/6.3.23.840 NetType/WIFI Language/zh_CN”</p>
+<p>“http_user_agent”: “Mozilla&#x2F;5.0 (Linux; Android 5.1; OPPO R9tm Build&#x2F;LMY47I) AppleWebKit&#x2F;537.36 (KHTML, like Gecko) Version&#x2F;4.0 Chrome&#x2F;37.0.0.0 Mobile MQQBrowser&#x2F;6.2 TBS&#x2F;036555 Safari&#x2F;537.36 MicroMessenger&#x2F;6.3.23.840 NetType&#x2F;WIFI Language&#x2F;zh_CN”</p>
 </blockquote>
 <p>我们要的是这些</p>
 <blockquote>
-<p>Android 5.1; OPPO R9tm Build/LMY47I</p>
+<p>Android 5.1; OPPO R9tm Build&#x2F;LMY47I</p>
 </blockquote>
 <p>总体思路是用sed，截取需要的信息，在json文档添加一个新字段phoneType</p>
 <p>截取信息正则表达式当然是首选，一开始写了这个单纯的正则式<br>Android或iPhone OS开头，到第一个”)”，不包括”)”，测试完美匹配。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(Android|iPhone OS).+?(?=\))</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(Android|iPhone OS).+?(?=\))</span><br></pre></td></tr></table></figure>
 
 <p>坑爹的事开始来了，sed不支持懒惰匹配。。那零宽断言也没用了。。<br>好吧，变成简单的，这个残缺美。。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(Android|iPhone OS).+AppleWebKit</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(Android|iPhone OS).+AppleWebKit</span><br></pre></td></tr></table></figure>
 
 <p>丑了点，关键能用，匹配出来了</p>
 <blockquote>
-<p>Android 5.1; OPPO R9tm Build/LMY47I) AppleWebKit</p>
+<p>Android 5.1; OPPO R9tm Build&#x2F;LMY47I) AppleWebKit</p>
 </blockquote>
 <p>好，坑爹之二，圆括号太多，正则式的圆括号在sed命令死活写不正确，干脆分两条了<br>进一步丑</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Android.+AppleWebKit</span><br><span class="line">iPhone.+AppleWebKit</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Android.+AppleWebKit</span><br><span class="line">iPhone.+AppleWebKit</span><br></pre></td></tr></table></figure>
 
 <p>经过两个坑后，可以进行下一步<br>因为是新增一个phoneType字段，就要重新组装access log。<br>使用sed的圆括号特性:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&quot;s/(^.*)(regexp)(.*)(\&#125;$)/\1\2\3\2\4/g&quot;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&quot;s/(^.*)(regexp)(.*)(\&#125;$)/\1\2\3\2\4/g&quot;</span><br></pre></td></tr></table></figure>
 
 <p>最终命令</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tail -F /var/log/nginx/access_www_weixiao100.log|sed -r -e &quot;s/: -/: 0/g&quot; -e &quot;s/(^.*)(Android.+ AppleWebKit)(.*)(\&#125;$)/\1\2\3,\&quot;phoneType\&quot;:\&quot;\2\&quot;\4/g&quot; -e &quot;s/(^.*)(iPhone.+ AppleWebKit)(.*)(\&#125;$)/\1\2\3,\&quot;phoneType\&quot;:\&quot;\2\&quot;\4/g&quot; | sudo filebeat.sh -c /etc/filebeat/filebeat-nginx.yml  &amp;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tail -F /var/log/nginx/access_www_weixiao100.log|sed -r -e &quot;s/: -/: 0/g&quot; -e &quot;s/(^.*)(Android.+ AppleWebKit)(.*)(\&#125;$)/\1\2\3,\&quot;phoneType\&quot;:\&quot;\2\&quot;\4/g&quot; -e &quot;s/(^.*)(iPhone.+ AppleWebKit)(.*)(\&#125;$)/\1\2\3,\&quot;phoneType\&quot;:\&quot;\2\&quot;\4/g&quot; | sudo filebeat.sh -c /etc/filebeat/filebeat-nginx.yml  &amp;</span><br></pre></td></tr></table></figure>
 
 <p>结果长这样，可以很好的导入elk，对手机型号进行一些分析统计了！</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;@timestamp&quot;: &quot;2016-08-15T10:23:53+08:00&quot;,</span><br><span class="line">    &quot;remote_addr&quot;: &quot;117.25.139.52&quot;,</span><br><span class="line">    &quot;remote_user&quot;: &quot;-&quot;,</span><br><span class="line">    &quot;body_bytes_sent&quot;: 6550,</span><br><span class="line">    &quot;request_time&quot;: 0.004,</span><br><span class="line">    &quot;status&quot;: &quot;200&quot;,</span><br><span class="line">    &quot;request&quot;: &quot;GET /index.html HTTP/1.1&quot;,</span><br><span class="line">    &quot;request_method&quot;: &quot;GET&quot;,</span><br><span class="line">    &quot;http_referrer&quot;: &quot;http://www.lstop.pub/index.html&quot;,</span><br><span class="line">    &quot;http_x_forwarded_for&quot;: &quot;117.136.53.193&quot;,</span><br><span class="line">    &quot;http_x_real_ip&quot;: &quot;117.136.53.193&quot;,</span><br><span class="line">    &quot;bytes_sent&quot;: 6817,</span><br><span class="line">    &quot;upstream_response_time&quot;: 0.004,</span><br><span class="line">    &quot;http_user_agent&quot;: &quot;Mozilla/5.0 (Linux; Android 4.2.2; 2014011 Build/HM2014011) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/37.0.0.0 Mobile MQQBrowser/6.2 TBS/036519 Safari/537.36 MicroMessenger/6.3.22.821 NetType/cmnet Language/zh_CN&quot;,</span><br><span class="line">    &quot;phoneType&quot;: &quot;Android 4.2.2; 2014011 Build/HM2014011) AppleWebKit&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>  
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;@timestamp&quot;: &quot;2016-08-15T10:23:53+08:00&quot;,</span><br><span class="line">    &quot;remote_addr&quot;: &quot;117.25.139.52&quot;,</span><br><span class="line">    &quot;remote_user&quot;: &quot;-&quot;,</span><br><span class="line">    &quot;body_bytes_sent&quot;: 6550,</span><br><span class="line">    &quot;request_time&quot;: 0.004,</span><br><span class="line">    &quot;status&quot;: &quot;200&quot;,</span><br><span class="line">    &quot;request&quot;: &quot;GET /index.html HTTP/1.1&quot;,</span><br><span class="line">    &quot;request_method&quot;: &quot;GET&quot;,</span><br><span class="line">    &quot;http_referrer&quot;: &quot;http://www.lstop.pub/index.html&quot;,</span><br><span class="line">    &quot;http_x_forwarded_for&quot;: &quot;117.136.53.193&quot;,</span><br><span class="line">    &quot;http_x_real_ip&quot;: &quot;117.136.53.193&quot;,</span><br><span class="line">    &quot;bytes_sent&quot;: 6817,</span><br><span class="line">    &quot;upstream_response_time&quot;: 0.004,</span><br><span class="line">    &quot;http_user_agent&quot;: &quot;Mozilla/5.0 (Linux; Android 4.2.2; 2014011 Build/HM2014011) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/37.0.0.0 Mobile MQQBrowser/6.2 TBS/036519 Safari/537.36 MicroMessenger/6.3.22.821 NetType/cmnet Language/zh_CN&quot;,</span><br><span class="line">    &quot;phoneType&quot;: &quot;Android 4.2.2; 2014011 Build/HM2014011) AppleWebKit&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>  
 	</div>
 		<footer class="article-footer clearfix">
 
@@ -137,14 +139,14 @@
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/运维/">运维</a>
+  <a class="article-category-link" href="/categories/%E8%BF%90%E7%BB%B4/">运维</a>
 </div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://www.lstop.pub/2016/08/15/Nginx-accesslog分离手机型号信息/" data-title="Nginx accesslog分离手机型号信息 | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  <div data-url="http://www.lstop.pub/2016/08/15/Nginx-accesslog%E5%88%86%E7%A6%BB%E6%89%8B%E6%9C%BA%E5%9E%8B%E5%8F%B7%E4%BF%A1%E6%81%AF/" data-title="Nginx accesslog分离手机型号信息 | Zong&#39;s blog" data-tsina="" class="share clearfix">
   </div>
 
 </div>

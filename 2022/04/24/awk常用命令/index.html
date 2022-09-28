@@ -1,7 +1,7 @@
 
  <!DOCTYPE HTML>
-<html>
-<head><meta name="generator" content="Hexo 3.9.0">
+<html >
+<head>
   <meta charset="UTF-8">
   
     <title>awk常用命令 | Zong&#39;s blog</title>
@@ -11,11 +11,9 @@
     
     <meta name="description" content="基础说明基本用于简单统计各种log数据，特别是access log以解析腾讯cdn的access log格式为例另外awk要全面学好不容易，这里只是简单涉及一些常用语法
 log字段含义
-$4=url
-$5=字节数大小
-$10=request_time（毫秒）cdn字段详细解析
-
-基本语法awk -F">
+$4&amp;#x3D;url
+$5&amp;#x3D;字节数大小
+$10&amp;#x3D;request_time（毫秒）cdn字段详">
     
     
     
@@ -27,9 +25,11 @@ $10=request_time（毫秒）cdn字段详细解析
     <link rel="apple-touch-icon" href="/img/pacman.jpg">
     <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
     
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-</html>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
   <body>
     <header>
       <div>
@@ -96,16 +96,16 @@ $10=request_time（毫秒）cdn字段详细解析
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#基础说明"><span class="toc-number">1.</span> <span class="toc-text">基础说明</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#log字段含义"><span class="toc-number">1.1.</span> <span class="toc-text">log字段含义</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#基本语法"><span class="toc-number">2.</span> <span class="toc-text">基本语法</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#特殊符号"><span class="toc-number">2.1.</span> <span class="toc-text">特殊符号</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#常用命令"><span class="toc-number">3.</span> <span class="toc-text">常用命令</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#慢url"><span class="toc-number">3.1.</span> <span class="toc-text">慢url</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#筛选url"><span class="toc-number">3.2.</span> <span class="toc-text">筛选url</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#根据url分组求和（每个url消耗流量）"><span class="toc-number">3.3.</span> <span class="toc-text">根据url分组求和（每个url消耗流量）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#url平均耗时"><span class="toc-number">3.4.</span> <span class="toc-text">url平均耗时</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#url访问次数排序"><span class="toc-number">3.5.</span> <span class="toc-text">url访问次数排序</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#去重"><span class="toc-number">3.6.</span> <span class="toc-text">去重</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#参考"><span class="toc-number">4.</span> <span class="toc-text">参考</span></a></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9F%BA%E7%A1%80%E8%AF%B4%E6%98%8E"><span class="toc-number">1.</span> <span class="toc-text">基础说明</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#log%E5%AD%97%E6%AE%B5%E5%90%AB%E4%B9%89"><span class="toc-number">1.1.</span> <span class="toc-text">log字段含义</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E8%AF%AD%E6%B3%95"><span class="toc-number">2.</span> <span class="toc-text">基本语法</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%89%B9%E6%AE%8A%E7%AC%A6%E5%8F%B7"><span class="toc-number">2.1.</span> <span class="toc-text">特殊符号</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="toc-number">3.</span> <span class="toc-text">常用命令</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%85%A2url"><span class="toc-number">3.1.</span> <span class="toc-text">慢url</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AD%9B%E9%80%89url"><span class="toc-number">3.2.</span> <span class="toc-text">筛选url</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%B9%E6%8D%AEurl%E5%88%86%E7%BB%84%E6%B1%82%E5%92%8C%EF%BC%88%E6%AF%8F%E4%B8%AAurl%E6%B6%88%E8%80%97%E6%B5%81%E9%87%8F%EF%BC%89"><span class="toc-number">3.3.</span> <span class="toc-text">根据url分组求和（每个url消耗流量）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#url%E5%B9%B3%E5%9D%87%E8%80%97%E6%97%B6"><span class="toc-number">3.4.</span> <span class="toc-text">url平均耗时</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#url%E8%AE%BF%E9%97%AE%E6%AC%A1%E6%95%B0%E6%8E%92%E5%BA%8F"><span class="toc-number">3.5.</span> <span class="toc-text">url访问次数排序</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8E%BB%E9%87%8D"><span class="toc-number">3.6.</span> <span class="toc-text">去重</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">4.</span> <span class="toc-text">参考</span></a></li></ol>
 		</div>
 		
 		<h1 id="基础说明"><a href="#基础说明" class="headerlink" title="基础说明"></a>基础说明</h1><p>基本用于简单统计各种log数据，特别是access log<br>以解析腾讯cdn的access log格式为例<br>另外awk要全面学好不容易，这里只是简单涉及一些常用语法</p>
 <h2 id="log字段含义"><a href="#log字段含义" class="headerlink" title="log字段含义"></a>log字段含义</h2><ul>
-<li>$4=url</li>
-<li>$5=字节数大小</li>
-<li>$10=request_time（毫秒）<br><a href="https://cloud.tencent.com/document/product/228/6316" target="_blank" rel="noopener">cdn字段详细解析</a></li>
+<li>$4&#x3D;url</li>
+<li>$5&#x3D;字节数大小</li>
+<li>$10&#x3D;request_time（毫秒）<br><a target="_blank" rel="noopener" href="https://cloud.tencent.com/document/product/228/6316">cdn字段详细解析</a></li>
 </ul>
-<h1 id="基本语法"><a href="#基本语法" class="headerlink" title="基本语法"></a>基本语法</h1><p>awk -F|-f|-v ‘BEGIN{ } / / {comand1;comand2} END{ }’ file</p>
+<h1 id="基本语法"><a href="#基本语法" class="headerlink" title="基本语法"></a>基本语法</h1><p>awk -F|-f|-v ‘BEGIN{ } &#x2F; &#x2F; {comand1;comand2} END{ }’ file</p>
 <ul>
 <li>-F 定义列分隔符</li>
 <li>-f 指定调用脚本</li>
@@ -113,7 +113,7 @@ $10=request_time（毫秒）cdn字段详细解析
 <li>‘ ‘引用代码块，awk执行语句必须包含在内</li>
 <li>BEGIN{ } 初始化代码块，在对每一行进行处理之前，初始化代码，主要是引用全局变量，设置FS分隔符</li>
 <li>{ } 命令代码块，包含一条或多条命令</li>
-<li>// 用来定义需要匹配的模式（字符串或者正则表达式），对满足匹配模式的行进行上条代码块的操作</li>
+<li>&#x2F;&#x2F; 用来定义需要匹配的模式（字符串或者正则表达式），对满足匹配模式的行进行上条代码块的操作</li>
 <li>END{ }  结尾代码块，在对每一行进行处理之后再执行的代码块，主要是进行最终计算或输出结尾摘要信息</li>
 </ul>
 <h2 id="特殊符号"><a href="#特殊符号" class="headerlink" title="特殊符号"></a>特殊符号</h2><table>
@@ -161,18 +161,18 @@ $10=request_time（毫秒）cdn字段详细解析
 </tr>
 <tr>
 <td>~</td>
-<td>匹配，与==相比不是精确比较</td>
+<td>匹配，与&#x3D;&#x3D;相比不是精确比较</td>
 </tr>
 <tr>
 <td>!~</td>
 <td>不匹配，不精确比较</td>
 </tr>
 <tr>
-<td>==</td>
+<td>&#x3D;&#x3D;</td>
 <td>等于，必须全部相等，精确比较</td>
 </tr>
 <tr>
-<td>!=</td>
+<td>!&#x3D;</td>
 <td>不等于，精确比较</td>
 </tr>
 <tr>
@@ -188,11 +188,11 @@ $10=request_time（毫秒）cdn字段详细解析
 <td>匹配时表示1个或1个以上</td>
 </tr>
 <tr>
-<td>/[0-9][0-9]+/</td>
+<td>&#x2F;[0-9][0-9]+&#x2F;</td>
 <td>两个或两个以上数字</td>
 </tr>
 <tr>
-<td>/[0-9][0-9]*/</td>
+<td>&#x2F;[0-9][0-9]*&#x2F;</td>
 <td>一个或一个以上数字</td>
 </tr>
 <tr>
@@ -208,41 +208,36 @@ $10=request_time（毫秒）cdn字段详细解析
 <td>输出的记录分隔符，默认为换行符,即处理结果也是一行一行输出到屏幕</td>
 </tr>
 <tr>
-<td>-F’[:#/]’</td>
+<td>-F’[:#&#x2F;]’</td>
 <td>定义三个分隔符</td>
 </tr>
 </tbody></table>
 <h1 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h1><h2 id="慢url"><a href="#慢url" class="headerlink" title="慢url"></a>慢url</h2><p>request time &gt; 500ms 的url</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">awk &apos;($10&gt;500)&#123;split($4,a,&quot;?&quot;);print $1,a[1],$10&#125;&apos; 30a.txt</span><br><span class="line">awk &apos;&#123;if($10&gt;500)&#123;split($4,a,&quot;?&quot;);print $1,a[1],$10&#125;&#125;&apos; 30a.txt</span><br></pre></td></tr></table></figure>
-
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">awk &#x27;($10&gt;500)&#123;split($4,a,&quot;?&quot;);print $1,a[1],$10&#125;&#x27; 30a.txt</span><br><span class="line">awk &#x27;&#123;if($10&gt;500)&#123;split($4,a,&quot;?&quot;);print $1,a[1],$10&#125;&#125;&#x27; 30a.txt</span><br></pre></td></tr></table></figure>
 <blockquote>
 <p>语法知识<br>split($4,a,”?”) 使用？分割后存放在数组a</p>
 </blockquote>
 <h2 id="筛选url"><a href="#筛选url" class="headerlink" title="筛选url"></a>筛选url</h2><p>筛选包含base关键字的url</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">awk &apos;/base/&#123;if($10&gt;500)&#123;split($4,a,&quot;?&quot;);print $1,a[1],$10&#125;&#125;&apos; 30a.txt</span><br></pre></td></tr></table></figure>
-
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">awk &#x27;/base/&#123;if($10&gt;500)&#123;split($4,a,&quot;?&quot;);print $1,a[1],$10&#125;&#125;&#x27; 30a.txt</span><br></pre></td></tr></table></figure>
 <blockquote>
-<p>语法知识<br>/正则/ 筛选的内容<br>$5~/base/ ，第5列匹配base</p>
+<p>语法知识<br>&#x2F;正则&#x2F; 筛选的内容<br>$5~&#x2F;base&#x2F; ，第5列匹配base</p>
 </blockquote>
-<h2 id="根据url分组求和（每个url消耗流量）"><a href="#根据url分组求和（每个url消耗流量）" class="headerlink" title="根据url分组求和（每个url消耗流量）"></a>根据url分组求和（每个url消耗流量）</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cat 30a.txt |awk &apos;&#123;split($4,a,&quot;?&quot;); x[a[1]] += $5&#125;END&#123;for(i in x)&#123;print i, x[i]&#125;&#125;&apos;|sort -k2 -n</span><br></pre></td></tr></table></figure>
-
+<h2 id="根据url分组求和（每个url消耗流量）"><a href="#根据url分组求和（每个url消耗流量）" class="headerlink" title="根据url分组求和（每个url消耗流量）"></a>根据url分组求和（每个url消耗流量）</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cat 30a.txt |awk &#x27;&#123;split($4,a,&quot;?&quot;); x[a[1]] += $5&#125;END&#123;for(i in x)&#123;print i, x[i]&#125;&#125;&#x27;|sort -k2 -n</span><br></pre></td></tr></table></figure>
 <blockquote>
-<p>语法知识<br>x[a[1]] += $5 ，x数组使用a[1]作为下标累加流量值（$5）<br>for(i in x){print i, x[i]}， for i循环获取x数组下标并打印<br>END， END前代码处理完所有行，再用END后代码打印<br>sort -k2 ,按第二列排序</p>
+<p>语法知识<br>x[a[1]] +&#x3D; $5 ，x数组使用a[1]作为下标累加流量值（$5）<br>for(i in x){print i, x[i]}， for i循环获取x数组下标并打印<br>END， END前代码处理完所有行，再用END后代码打印<br>sort -k2 ,按第二列排序</p>
 </blockquote>
-<h2 id="url平均耗时"><a href="#url平均耗时" class="headerlink" title="url平均耗时"></a>url平均耗时</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">gawk -F, &apos;NF == 3 &#123; sum[$2] += $3; N[$2]++ &#125; </span><br><span class="line">          END     &#123; for (key in sum) &#123;</span><br><span class="line">                        avg = sum[key] / N[key];</span><br><span class="line">                        printf &quot;%s %d\n&quot;, key, int(avg);</span><br><span class="line">                    &#125; &#125;&apos; filename | sort -n</span><br></pre></td></tr></table></figure>
-
+<h2 id="url平均耗时"><a href="#url平均耗时" class="headerlink" title="url平均耗时"></a>url平均耗时</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">gawk -F, &#x27;NF == 3 &#123; sum[$2] += $3; N[$2]++ &#125; </span><br><span class="line">          END     &#123; for (key in sum) &#123;</span><br><span class="line">                        avg = sum[key] / N[key];</span><br><span class="line">                        printf &quot;%s %d\n&quot;, key, int(avg);</span><br><span class="line">                    &#125; &#125;&#x27; filename | sort -n</span><br></pre></td></tr></table></figure>
 <blockquote>
-<p>语法知识<br>N[$2]++， 自增<br>avg = sum[key] / N[key]， 计算平均值 = 总数/次数</p>
+<p>语法知识<br>N[$2]++， 自增<br>avg &#x3D; sum[key] &#x2F; N[key]， 计算平均值 &#x3D; 总数&#x2F;次数</p>
 </blockquote>
-<h2 id="url访问次数排序"><a href="#url访问次数排序" class="headerlink" title="url访问次数排序"></a>url访问次数排序</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cat 30a.txt |awk &apos;&#123;split($4,a,&quot;?&quot;); u=a[1]; N[u]++&#125; END &#123;for(i in N)&#123;print i, N[i]&#125;&#125;&apos; | sort -k2 -n</span><br></pre></td></tr></table></figure>
+<h2 id="url访问次数排序"><a href="#url访问次数排序" class="headerlink" title="url访问次数排序"></a>url访问次数排序</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cat 30a.txt |awk &#x27;&#123;split($4,a,&quot;?&quot;); u=a[1]; N[u]++&#125; END &#123;for(i in N)&#123;print i, N[i]&#125;&#125;&#x27; | sort -k2 -n</span><br></pre></td></tr></table></figure>
 
 <h2 id="去重"><a href="#去重" class="headerlink" title="去重"></a>去重</h2><p>根据第二排去重输出</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">awk &apos;!a[$2]++ &#123;print $2,$3&#125;&apos; a.txt</span><br></pre></td></tr></table></figure>
-
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">awk &#x27;!a[$2]++ &#123;print $2,$3&#125;&#x27; a.txt</span><br></pre></td></tr></table></figure>
 <blockquote>
 <p>语法知识<br>awk和python一样参数空或0为false，非空或非零为true<br>使用$2为下标自增后，第一次是0，!反转后为true，之后都是false，所以只有第一次遇到会通过判断</p>
 </blockquote>
-<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a href="https://www.jianshu.com/p/cae3cccd2ee6" target="_blank" rel="noopener">awk基本语法格式</a><br>参考<a href="https://baike.sogou.com/v581671.htm?fromTitle=AWK" target="_blank" rel="noopener">awk语法</a></p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/cae3cccd2ee6">awk基本语法格式</a><br>参考<a target="_blank" rel="noopener" href="https://baike.sogou.com/v581671.htm?fromTitle=AWK">awk语法</a></p>
   
 	</div>
 		<footer class="article-footer clearfix">
@@ -255,14 +250,14 @@ $10=request_time（毫秒）cdn字段详细解析
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/运维/">运维</a>
+  <a class="article-category-link" href="/categories/%E8%BF%90%E7%BB%B4/">运维</a>
 </div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://www.lstop.pub/2022/04/24/awk常用命令/" data-title="awk常用命令 | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  <div data-url="http://www.lstop.pub/2022/04/24/awk%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/" data-title="awk常用命令 | Zong&#39;s blog" data-tsina="" class="share clearfix">
   </div>
 
 </div>
@@ -271,6 +266,14 @@ $10=request_time（毫秒）cdn字段详细解析
 	
 <nav class="article-nav clearfix">
  
+ <div class="prev" >
+ <a href="/2022/09/28/acme自动申请及续期ssl证书/" title="acme自动申请及续期ssl证书">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  acme自动申请及续期ssl证书</span>
+</a>
+</div>
+
 
 <div class="next">
 <a href="/2022/01/20/K8s-service故障排查/"  title="K8s service故障排查">
@@ -288,7 +291,7 @@ $10=request_time（毫秒）cdn字段详细解析
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#基础说明"><span class="toc-number">1.</span> <span class="toc-text">基础说明</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#log字段含义"><span class="toc-number">1.1.</span> <span class="toc-text">log字段含义</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#基本语法"><span class="toc-number">2.</span> <span class="toc-text">基本语法</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#特殊符号"><span class="toc-number">2.1.</span> <span class="toc-text">特殊符号</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#常用命令"><span class="toc-number">3.</span> <span class="toc-text">常用命令</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#慢url"><span class="toc-number">3.1.</span> <span class="toc-text">慢url</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#筛选url"><span class="toc-number">3.2.</span> <span class="toc-text">筛选url</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#根据url分组求和（每个url消耗流量）"><span class="toc-number">3.3.</span> <span class="toc-text">根据url分组求和（每个url消耗流量）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#url平均耗时"><span class="toc-number">3.4.</span> <span class="toc-text">url平均耗时</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#url访问次数排序"><span class="toc-number">3.5.</span> <span class="toc-text">url访问次数排序</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#去重"><span class="toc-number">3.6.</span> <span class="toc-text">去重</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#参考"><span class="toc-number">4.</span> <span class="toc-text">参考</span></a></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9F%BA%E7%A1%80%E8%AF%B4%E6%98%8E"><span class="toc-number">1.</span> <span class="toc-text">基础说明</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#log%E5%AD%97%E6%AE%B5%E5%90%AB%E4%B9%89"><span class="toc-number">1.1.</span> <span class="toc-text">log字段含义</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E8%AF%AD%E6%B3%95"><span class="toc-number">2.</span> <span class="toc-text">基本语法</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%89%B9%E6%AE%8A%E7%AC%A6%E5%8F%B7"><span class="toc-number">2.1.</span> <span class="toc-text">特殊符号</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="toc-number">3.</span> <span class="toc-text">常用命令</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%85%A2url"><span class="toc-number">3.1.</span> <span class="toc-text">慢url</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AD%9B%E9%80%89url"><span class="toc-number">3.2.</span> <span class="toc-text">筛选url</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%B9%E6%8D%AEurl%E5%88%86%E7%BB%84%E6%B1%82%E5%92%8C%EF%BC%88%E6%AF%8F%E4%B8%AAurl%E6%B6%88%E8%80%97%E6%B5%81%E9%87%8F%EF%BC%89"><span class="toc-number">3.3.</span> <span class="toc-text">根据url分组求和（每个url消耗流量）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#url%E5%B9%B3%E5%9D%87%E8%80%97%E6%97%B6"><span class="toc-number">3.4.</span> <span class="toc-text">url平均耗时</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#url%E8%AE%BF%E9%97%AE%E6%AC%A1%E6%95%B0%E6%8E%92%E5%BA%8F"><span class="toc-number">3.5.</span> <span class="toc-text">url访问次数排序</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8E%BB%E9%87%8D"><span class="toc-number">3.6.</span> <span class="toc-text">去重</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">4.</span> <span class="toc-text">参考</span></a></li></ol>
   </div>
 
 <div id="asidepart">

@@ -1,7 +1,7 @@
 
  <!DOCTYPE HTML>
-<html>
-<head><meta name="generator" content="Hexo 3.9.0">
+<html >
+<head>
   <meta charset="UTF-8">
   
     <title>jvm编译器参数及踩坑-弃用C2 | Zong&#39;s blog</title>
@@ -21,9 +21,11 @@
     <link rel="apple-touch-icon" href="/img/pacman.jpg">
     <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
     
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-</html>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
   <body>
     <header>
       <div>
@@ -90,14 +92,14 @@
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#思路一，启动时候就做好C2吧"><span class="toc-number">1.</span> <span class="toc-text">思路一，启动时候就做好C2吧</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#思路二，放弃C2吧"><span class="toc-number">2.</span> <span class="toc-text">思路二，放弃C2吧</span></a></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%9D%E8%B7%AF%E4%B8%80%EF%BC%8C%E5%90%AF%E5%8A%A8%E6%97%B6%E5%80%99%E5%B0%B1%E5%81%9A%E5%A5%BDC2%E5%90%A7"><span class="toc-number">1.</span> <span class="toc-text">思路一，启动时候就做好C2吧</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%9D%E8%B7%AF%E4%BA%8C%EF%BC%8C%E6%94%BE%E5%BC%83C2%E5%90%A7"><span class="toc-number">2.</span> <span class="toc-text">思路二，放弃C2吧</span></a></li></ol>
 		</div>
 		
 		<p>最近通过阿里的arthas观察到java进程经常因为”C2 CompilerThread”导致cpu使用率波动，就因为这个进程容器cpu经常彪高到告警线。<br>网上查的资料都感觉不靠谱，推荐方法要么用jmeter压（成本高），去尽快把代码优化成C2；要么启动多个C2进程快点完成编译（cpu更吃紧了）。<br>这里必须要吐槽一下JIT的机制了，对我们k8s上跑的java不友好，一般根据业务负载，我们限制单个容器500-1000m的cpu就够用了，结果不知道什么时候就来个C2把cpu搞起来，严重情况下会造成业务卡顿。。。<br>这里总体思路是放弃JIT编译优化，稳定为先。</p>
 <h1 id="思路一，启动时候就做好C2吧"><a href="#思路一，启动时候就做好C2吧" class="headerlink" title="思路一，启动时候就做好C2吧"></a>思路一，启动时候就做好C2吧</h1><p>java启动加上参数：-XX:-TieredCompilation， -server<br>这个参数是能关闭C1的level 1-3级，想当然以为跑起来就是C2优化好的。<br>结果：不理想，还是观察到有”C2 CompilerThread”，而且貌似cpu波动更高了。。。</p>
-<h1 id="思路二，放弃C2吧"><a href="#思路二，放弃C2吧" class="headerlink" title="思路二，放弃C2吧"></a>思路二，放弃C2吧</h1><p>java启动加上参数：-XX:TieredStopAtLevel=1<br>限制编译层级到level 1，虽然代码没有C2编译优化理论上运行效率打折扣，但是还是稳定优先吧。<br>结果：达到预期，没有观察到”C2 CompilerThread”了，cpu能稳定运行不会上蹿下跳。</p>
+<h1 id="思路二，放弃C2吧"><a href="#思路二，放弃C2吧" class="headerlink" title="思路二，放弃C2吧"></a>思路二，放弃C2吧</h1><p>java启动加上参数：-XX:TieredStopAtLevel&#x3D;1<br>限制编译层级到level 1，虽然代码没有C2编译优化理论上运行效率打折扣，但是还是稳定优先吧。<br>结果：达到预期，没有观察到”C2 CompilerThread”了，cpu能稳定运行不会上蹿下跳。</p>
 <blockquote>
-<p>JIT及编译层级参考：<br><a href="https://www.baeldung.com/jvm-tiered-compilation" target="_blank" rel="noopener">Tiered Compilation in JVM</a><br><a href="https://stackoverflow.com/questions/38721235/what-exactly-does-xx-tieredcompilation-do" target="_blank" rel="noopener">What exactly does -XX:-TieredCompilation do?</a><br><a href="https://www.cnblogs.com/lbser/p/3703967.html" target="_blank" rel="noopener">发布或重启线上服务时抖动问题解决方案</a></p>
+<p>JIT及编译层级参考：<br><a target="_blank" rel="noopener" href="https://www.baeldung.com/jvm-tiered-compilation">Tiered Compilation in JVM</a><br><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/38721235/what-exactly-does-xx-tieredcompilation-do">What exactly does -XX:-TieredCompilation do?</a><br><a target="_blank" rel="noopener" href="https://www.cnblogs.com/lbser/p/3703967.html">发布或重启线上服务时抖动问题解决方案</a></p>
 </blockquote>
   
 	</div>
@@ -111,14 +113,14 @@
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/运维/">运维</a>
+  <a class="article-category-link" href="/categories/%E8%BF%90%E7%BB%B4/">运维</a>
 </div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://www.lstop.pub/2021/09/07/jvm编译器参数及踩坑/" data-title="jvm编译器参数及踩坑-弃用C2 | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  <div data-url="http://www.lstop.pub/2021/09/07/jvm%E7%BC%96%E8%AF%91%E5%99%A8%E5%8F%82%E6%95%B0%E5%8F%8A%E8%B8%A9%E5%9D%91/" data-title="jvm编译器参数及踩坑-弃用C2 | Zong&#39;s blog" data-tsina="" class="share clearfix">
   </div>
 
 </div>
@@ -152,7 +154,7 @@
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#思路一，启动时候就做好C2吧"><span class="toc-number">1.</span> <span class="toc-text">思路一，启动时候就做好C2吧</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#思路二，放弃C2吧"><span class="toc-number">2.</span> <span class="toc-text">思路二，放弃C2吧</span></a></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%9D%E8%B7%AF%E4%B8%80%EF%BC%8C%E5%90%AF%E5%8A%A8%E6%97%B6%E5%80%99%E5%B0%B1%E5%81%9A%E5%A5%BDC2%E5%90%A7"><span class="toc-number">1.</span> <span class="toc-text">思路一，启动时候就做好C2吧</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%9D%E8%B7%AF%E4%BA%8C%EF%BC%8C%E6%94%BE%E5%BC%83C2%E5%90%A7"><span class="toc-number">2.</span> <span class="toc-text">思路二，放弃C2吧</span></a></li></ol>
   </div>
 
 <div id="asidepart">

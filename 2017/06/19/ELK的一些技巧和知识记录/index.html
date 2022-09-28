@@ -1,7 +1,7 @@
 
  <!DOCTYPE HTML>
-<html>
-<head><meta name="generator" content="Hexo 3.9.0">
+<html >
+<head>
   <meta charset="UTF-8">
   
     <title>ELK的一些技巧和知识记录 | Zong&#39;s blog</title>
@@ -24,9 +24,11 @@ logs表示从客户端收集到的日志，收集日志通常使用logstash、fl
     <link rel="apple-touch-icon" href="/img/pacman.jpg">
     <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
     
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-</html>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
   <body>
     <header>
       <div>
@@ -93,7 +95,7 @@ logs表示从客户端收集到的日志，收集日志通常使用logstash、fl
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#总体架构"><span class="toc-number">1.</span> <span class="toc-text">总体架构</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#elasticsearch"><span class="toc-number">2.</span> <span class="toc-text">elasticsearch</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#kafka"><span class="toc-number">3.</span> <span class="toc-text">kafka</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#logstash、flume、kafka-connect-elasticsearch"><span class="toc-number">4.</span> <span class="toc-text">logstash、flume、kafka-connect-elasticsearch</span></a></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%BB%E4%BD%93%E6%9E%B6%E6%9E%84"><span class="toc-number">1.</span> <span class="toc-text">总体架构</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#elasticsearch"><span class="toc-number">2.</span> <span class="toc-text">elasticsearch</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#kafka"><span class="toc-number">3.</span> <span class="toc-text">kafka</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#logstash%E3%80%81flume%E3%80%81kafka-connect-elasticsearch"><span class="toc-number">4.</span> <span class="toc-text">logstash、flume、kafka-connect-elasticsearch</span></a></li></ol>
 		</div>
 		
 		<h1 id="总体架构"><a href="#总体架构" class="headerlink" title="总体架构"></a>总体架构</h1><p>最近自己搭建了一套ELK，在摸索中总结了一下，这个post不是一个step by step安装教程。<br>现在初步的架构是这样：</p>
@@ -101,42 +103,38 @@ logs表示从客户端收集到的日志，收集日志通常使用logstash、fl
 
 <p>logs表示从客户端收集到的日志，收集日志通常使用logstash、flume、自己写的python工具等。<br>kafka是作为一个缓冲和标准的数据传输接口。<br>logstash作为kafka和es的桥梁、原本想使用其他方式、比如flume、kafka-connect-elasticsearch等工具直接把json格式录入es、不过遇到版本问题，我安装的es版本5.4太新了，一些工具都没update，就先用logstash吧<br>当前算是初代架构，后面看情况调整。</p>
 <h1 id="elasticsearch"><a href="#elasticsearch" class="headerlink" title="elasticsearch"></a>elasticsearch</h1><p>elasticsearch是一个全文索引的存储引擎吧，能快速搜索海量数据<br>安装还是使用apt</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"># 导入PGP Key</span><br><span class="line">wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -</span><br><span class="line"># 从APT库安装</span><br><span class="line">sudo apt-get install apt-transport-https</span><br><span class="line">echo &quot;deb https://artifacts.elastic.co/packages/5.x/apt stable main&quot; | sudo tee -a /etc/apt/sources.list.d/elastic-5.x.list</span><br><span class="line">sudo apt-get update</span><br><span class="line">sudo apt-get install elasticsearch</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"># 导入PGP Key</span><br><span class="line">wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -</span><br><span class="line"># 从APT库安装</span><br><span class="line">sudo apt-get install apt-transport-https</span><br><span class="line">echo &quot;deb https://artifacts.elastic.co/packages/5.x/apt stable main&quot; | sudo tee -a /etc/apt/sources.list.d/elastic-5.x.list</span><br><span class="line">sudo apt-get update</span><br><span class="line">sudo apt-get install elasticsearch</span><br></pre></td></tr></table></figure>
 
 <blockquote>
 <p>ps 如果安装es6的话用 </p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt; echo &quot;deb https://artifacts.elastic.co/packages/6.x/apt stable main&quot; | sudo tee -a /etc/apt/sources.list.d/elastic-6.x.list</span><br><span class="line">&gt;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">echo &quot;deb https://artifacts.elastic.co/packages/6.x/apt stable main&quot; | sudo tee -a /etc/apt/sources.list.d/elastic-6.x.list</span><br></pre></td></tr></table></figure>
 </blockquote>
 <p>基本上导入了上面的elastic源就能apt安装logstash、elasticsearch、kibana，很方便，而且版本都最新。</p>
 <p>配置就不多写了，网上也很多，下面记录一下常用的管理命令</p>
 <ol>
 <li><p>查看es的index</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">curl -XGET &apos;wx_es_1:9200/_cat/indices?v&apos;</span><br><span class="line">health status index                             uuid                   pri rep docs.count docs.deleted store.size pri.store.size</span><br><span class="line">yellow open   logstash-wgw-accesslog-2017.06.07 3lj8lgN5T9qYU1BW2y07hQ   5   1       2548            0      4.6mb          4.6mb</span><br><span class="line">yellow open   logstash-wgw-accesslog-2017.06.06 GC-ElhrLQu2rNfYtvR4XSg   5   1    2335781            0      2.1gb          2.1gb</span><br><span class="line">yellow open   packetbeat-2017.06.08             KsS2uikmTES3OkZwPu5TpQ   5   1    2340461            0    487.6mb        487.6mb</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">curl -XGET &#x27;wx_es_1:9200/_cat/indices?v&#x27;</span><br><span class="line">health status index                             uuid                   pri rep docs.count docs.deleted store.size pri.store.size</span><br><span class="line">yellow open   logstash-wgw-accesslog-2017.06.07 3lj8lgN5T9qYU1BW2y07hQ   5   1       2548            0      4.6mb          4.6mb</span><br><span class="line">yellow open   logstash-wgw-accesslog-2017.06.06 GC-ElhrLQu2rNfYtvR4XSg   5   1    2335781            0      2.1gb          2.1gb</span><br><span class="line">yellow open   packetbeat-2017.06.08             KsS2uikmTES3OkZwPu5TpQ   5   1    2340461            0    487.6mb        487.6mb</span><br></pre></td></tr></table></figure>
 </li>
 <li><p>删除一个index</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -XDELETE &apos;wx_es_1:9200/wx-qiniu/?pretty&apos;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -XDELETE &#x27;wx_es_1:9200/wx-qiniu/?pretty&#x27;</span><br></pre></td></tr></table></figure>
 </li>
-<li><p>添加模板<br>比如下面template_2模板就定义了所有wx-*索引的logtime字段格式，类似 15/Jun/2017:15:36:10 +0800</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">curl -XPUT http://wx_es_1:9200/_template/template_2 -d &apos;&#123;</span><br><span class="line">    &quot;template&quot; : &quot;wx-*&quot;,</span><br><span class="line">    &quot;mappings&quot; : &#123;</span><br><span class="line">        &quot;type1&quot; : &#123;</span><br><span class="line">            &quot;properties&quot;: &#123;</span><br><span class="line">			    &quot;logtime&quot;: &#123;</span><br><span class="line">				&quot;type&quot; : &quot;date&quot;,</span><br><span class="line">				&quot;format&quot; : &quot;dd/MMM/YYYY:HH:mm:ss Z&quot;</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;&apos;</span><br></pre></td></tr></table></figure>
-
-</li>
+<li><p>添加模板<br>比如下面template_2模板就定义了所有wx-*索引的logtime字段格式，类似 15&#x2F;Jun&#x2F;2017:15:36:10 +0800</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">curl -XPUT http://wx_es_1:9200/_template/template_2 -d &#x27;&#123;</span><br><span class="line">    &quot;template&quot; : &quot;wx-*&quot;,</span><br><span class="line">    &quot;mappings&quot; : &#123;</span><br><span class="line">        &quot;type1&quot; : &#123;</span><br><span class="line">            &quot;properties&quot;: &#123;</span><br><span class="line">			    &quot;logtime&quot;: &#123;</span><br><span class="line">				&quot;type&quot; : &quot;date&quot;,</span><br><span class="line">				&quot;format&quot; : &quot;dd/MMM/YYYY:HH:mm:ss Z&quot;</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;&#x27;</span><br></pre></td></tr></table></figure></li>
 </ol>
-<p>更详细参考<br><a href="http://www.cnblogs.com/didda/p/4758061.html" target="_blank" rel="noopener">ElasticSearch 模板文件配置</a><br><a href="https://kibana.logstash.es/content/elasticsearch/template.html" target="_blank" rel="noopener">ELKstack中文指南</a></p>
+<p>更详细参考<br><a target="_blank" rel="noopener" href="http://www.cnblogs.com/didda/p/4758061.html">ElasticSearch 模板文件配置</a><br><a target="_blank" rel="noopener" href="https://kibana.logstash.es/content/elasticsearch/template.html">ELKstack中文指南</a></p>
 <h1 id="kafka"><a href="#kafka" class="headerlink" title="kafka"></a>kafka</h1><p>kafka是作为一个缓冲和标准的数据传输接口，kafka处理消息的速度据说是rabbitmq的N倍，第一次尝试。<br>kafka使用了二进制包安装，解压就ok，启动需要依赖zookeeper<br>常用命令：</p>
 <ol>
 <li><p>查看kafka topic</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bin/kafka-topics.sh --list --zookeeper zk1-test:2182</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bin/kafka-topics.sh --list --zookeeper zk1-test:2182</span><br></pre></td></tr></table></figure>
 </li>
 <li><p>使用console consumer<br>调试的时候方便输出消息查看</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bin/kafka-console-consumer.sh  --topic wx-qiniu --bootstrap-server  wx_es_1:9092</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bin/kafka-console-consumer.sh  --topic wx-qiniu --bootstrap-server  wx_es_1:9092</span><br></pre></td></tr></table></figure>
 </li>
 <li><p>使用console producter<br>调试的时候方便输入消息数据</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bin/kafka-console-producer.sh --topic logs-wx --broker-list wx_es_1:9092</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bin/kafka-console-producer.sh --topic logs-wx --broker-list wx_es_1:9092</span><br></pre></td></tr></table></figure>
 </li>
-<li><p>删除topic<br>server.properties中的delete.topic.enable=true需要设置成true，才能使用命令直接删除topic和数据</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bin/kafka-topics.sh --delete --topic testl --zookeeper zk1-test:2182</span><br></pre></td></tr></table></figure>
-
-</li>
+<li><p>删除topic<br>server.properties中的delete.topic.enable&#x3D;true需要设置成true，才能使用命令直接删除topic和数据</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bin/kafka-topics.sh --delete --topic testl --zookeeper zk1-test:2182</span><br></pre></td></tr></table></figure></li>
 </ol>
 <h1 id="logstash、flume、kafka-connect-elasticsearch"><a href="#logstash、flume、kafka-connect-elasticsearch" class="headerlink" title="logstash、flume、kafka-connect-elasticsearch"></a>logstash、flume、kafka-connect-elasticsearch</h1><p>这里说的其实是kafka与es的数据通信问题，logstash是elastic官方原生支持，更新快，但是感觉作为中间通信层，不够简洁高效（猜测的）。<br>flume作为常见的log收集和传输工具，结构上实现了source-&gt;channel-&gt;sink 的形式，输入输出比较灵活，例如可以多个sink分别把数据传入es和jstrom等。<br>kafka-connect-elasticsearch是最先考虑的，直接在log收集时把数据格式化成json，通过kafka的connect实现数据传入es，版本问题不支持。</p>
 <p>长远来说，flume可能更优先考虑，也可能是多种方式，反正比较灵活。<script src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.2.7/raphael.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/flowchart/1.6.5/flowchart.min.js"></script><textarea id="flowchart-0-code" style="display: none">op1=>operation: logs|past
@@ -158,14 +156,14 @@ op1(right)->op2(right)->op3(right)->op4(right)->op5</textarea><textarea id="flow
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/运维/">运维</a>
+  <a class="article-category-link" href="/categories/%E8%BF%90%E7%BB%B4/">运维</a>
 </div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://www.lstop.pub/2017/06/19/ELK的一些技巧和知识记录/" data-title="ELK的一些技巧和知识记录 | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  <div data-url="http://www.lstop.pub/2017/06/19/ELK%E7%9A%84%E4%B8%80%E4%BA%9B%E6%8A%80%E5%B7%A7%E5%92%8C%E7%9F%A5%E8%AF%86%E8%AE%B0%E5%BD%95/" data-title="ELK的一些技巧和知识记录 | Zong&#39;s blog" data-tsina="" class="share clearfix">
   </div>
 
 </div>
@@ -199,7 +197,7 @@ op1(right)->op2(right)->op3(right)->op4(right)->op5</textarea><textarea id="flow
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#总体架构"><span class="toc-number">1.</span> <span class="toc-text">总体架构</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#elasticsearch"><span class="toc-number">2.</span> <span class="toc-text">elasticsearch</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#kafka"><span class="toc-number">3.</span> <span class="toc-text">kafka</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#logstash、flume、kafka-connect-elasticsearch"><span class="toc-number">4.</span> <span class="toc-text">logstash、flume、kafka-connect-elasticsearch</span></a></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%BB%E4%BD%93%E6%9E%B6%E6%9E%84"><span class="toc-number">1.</span> <span class="toc-text">总体架构</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#elasticsearch"><span class="toc-number">2.</span> <span class="toc-text">elasticsearch</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#kafka"><span class="toc-number">3.</span> <span class="toc-text">kafka</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#logstash%E3%80%81flume%E3%80%81kafka-connect-elasticsearch"><span class="toc-number">4.</span> <span class="toc-text">logstash、flume、kafka-connect-elasticsearch</span></a></li></ol>
   </div>
 
 <div id="asidepart">

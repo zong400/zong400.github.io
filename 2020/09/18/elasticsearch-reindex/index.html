@@ -1,7 +1,7 @@
 
  <!DOCTYPE HTML>
-<html>
-<head><meta name="generator" content="Hexo 3.9.0">
+<html >
+<head>
   <meta charset="UTF-8">
   
     <title>elasticsearch reindex | Zong&#39;s blog</title>
@@ -22,9 +22,11 @@
     <link rel="apple-touch-icon" href="/img/pacman.jpg">
     <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
     
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-</html>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
   <body>
     <header>
       <div>
@@ -95,8 +97,7 @@
 		</div>
 		
 		<h1 id="reindex"><a href="#reindex" class="headerlink" title="reindex"></a>reindex</h1><p>顾名思义是重建index的意思，因为一些原因，之前的index参数、mapping等设置需要优化、不合理时就需要reindex。典型的原因是设置shard数量，当index增长或者业务量增长需要扩容集群，重新设置shard可以进一步优化性能。<br>reindex基本操作比较简单：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">POST _reindex?wait_for_completion=false&amp;slices=auto&amp;refresh</span><br><span class="line">&#123;</span><br><span class="line">  &quot;source&quot;: &#123;</span><br><span class="line">    &quot;index&quot;: &quot;tk_books&quot;,</span><br><span class="line">	&quot;size&quot;: 100</span><br><span class="line">  &#125;,</span><br><span class="line">  &quot;dest&quot;: &#123;</span><br><span class="line">    &quot;index&quot;: &quot;ttkk_tk_books&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">POST _reindex?wait_for_completion=false&amp;slices=auto&amp;refresh</span><br><span class="line">&#123;</span><br><span class="line">  &quot;source&quot;: &#123;</span><br><span class="line">    &quot;index&quot;: &quot;tk_books&quot;,</span><br><span class="line">	&quot;size&quot;: 100</span><br><span class="line">  &#125;,</span><br><span class="line">  &quot;dest&quot;: &#123;</span><br><span class="line">    &quot;index&quot;: &quot;ttkk_tk_books&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <blockquote>
 <p>wait_for_completion: false不等待任务完成<br>slices: 并行操作，相当于切片，设置auto是按shard数切分，也可以指定一个数<br>size: 批量操作，每批数据，每批数据5-15MB开始，逐步调整size大小可以改善性能</p>
 </blockquote>
@@ -114,7 +115,7 @@
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/运维/">运维</a>
+  <a class="article-category-link" href="/categories/%E8%BF%90%E7%BB%B4/">运维</a>
 </div>
 
 

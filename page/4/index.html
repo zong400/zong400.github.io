@@ -1,7 +1,7 @@
 
  <!DOCTYPE HTML>
-<html>
-<head><meta name="generator" content="Hexo 3.9.0">
+<html >
+<head>
   <meta charset="UTF-8">
   
     <title>Zong&#39;s blog</title>
@@ -19,9 +19,11 @@
     <link rel="apple-touch-icon" href="/img/pacman.jpg">
     <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
     
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-</html>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
   <body>
     <header>
       <div>
@@ -72,6 +74,23 @@
 
   <section class="post" itemscope itemprop="blogPost">
   
+    <a href="/2017/06/19/ELK的一些技巧和知识记录/" title="ELK的一些技巧和知识记录" itemprop="url">
+  
+    <h1 itemprop="name">ELK的一些技巧和知识记录</h1>
+    
+     
+           <p itemprop="description" >总体架构最近自己搭建了一套ELK，在摸索中总结了一下，这个post不是一个step by step安装教程。现在初步的架构是这样：
+
+
+logs表示从客户端收集到的日志，收集日志通常使用logstash、flume、自己写的python工具等。kafka是作为一个缓冲和标准的数据</p>
+        
+    
+    <time datetime="2017-06-19T08:13:51.000Z" itemprop="datePublished">2017-06-19</time>
+  </a>
+</section>
+
+  <section class="post" itemscope itemprop="blogPost">
+  
     <a href="/2017/05/26/一直以来对tcp-tw-recycle参数的误解及tcp-timestamps/" title="一直以来对tcp_tw_recycle参数的误解及tcp_timestamps" itemprop="url">
   
     <h1 itemprop="name">一直以来对tcp_tw_recycle参数的误解及tcp_timestamps</h1>
@@ -79,7 +98,7 @@
      
            <p itemprop="description" >net.ipv4.tcp_tw_recycle 这个参数稍微熟悉linux的同学应该都不陌生，网上随便一搜，凡是解决TCP time wait的文章都提到把这个改成1能快速回收time wait连接。我之前的记录是这样写的
 
-net.ipv4.tcp_tw_recycle = 1</p>
+net.ipv4.tcp_tw_recycle &amp;#x</p>
         
     
     <time datetime="2017-05-26T06:23:59.000Z" itemprop="datePublished">2017-05-26</time>
@@ -204,24 +223,9 @@ net.ipv4.tcp_tw_recycle = 1</p>
   </a>
 </section>
 
-  <section class="post" itemscope itemprop="blogPost">
-  
-    <a href="/2016/08/22/MongoDB权限管理/" title="MongoDB权限管理" itemprop="url">
-  
-    <h1 itemprop="name">MongoDB权限管理</h1>
-    
-     
-           <p itemprop="description" >最近工作中用到MongoDB的权限管理，简单记录一下涉及到的知识。Mongo的账号权限管理是基于角色的，建立账号并赋予角色是基本操作，账号属于库。账号有分为超级权限和普通权限，超级权限用来管理账号角色，普通权限就是实际操作数据的账号。
-MongoDB默认不需要账号登录，不存在初始</p>
-        
-    
-    <time datetime="2016-08-22T01:49:21.000Z" itemprop="datePublished">2016-08-22</time>
-  </a>
-</section>
-
 
   <nav id="page-nav" class="clearfix">
-    <a class="extend prev" rel="prev" href="/page/3/">&laquo; Prev</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><span class="page-number current">4</span><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/5/">Next &raquo;</a>
+    <a class="extend prev" rel="prev" href="/page/3/">&amp;laquo; Prev</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><span class="page-number current">4</span><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/5/">Next &amp;raquo;</a>
   </nav>
 
 </div>

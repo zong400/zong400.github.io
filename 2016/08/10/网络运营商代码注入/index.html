@@ -1,7 +1,7 @@
 
  <!DOCTYPE HTML>
-<html>
-<head><meta name="generator" content="Hexo 3.9.0">
+<html >
+<head>
   <meta charset="UTF-8">
   
     <title>网络运营商代码注入 | Zong&#39;s blog</title>
@@ -22,9 +22,11 @@
     <link rel="apple-touch-icon" href="/img/pacman.jpg">
     <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
     
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-</html>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
   <body>
     <header>
       <div>
@@ -100,13 +102,12 @@
 <p>出现了奇怪的域名。</p>
 <p><img src="http://qnimg.banxiaoer.net/yw/security/zuru1.png_blogpic.jpg" alt="注入1"></p>
 <p>囧，发现我们的js都变成其他域名的了。</p>
-<p><img src="http://qnimg.banxiaoer.net/yw/security/zuru2.png_blogpic.jpg" alt></p>
-<p><img src="http://qnimg.banxiaoer.net/yw/security/zuru3.png_blogpic.jpg" alt></p>
+<p><img src="http://qnimg.banxiaoer.net/yw/security/zuru2.png_blogpic.jpg"></p>
+<p><img src="http://qnimg.banxiaoer.net/yw/security/zuru3.png_blogpic.jpg"></p>
 <p>网页里面的代码被插入很多奇怪的网址链接，孙杨霸气，可惜不是我们放上去的。</p>
-<p><img src="http://qnimg.banxiaoer.net/yw/security/zuru4.png_blogpic.jpg" alt></p>
+<p><img src="http://qnimg.banxiaoer.net/yw/security/zuru4.png_blogpic.jpg"></p>
 <p>注入的代码：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- 注入代码 --&gt;</span><br><span class="line">&lt;script type=&quot;text/javascript&quot; charset=&quot;utf-8&quot; async=&quot;&quot; data-requirecontext=&quot;_&quot; data-requiremodule=&quot;FOG_PC&quot; src=&quot;http://g.gclick.cn/static/20160530/fog.js?aloader=true&quot;&gt;&lt;/script&gt;&lt;script type=&quot;text/javascript&quot; charset=&quot;utf-8&quot; async=&quot;&quot; data-requirecontext=&quot;_&quot; data-requiremodule=&quot;dicepc&quot; src=&quot;http://g.gclick.cn/static/dice-pc.js?aloader=true&quot;&gt;&lt;/script&gt;&lt;script type=&quot;text/javascript&quot; charset=&quot;utf-8&quot; async=&quot;&quot; data-requirecontext=&quot;_&quot; data-requiremodule=&quot;CRAWLER&quot; src=&quot;http://g.gclick.cn/static/20160713/crawler.js?aloader=true&quot;&gt;&lt;/script&gt;&lt;link type=&quot;text/css&quot; rel=&quot;stylesheet&quot; href=&quot;plugin/laydate/need/laydate.css&quot;&gt;&lt;link type=&quot;text/css&quot; rel=&quot;stylesheet&quot; href=&quot;plugin/laydate/skins/default/laydate.css&quot; id=&quot;LayDateSkin&quot;&gt;&lt;/head&gt;</span><br><span class="line">&lt;body&gt;</span><br></pre></td></tr></table></figure>
-
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- 注入代码 --&gt;</span><br><span class="line">&lt;script type=&quot;text/javascript&quot; charset=&quot;utf-8&quot; async=&quot;&quot; data-requirecontext=&quot;_&quot; data-requiremodule=&quot;FOG_PC&quot; src=&quot;http://g.gclick.cn/static/20160530/fog.js?aloader=true&quot;&gt;&lt;/script&gt;&lt;script type=&quot;text/javascript&quot; charset=&quot;utf-8&quot; async=&quot;&quot; data-requirecontext=&quot;_&quot; data-requiremodule=&quot;dicepc&quot; src=&quot;http://g.gclick.cn/static/dice-pc.js?aloader=true&quot;&gt;&lt;/script&gt;&lt;script type=&quot;text/javascript&quot; charset=&quot;utf-8&quot; async=&quot;&quot; data-requirecontext=&quot;_&quot; data-requiremodule=&quot;CRAWLER&quot; src=&quot;http://g.gclick.cn/static/20160713/crawler.js?aloader=true&quot;&gt;&lt;/script&gt;&lt;link type=&quot;text/css&quot; rel=&quot;stylesheet&quot; href=&quot;plugin/laydate/need/laydate.css&quot;&gt;&lt;link type=&quot;text/css&quot; rel=&quot;stylesheet&quot; href=&quot;plugin/laydate/skins/default/laydate.css&quot; id=&quot;LayDateSkin&quot;&gt;&lt;/head&gt;</span><br><span class="line">&lt;body&gt;</span><br></pre></td></tr></table></figure>
 <p>被这样子无节操，无下限的搞了一下，怪不得不能登录了啊…</p>
 <p>后面向客户推荐了一个临时解决方法就是使用adblock插件把g.gclick.cn屏蔽，效果待反馈。<br>这种带宽还是尽早换掉吧！</p>
 <blockquote>
@@ -124,14 +125,14 @@
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/运维/">运维</a>
+  <a class="article-category-link" href="/categories/%E8%BF%90%E7%BB%B4/">运维</a>
 </div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://www.lstop.pub/2016/08/10/网络运营商代码注入/" data-title="网络运营商代码注入 | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  <div data-url="http://www.lstop.pub/2016/08/10/%E7%BD%91%E7%BB%9C%E8%BF%90%E8%90%A5%E5%95%86%E4%BB%A3%E7%A0%81%E6%B3%A8%E5%85%A5/" data-title="网络运营商代码注入 | Zong&#39;s blog" data-tsina="" class="share clearfix">
   </div>
 
 </div>

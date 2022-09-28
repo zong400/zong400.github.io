@@ -1,7 +1,7 @@
 
  <!DOCTYPE HTML>
-<html>
-<head><meta name="generator" content="Hexo 3.9.0">
+<html >
+<head>
   <meta charset="UTF-8">
   
     <title>traefik实现ssl双向认证 | Zong&#39;s blog</title>
@@ -22,9 +22,11 @@
     <link rel="apple-touch-icon" href="/img/pacman.jpg">
     <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
     
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-</html>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
   <body>
     <header>
       <div>
@@ -91,22 +93,21 @@
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#证书"><span class="toc-number">1.</span> <span class="toc-text">证书</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#traefik配置"><span class="toc-number">2.</span> <span class="toc-text">traefik配置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#k8s-ingress"><span class="toc-number">3.</span> <span class="toc-text">k8s ingress</span></a></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%AF%81%E4%B9%A6"><span class="toc-number">1.</span> <span class="toc-text">证书</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#traefik%E9%85%8D%E7%BD%AE"><span class="toc-number">2.</span> <span class="toc-text">traefik配置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#k8s-ingress"><span class="toc-number">3.</span> <span class="toc-text">k8s ingress</span></a></li></ol>
 		</div>
 		
 		<p>ssl双向认证简单来说就是服务端需要认证客户端证书，客户端也需要认证服务端证书。通常应用于安全等级很高的内部系统，保证能访问系统的客户端都是授信任的。</p>
 <h1 id="证书"><a href="#证书" class="headerlink" title="证书"></a>证书</h1><p>通常我们可以使用ca自签来颁发服务端和客户端证书，值得注意的是生成服务端签名申请（csr）中的Common Name值需要填写真实访问的域名，最后生成的p12证书需要导入到客户端浏览器</p>
-<p>具体步骤可以参照下面的文章<br><a href="https://blog.yoodb.com/yoodb/article/detail/1433" target="_blank" rel="noopener">openssl生成ca证书配置ssl双向认证</a><br><a href="http://blog.51cto.com/colinzhouyj/1670634" target="_blank" rel="noopener">openssl签署自己的泛域名（通配符）证书</a></p>
+<p>具体步骤可以参照下面的文章<br><a target="_blank" rel="noopener" href="https://blog.yoodb.com/yoodb/article/detail/1433">openssl生成ca证书配置ssl双向认证</a><br><a target="_blank" rel="noopener" href="http://blog.51cto.com/colinzhouyj/1670634">openssl签署自己的泛域名（通配符）证书</a></p>
 <h1 id="traefik配置"><a href="#traefik配置" class="headerlink" title="traefik配置"></a>traefik配置</h1><p>因为是双向认证，为了和普通的单向认证区分，我们新配一个entry point名为secure</p>
 <blockquote>
-<p>optional = false 表示要验证客户端证书是否经过ca签名</p>
+<p>optional &#x3D; false 表示要验证客户端证书是否经过ca签名</p>
 </blockquote>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">defaultEntryPoints = [&quot;http&quot;, &quot;https&quot;]</span><br><span class="line">[entryPoints]</span><br><span class="line">  [entryPoints.http]</span><br><span class="line">  address = &quot;:80&quot;</span><br><span class="line">  [entryPoints.https]</span><br><span class="line">  address = &quot;:443&quot;</span><br><span class="line">  [entryPoints.secure]</span><br><span class="line">  address = &quot;:8443&quot;</span><br><span class="line">  [entryPoints.secure.tls]</span><br><span class="line">    [entryPoints.secure.tls.ClientCA]</span><br><span class="line">    files = [&quot;/etc/traefikssl/clientca.crt&quot;]</span><br><span class="line">    optional = false</span><br><span class="line">    [[entryPoints.secure.tls.certificates]]</span><br><span class="line">    certFile = &quot;/etc/traefikssl/bxr.cn.crt&quot;</span><br><span class="line">    keyFile = &quot;/etc/traefikssl/bxr.cn.key&quot;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">defaultEntryPoints = [&quot;http&quot;, &quot;https&quot;]</span><br><span class="line">[entryPoints]</span><br><span class="line">  [entryPoints.http]</span><br><span class="line">  address = &quot;:80&quot;</span><br><span class="line">  [entryPoints.https]</span><br><span class="line">  address = &quot;:443&quot;</span><br><span class="line">  [entryPoints.secure]</span><br><span class="line">  address = &quot;:8443&quot;</span><br><span class="line">  [entryPoints.secure.tls]</span><br><span class="line">    [entryPoints.secure.tls.ClientCA]</span><br><span class="line">    files = [&quot;/etc/traefikssl/clientca.crt&quot;]</span><br><span class="line">    optional = false</span><br><span class="line">    [[entryPoints.secure.tls.certificates]]</span><br><span class="line">    certFile = &quot;/etc/traefikssl/bxr.cn.crt&quot;</span><br><span class="line">    keyFile = &quot;/etc/traefikssl/bxr.cn.key&quot;</span><br></pre></td></tr></table></figure>
 
 <h1 id="k8s-ingress"><a href="#k8s-ingress" class="headerlink" title="k8s ingress"></a>k8s ingress</h1><p>在ing中使用Annotations标记使用secure entry point</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: extensions/v1beta1</span><br><span class="line">kind: Ingress</span><br><span class="line">metadata:</span><br><span class="line">  annotations:</span><br><span class="line">    traefik.ingress.kubernetes.io/frontend-entry-points: secure</span><br><span class="line">  name: kubernetes-dashboard</span><br><span class="line">  namespace: kube-system</span><br><span class="line">spec:</span><br><span class="line">  rules:</span><br><span class="line">  - host: k8s.bxr.cn</span><br><span class="line">    http:</span><br><span class="line">      paths:</span><br><span class="line">      - backend:</span><br><span class="line">          serviceName: kubernetes-dashboard</span><br><span class="line">          servicePort: 9090</span><br></pre></td></tr></table></figure>
-
-<p>访问 <a href="https://k8s.bxr.cn:8443" target="_blank" rel="noopener">https://k8s.bxr.cn:8443</a> 浏览器就会要求你提供证书（之前生成的p12证书），没有证书不能访问。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: extensions/v1beta1</span><br><span class="line">kind: Ingress</span><br><span class="line">metadata:</span><br><span class="line">  annotations:</span><br><span class="line">    traefik.ingress.kubernetes.io/frontend-entry-points: secure</span><br><span class="line">  name: kubernetes-dashboard</span><br><span class="line">  namespace: kube-system</span><br><span class="line">spec:</span><br><span class="line">  rules:</span><br><span class="line">  - host: k8s.bxr.cn</span><br><span class="line">    http:</span><br><span class="line">      paths:</span><br><span class="line">      - backend:</span><br><span class="line">          serviceName: kubernetes-dashboard</span><br><span class="line">          servicePort: 9090</span><br></pre></td></tr></table></figure>
+<p>访问 <a target="_blank" rel="noopener" href="https://k8s.bxr.cn:8443/">https://k8s.bxr.cn:8443</a> 浏览器就会要求你提供证书（之前生成的p12证书），没有证书不能访问。</p>
   
 	</div>
 		<footer class="article-footer clearfix">
@@ -119,14 +120,14 @@
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/运维/">运维</a>
+  <a class="article-category-link" href="/categories/%E8%BF%90%E7%BB%B4/">运维</a>
 </div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://www.lstop.pub/2018/06/05/traefik实现ssl双向认证/" data-title="traefik实现ssl双向认证 | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  <div data-url="http://www.lstop.pub/2018/06/05/traefik%E5%AE%9E%E7%8E%B0ssl%E5%8F%8C%E5%90%91%E8%AE%A4%E8%AF%81/" data-title="traefik实现ssl双向认证 | Zong&#39;s blog" data-tsina="" class="share clearfix">
   </div>
 
 </div>
@@ -160,7 +161,7 @@
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#证书"><span class="toc-number">1.</span> <span class="toc-text">证书</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#traefik配置"><span class="toc-number">2.</span> <span class="toc-text">traefik配置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#k8s-ingress"><span class="toc-number">3.</span> <span class="toc-text">k8s ingress</span></a></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%AF%81%E4%B9%A6"><span class="toc-number">1.</span> <span class="toc-text">证书</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#traefik%E9%85%8D%E7%BD%AE"><span class="toc-number">2.</span> <span class="toc-text">traefik配置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#k8s-ingress"><span class="toc-number">3.</span> <span class="toc-text">k8s ingress</span></a></li></ol>
   </div>
 
 <div id="asidepart">

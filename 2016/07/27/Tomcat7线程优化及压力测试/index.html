@@ -1,7 +1,7 @@
 
  <!DOCTYPE HTML>
-<html>
-<head><meta name="generator" content="Hexo 3.9.0">
+<html >
+<head>
   <meta charset="UTF-8">
   
     <title>Tomcat7线程优化及压力测试 | Zong&#39;s blog</title>
@@ -22,9 +22,11 @@
     <link rel="apple-touch-icon" href="/img/pacman.jpg">
     <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
     
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-</html>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
   <body>
     <header>
       <div>
@@ -91,20 +93,19 @@
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#一、测试内容"><span class="toc-number">1.</span> <span class="toc-text">一、测试内容</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#二、测试方法及数据准备"><span class="toc-number">2.</span> <span class="toc-text">二、测试方法及数据准备</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#三、测试环境"><span class="toc-number">3.</span> <span class="toc-text">三、测试环境</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#四、jmeter设置"><span class="toc-number">4.</span> <span class="toc-text">四、jmeter设置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#五、测试数据"><span class="toc-number">5.</span> <span class="toc-text">五、测试数据</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-测试一"><span class="toc-number">5.1.</span> <span class="toc-text">1 测试一</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-测试二"><span class="toc-number">5.2.</span> <span class="toc-text">2 测试二</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-测试三"><span class="toc-number">5.3.</span> <span class="toc-text">3 测试三</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#测试四"><span class="toc-number">5.4.</span> <span class="toc-text">测试四</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#测试五"><span class="toc-number">5.5.</span> <span class="toc-text">测试五</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#六、结论"><span class="toc-number">6.</span> <span class="toc-text">六、结论</span></a></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%B5%8B%E8%AF%95%E5%86%85%E5%AE%B9"><span class="toc-number">1.</span> <span class="toc-text">一、测试内容</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E6%B5%8B%E8%AF%95%E6%96%B9%E6%B3%95%E5%8F%8A%E6%95%B0%E6%8D%AE%E5%87%86%E5%A4%87"><span class="toc-number">2.</span> <span class="toc-text">二、测试方法及数据准备</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E6%B5%8B%E8%AF%95%E7%8E%AF%E5%A2%83"><span class="toc-number">3.</span> <span class="toc-text">三、测试环境</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9B%9B%E3%80%81jmeter%E8%AE%BE%E7%BD%AE"><span class="toc-number">4.</span> <span class="toc-text">四、jmeter设置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E6%B5%8B%E8%AF%95%E6%95%B0%E6%8D%AE"><span class="toc-number">5.</span> <span class="toc-text">五、测试数据</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E6%B5%8B%E8%AF%95%E4%B8%80"><span class="toc-number">5.1.</span> <span class="toc-text">1 测试一</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E6%B5%8B%E8%AF%95%E4%BA%8C"><span class="toc-number">5.2.</span> <span class="toc-text">2 测试二</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E6%B5%8B%E8%AF%95%E4%B8%89"><span class="toc-number">5.3.</span> <span class="toc-text">3 测试三</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E5%9B%9B"><span class="toc-number">5.4.</span> <span class="toc-text">测试四</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E4%BA%94"><span class="toc-number">5.5.</span> <span class="toc-text">测试五</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E7%BB%93%E8%AE%BA"><span class="toc-number">6.</span> <span class="toc-text">六、结论</span></a></li></ol>
 		</div>
 		
 		<h1 id="一、测试内容"><a href="#一、测试内容" class="headerlink" title="一、测试内容"></a>一、测试内容</h1><p>本次测试是针对业务微信端通知消息模块进行的压力测试，<br>测试用例是模拟用户点击推送消息查看通知详情。</p>
 <h1 id="二、测试方法及数据准备"><a href="#二、测试方法及数据准备" class="headerlink" title="二、测试方法及数据准备"></a>二、测试方法及数据准备</h1><p>本次采用开源测试工具jmeter采用多线程的方式模拟大量客户端向服务器方发送业务请求，达到压力测试的目的。<br>数据准备：5万个虚拟用户(uic_account_info表导入5万记录)<br>          50万条通知明细（notice表10条、notice_subscr表导入50万记录）。</p>
 <h1 id="三、测试环境"><a href="#三、测试环境" class="headerlink" title="三、测试环境"></a>三、测试环境</h1><p>Tomcat服务器：wx-dev-web，2核cpu，4g内存<br>Jmeter服务器：wx-dev-test02，2核cpu，4g内存<br>带宽：金山云内网带宽    </p>
 <h1 id="四、jmeter设置"><a href="#四、jmeter设置" class="headerlink" title="四、jmeter设置"></a>四、jmeter设置</h1><p>测试url：内部链接<br>Jmeter线程200，单线程循环100次<br>测试脚本：内部脚本<br>参数化文件：内部数据</p>
-<p>名词定义（时间的单位均为ms）：<br>Samples – 本次场景中一共完成了多少个线程<br>Average – 平均响应时间<br>Median – 统计意义上面的响应时间的中值<br>90% Line – 所有线程中90%的线程的响应时间都小于xx<br>Min – 最小响应时间<br>Max – 最大响应时间<br>Error – 出错率<br>Troughput – 吞吐量<br>KB/sec – 以流量做衡量的吞吐量</p>
+<p>名词定义（时间的单位均为ms）：<br>Samples – 本次场景中一共完成了多少个线程<br>Average – 平均响应时间<br>Median – 统计意义上面的响应时间的中值<br>90% Line – 所有线程中90%的线程的响应时间都小于xx<br>Min – 最小响应时间<br>Max – 最大响应时间<br>Error – 出错率<br>Troughput – 吞吐量<br>KB&#x2F;sec – 以流量做衡量的吞吐量</p>
 <h1 id="五、测试数据"><a href="#五、测试数据" class="headerlink" title="五、测试数据"></a>五、测试数据</h1><h2 id="1-测试一"><a href="#1-测试一" class="headerlink" title="1 测试一"></a>1 测试一</h2><p>基础参数，只有JVM内存修改为1000M。<br>吞吐量基本稳定在900以上，出错率较高基本&gt;1%</p>
 <p>Java参数：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-Xms1000M -Xmx1000M -Xss512k</span><br></pre></td></tr></table></figure>
-
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-Xms1000M -Xmx1000M -Xss512k</span><br></pre></td></tr></table></figure>
 <p>Tomcat参数：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;Connector port=&quot;8090&quot; protocol=&quot;HTTP/1.1&quot;</span><br><span class="line">               connectionTimeout=&quot;20000&quot;</span><br><span class="line">               redirectPort=&quot;8443&quot; /&gt;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;Connector port=&quot;8090&quot; protocol=&quot;HTTP/1.1&quot;</span><br><span class="line">               connectionTimeout=&quot;20000&quot;</span><br><span class="line">               redirectPort=&quot;8443&quot; /&gt;</span><br></pre></td></tr></table></figure>
 
 <p>数据样本：</p>
 <table>
@@ -121,7 +122,7 @@
 <th>Max</th>
 <th>Error %</th>
 <th>Throughput</th>
-<th>KB/sec</th>
+<th>KB&#x2F;sec</th>
 </tr>
 </thead>
 <tbody><tr>
@@ -197,10 +198,10 @@
 </tbody></table>
 <h2 id="2-测试二"><a href="#2-测试二" class="headerlink" title="2 测试二"></a>2 测试二</h2><p>JVM参数不变，Tomcat线程数调到30000，测试tomcat线程过高的情况。<br>从压测结果看起到了反效果，吞吐量大部分只能在400左右。此时CPU达到瓶颈，吞吐量不稳定，tomcat不能线性处理请求，会出现卡顿并反映在cpu及jvm上</p>
 <p>Java参数：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-Xms1000M -Xmx1000M -Xss512k</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-Xms1000M -Xmx1000M -Xss512k</span><br></pre></td></tr></table></figure>
 
 <p>Tomcat参数：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;Connector port=&quot;8090&quot; protocol=&quot;org.apache.coyote.http11.Http11NioProtocol&quot;</span><br><span class="line">               connectionTimeout=&quot;20000&quot;</span><br><span class="line">                               enableLookups=&quot;false&quot;</span><br><span class="line">                               maxThreads=&quot;30000&quot;</span><br><span class="line">                               minSpareThreads=&quot;512&quot;</span><br><span class="line">                               maxSpareThreads=&quot;2048&quot;</span><br><span class="line">                               acceptCount=&quot;35000&quot;</span><br><span class="line">                               debug=&quot;0&quot;</span><br><span class="line">                               disableUploadTimeout=&quot;true&quot;</span><br><span class="line">               redirectPort=&quot;8443&quot; /&gt;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;Connector port=&quot;8090&quot; protocol=&quot;org.apache.coyote.http11.Http11NioProtocol&quot;</span><br><span class="line">               connectionTimeout=&quot;20000&quot;</span><br><span class="line">                               enableLookups=&quot;false&quot;</span><br><span class="line">                               maxThreads=&quot;30000&quot;</span><br><span class="line">                               minSpareThreads=&quot;512&quot;</span><br><span class="line">                               maxSpareThreads=&quot;2048&quot;</span><br><span class="line">                               acceptCount=&quot;35000&quot;</span><br><span class="line">                               debug=&quot;0&quot;</span><br><span class="line">                               disableUploadTimeout=&quot;true&quot;</span><br><span class="line">               redirectPort=&quot;8443&quot; /&gt;</span><br></pre></td></tr></table></figure>
 
 <p>数据样本：</p>
 <table>
@@ -217,7 +218,7 @@
 <th>Max</th>
 <th>Error %</th>
 <th>Throughput</th>
-<th>KB/sec</th>
+<th>KB&#x2F;sec</th>
 </tr>
 </thead>
 <tbody><tr>
@@ -293,10 +294,10 @@
 </tbody></table>
 <h2 id="3-测试三"><a href="#3-测试三" class="headerlink" title="3 测试三"></a>3 测试三</h2><p>把Tomcat线程数减少到1000，结果与测试二类似</p>
 <p>Java参数：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-Xms1000M -Xmx1000M -Xss512k</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-Xms1000M -Xmx1000M -Xss512k</span><br></pre></td></tr></table></figure>
 
 <p>Tomcat参数：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;Connector port=&quot;8090&quot; protocol=&quot;org.apache.coyote.http11.Http11NioProtocol&quot;</span><br><span class="line">               connectionTimeout=&quot;20000&quot;</span><br><span class="line">                               enableLookups=&quot;false&quot;</span><br><span class="line">                               maxThreads=&quot;1000&quot;</span><br><span class="line">                               minSpareThreads=&quot;128&quot;</span><br><span class="line">                               maxSpareThreads=&quot;512&quot;</span><br><span class="line">                               acceptCount=&quot;3000&quot;</span><br><span class="line">                               debug=&quot;0&quot;</span><br><span class="line">                               disableUploadTimeout=&quot;true&quot;</span><br><span class="line">               redirectPort=&quot;8443&quot; /&gt;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;Connector port=&quot;8090&quot; protocol=&quot;org.apache.coyote.http11.Http11NioProtocol&quot;</span><br><span class="line">               connectionTimeout=&quot;20000&quot;</span><br><span class="line">                               enableLookups=&quot;false&quot;</span><br><span class="line">                               maxThreads=&quot;1000&quot;</span><br><span class="line">                               minSpareThreads=&quot;128&quot;</span><br><span class="line">                               maxSpareThreads=&quot;512&quot;</span><br><span class="line">                               acceptCount=&quot;3000&quot;</span><br><span class="line">                               debug=&quot;0&quot;</span><br><span class="line">                               disableUploadTimeout=&quot;true&quot;</span><br><span class="line">               redirectPort=&quot;8443&quot; /&gt;</span><br></pre></td></tr></table></figure>
 
 <p>数据样本：</p>
 <table>
@@ -313,7 +314,7 @@
 <th>Max</th>
 <th>Error %</th>
 <th>Throughput</th>
-<th>KB/sec</th>
+<th>KB&#x2F;sec</th>
 </tr>
 </thead>
 <tbody><tr>
@@ -389,10 +390,10 @@
 </tbody></table>
 <h2 id="测试四"><a href="#测试四" class="headerlink" title="测试四"></a>测试四</h2><p>继续调小tomcat线程，测试结果比之前稳定，吞吐量保持在高水平，并且出错率比默认参数低一倍左右，基本&lt;1%。</p>
 <p>Java参数：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-Xms1000M -Xmx1000M -Xss512k</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-Xms1000M -Xmx1000M -Xss512k</span><br></pre></td></tr></table></figure>
 
 <p>Tomcat参数：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;Connector port=&quot;8090&quot; protocol=&quot;org.apache.coyote.http11.Http11NioProtocol&quot;</span><br><span class="line">               connectionTimeout=&quot;20000&quot;</span><br><span class="line">                               enableLookups=&quot;false&quot;</span><br><span class="line">                               maxThreads=&quot;256&quot;</span><br><span class="line">                               minSpareThreads=&quot;32&quot;</span><br><span class="line">                               maxSpareThreads=&quot;128&quot;</span><br><span class="line">                               acceptCount=&quot;300&quot;</span><br><span class="line">                               debug=&quot;0&quot;</span><br><span class="line">                               disableUploadTimeout=&quot;true&quot;</span><br><span class="line">               redirectPort=&quot;8443&quot; /&gt;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;Connector port=&quot;8090&quot; protocol=&quot;org.apache.coyote.http11.Http11NioProtocol&quot;</span><br><span class="line">               connectionTimeout=&quot;20000&quot;</span><br><span class="line">                               enableLookups=&quot;false&quot;</span><br><span class="line">                               maxThreads=&quot;256&quot;</span><br><span class="line">                               minSpareThreads=&quot;32&quot;</span><br><span class="line">                               maxSpareThreads=&quot;128&quot;</span><br><span class="line">                               acceptCount=&quot;300&quot;</span><br><span class="line">                               debug=&quot;0&quot;</span><br><span class="line">                               disableUploadTimeout=&quot;true&quot;</span><br><span class="line">               redirectPort=&quot;8443&quot; /&gt;</span><br></pre></td></tr></table></figure>
 
 <p>数据样本：</p>
 <table>
@@ -409,7 +410,7 @@
 <th>Max</th>
 <th>Error %</th>
 <th>Throughput</th>
-<th>KB/sec</th>
+<th>KB&#x2F;sec</th>
 </tr>
 </thead>
 <tbody><tr>
@@ -485,10 +486,10 @@
 </tbody></table>
 <h2 id="测试五"><a href="#测试五" class="headerlink" title="测试五"></a>测试五</h2><p>继续调小tomcat线程，测试取得了最理想的结果，吞吐量稳定保持在高水平，比之前测试都要高，其他各项结果均有不同程度提升，关键是出错率为0%。</p>
 <p>Java参数：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-Xms1000M -Xmx1000M -Xss512k</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-Xms1000M -Xmx1000M -Xss512k</span><br></pre></td></tr></table></figure>
 
 <p>Tomcat参数：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;Connector port=&quot;8090&quot; protocol=&quot;org.apache.coyote.http11.Http11NioProtocol&quot;</span><br><span class="line">               connectionTimeout=&quot;20000&quot;</span><br><span class="line">                               enableLookups=&quot;false&quot;</span><br><span class="line">                               maxThreads=&quot;128&quot;</span><br><span class="line">                               minSpareThreads=&quot;32&quot;</span><br><span class="line">                               maxSpareThreads=&quot;64&quot;</span><br><span class="line">                               acceptCount=&quot;300&quot;</span><br><span class="line">                               debug=&quot;0&quot;</span><br><span class="line">                               disableUploadTimeout=&quot;true&quot;</span><br><span class="line">               redirectPort=&quot;8443&quot; /&gt;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;Connector port=&quot;8090&quot; protocol=&quot;org.apache.coyote.http11.Http11NioProtocol&quot;</span><br><span class="line">               connectionTimeout=&quot;20000&quot;</span><br><span class="line">                               enableLookups=&quot;false&quot;</span><br><span class="line">                               maxThreads=&quot;128&quot;</span><br><span class="line">                               minSpareThreads=&quot;32&quot;</span><br><span class="line">                               maxSpareThreads=&quot;64&quot;</span><br><span class="line">                               acceptCount=&quot;300&quot;</span><br><span class="line">                               debug=&quot;0&quot;</span><br><span class="line">                               disableUploadTimeout=&quot;true&quot;</span><br><span class="line">               redirectPort=&quot;8443&quot; /&gt;</span><br></pre></td></tr></table></figure>
 
 <p>数据样本：</p>
 <table>
@@ -505,7 +506,7 @@
 <th>Max</th>
 <th>Error %</th>
 <th>Throughput</th>
-<th>KB/sec</th>
+<th>KB&#x2F;sec</th>
 </tr>
 </thead>
 <tbody><tr>
@@ -580,15 +581,10 @@
 </tr>
 </tbody></table>
 <h1 id="六、结论"><a href="#六、结论" class="headerlink" title="六、结论"></a>六、结论</h1><ol>
-<li><p>当前最大瓶颈在服务器配置，主要受cpu限制，不能承载大并发请求。</p>
-</li>
-<li><p>此项压测对数据库无明显依赖，测试过程中数据库指标健康。</p>
-</li>
-<li><p>Tomcat线程按测试五参数调整能达到最优性能，吞吐率稳定而且出错率为0。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;Connector port=&quot;8090&quot; protocol=&quot;org.apache.coyote.http11.Http11NioProtocol&quot;</span><br><span class="line">            connectionTimeout=&quot;20000&quot;</span><br><span class="line">                            enableLookups=&quot;false&quot;</span><br><span class="line">                            maxThreads=&quot;128&quot;</span><br><span class="line">                            minSpareThreads=&quot;32&quot;</span><br><span class="line">                            maxSpareThreads=&quot;64&quot;</span><br><span class="line">                            acceptCount=&quot;300&quot;</span><br><span class="line">                            debug=&quot;0&quot;</span><br><span class="line">                            disableUploadTimeout=&quot;true&quot;</span><br><span class="line">            redirectPort=&quot;8443&quot; /&gt;</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>按当前服务器配置，tomcat参数调优对整体吞吐性能影响不算明显，大概提升10%左右，但是对出错率有较好提升。</p>
-</li>
+<li>当前最大瓶颈在服务器配置，主要受cpu限制，不能承载大并发请求。</li>
+<li>此项压测对数据库无明显依赖，测试过程中数据库指标健康。</li>
+<li>Tomcat线程按测试五参数调整能达到最优性能，吞吐率稳定而且出错率为0。<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;Connector port=&quot;8090&quot; protocol=&quot;org.apache.coyote.http11.Http11NioProtocol&quot;</span><br><span class="line">            connectionTimeout=&quot;20000&quot;</span><br><span class="line">                            enableLookups=&quot;false&quot;</span><br><span class="line">                            maxThreads=&quot;128&quot;</span><br><span class="line">                            minSpareThreads=&quot;32&quot;</span><br><span class="line">                            maxSpareThreads=&quot;64&quot;</span><br><span class="line">                            acceptCount=&quot;300&quot;</span><br><span class="line">                            debug=&quot;0&quot;</span><br><span class="line">                            disableUploadTimeout=&quot;true&quot;</span><br><span class="line">            redirectPort=&quot;8443&quot; /&gt;</span><br></pre></td></tr></table></figure></li>
+<li>按当前服务器配置，tomcat参数调优对整体吞吐性能影响不算明显，大概提升10%左右，但是对出错率有较好提升。</li>
 </ol>
   
 	</div>
@@ -602,14 +598,14 @@
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/运维/">运维</a>
+  <a class="article-category-link" href="/categories/%E8%BF%90%E7%BB%B4/">运维</a>
 </div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://www.lstop.pub/2016/07/27/Tomcat7线程优化及压力测试/" data-title="Tomcat7线程优化及压力测试 | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  <div data-url="http://www.lstop.pub/2016/07/27/Tomcat7%E7%BA%BF%E7%A8%8B%E4%BC%98%E5%8C%96%E5%8F%8A%E5%8E%8B%E5%8A%9B%E6%B5%8B%E8%AF%95/" data-title="Tomcat7线程优化及压力测试 | Zong&#39;s blog" data-tsina="" class="share clearfix">
   </div>
 
 </div>
@@ -643,7 +639,7 @@
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#一、测试内容"><span class="toc-number">1.</span> <span class="toc-text">一、测试内容</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#二、测试方法及数据准备"><span class="toc-number">2.</span> <span class="toc-text">二、测试方法及数据准备</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#三、测试环境"><span class="toc-number">3.</span> <span class="toc-text">三、测试环境</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#四、jmeter设置"><span class="toc-number">4.</span> <span class="toc-text">四、jmeter设置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#五、测试数据"><span class="toc-number">5.</span> <span class="toc-text">五、测试数据</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-测试一"><span class="toc-number">5.1.</span> <span class="toc-text">1 测试一</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-测试二"><span class="toc-number">5.2.</span> <span class="toc-text">2 测试二</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-测试三"><span class="toc-number">5.3.</span> <span class="toc-text">3 测试三</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#测试四"><span class="toc-number">5.4.</span> <span class="toc-text">测试四</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#测试五"><span class="toc-number">5.5.</span> <span class="toc-text">测试五</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#六、结论"><span class="toc-number">6.</span> <span class="toc-text">六、结论</span></a></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%B5%8B%E8%AF%95%E5%86%85%E5%AE%B9"><span class="toc-number">1.</span> <span class="toc-text">一、测试内容</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E6%B5%8B%E8%AF%95%E6%96%B9%E6%B3%95%E5%8F%8A%E6%95%B0%E6%8D%AE%E5%87%86%E5%A4%87"><span class="toc-number">2.</span> <span class="toc-text">二、测试方法及数据准备</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E6%B5%8B%E8%AF%95%E7%8E%AF%E5%A2%83"><span class="toc-number">3.</span> <span class="toc-text">三、测试环境</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9B%9B%E3%80%81jmeter%E8%AE%BE%E7%BD%AE"><span class="toc-number">4.</span> <span class="toc-text">四、jmeter设置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E6%B5%8B%E8%AF%95%E6%95%B0%E6%8D%AE"><span class="toc-number">5.</span> <span class="toc-text">五、测试数据</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E6%B5%8B%E8%AF%95%E4%B8%80"><span class="toc-number">5.1.</span> <span class="toc-text">1 测试一</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E6%B5%8B%E8%AF%95%E4%BA%8C"><span class="toc-number">5.2.</span> <span class="toc-text">2 测试二</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E6%B5%8B%E8%AF%95%E4%B8%89"><span class="toc-number">5.3.</span> <span class="toc-text">3 测试三</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E5%9B%9B"><span class="toc-number">5.4.</span> <span class="toc-text">测试四</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E4%BA%94"><span class="toc-number">5.5.</span> <span class="toc-text">测试五</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E7%BB%93%E8%AE%BA"><span class="toc-number">6.</span> <span class="toc-text">六、结论</span></a></li></ol>
   </div>
 
 <div id="asidepart">

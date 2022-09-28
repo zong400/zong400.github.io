@@ -1,7 +1,7 @@
 
  <!DOCTYPE HTML>
-<html>
-<head><meta name="generator" content="Hexo 3.9.0">
+<html >
+<head>
   <meta charset="UTF-8">
   
     <title>比较6的python语法 | Zong&#39;s blog</title>
@@ -12,7 +12,7 @@
     <meta name="description" content="收集整理一下python的语法，不断更新
 ##构建子列表
 包含多个字典的列表，用其中字典元素构建子列表
-1234d = [&amp;#123;&amp;apos;name&amp;apos;:&amp;apos;傅家俊&amp;apos;, &amp;apos;age&amp;apos;: 26&amp;#125;, &amp;#123;&amp;apos;name&amp;apos;">
+1234d = [&amp;#123;&amp;#x27;name&amp;#x27;:&amp;#x27;傅家俊&amp;#x27;, &amp;#x27;age&amp;#x27;: 26&amp;#125;, &amp;#123;&amp;#x27;name&amp;#x27;">
     
     
     
@@ -24,9 +24,11 @@
     <link rel="apple-touch-icon" href="/img/pacman.jpg">
     <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
     
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-</html>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
   <body>
     <header>
       <div>
@@ -99,21 +101,21 @@
 		<p>收集整理一下python的语法，不断更新</p>
 <p>##构建子列表</p>
 <p>包含多个字典的列表，用其中字典元素构建子列表</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">d = [&#123;&apos;name&apos;:&apos;傅家俊&apos;, &apos;age&apos;: 26&#125;, &#123;&apos;name&apos;:&apos;朱婷&apos;, &apos;age&apos;: 23&#125;, &#123;&apos;name&apos;:&apos;易建联&apos;, &apos;age&apos;: 30&#125;]</span><br><span class="line">d1 = [sub[&apos;name&apos;] for sub in d]</span><br><span class="line">print(d1)</span><br><span class="line">[&apos;傅家俊&apos;, &apos;朱婷&apos;, &apos;易建联&apos;]</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">d = [&#123;&#x27;name&#x27;:&#x27;傅家俊&#x27;, &#x27;age&#x27;: 26&#125;, &#123;&#x27;name&#x27;:&#x27;朱婷&#x27;, &#x27;age&#x27;: 23&#125;, &#123;&#x27;name&#x27;:&#x27;易建联&#x27;, &#x27;age&#x27;: 30&#125;]</span><br><span class="line">d1 = [sub[&#x27;name&#x27;] for sub in d]</span><br><span class="line">print(d1)</span><br><span class="line">[&#x27;傅家俊&#x27;, &#x27;朱婷&#x27;, &#x27;易建联&#x27;]</span><br></pre></td></tr></table></figure>
 
 <p>还能带if判断</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">d2 = [sub[&apos;age&apos;] for sub in d if sub[&apos;age&apos;] &gt; 24]</span><br><span class="line">print(d2)</span><br><span class="line">[26, 30]</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">d2 = [sub[&#x27;age&#x27;] for sub in d if sub[&#x27;age&#x27;] &gt; 24]</span><br><span class="line">print(d2)</span><br><span class="line">[26, 30]</span><br></pre></td></tr></table></figure>
 
 <p>重组一个新字典列表</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">d3 = [&#123;&apos;name&apos; : i[&apos;name&apos;]&#125; for i in d]</span><br><span class="line">print(d3)</span><br><span class="line">[&#123;&apos;name&apos;: &apos;傅家俊&apos;&#125;, &#123;&apos;name&apos;: &apos;朱婷&apos;&#125;, &#123;&apos;name&apos;: &apos;易建联&apos;&#125;]</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">d3 = [&#123;&#x27;name&#x27; : i[&#x27;name&#x27;]&#125; for i in d]</span><br><span class="line">print(d3)</span><br><span class="line">[&#123;&#x27;name&#x27;: &#x27;傅家俊&#x27;&#125;, &#123;&#x27;name&#x27;: &#x27;朱婷&#x27;&#125;, &#123;&#x27;name&#x27;: &#x27;易建联&#x27;&#125;]</span><br></pre></td></tr></table></figure>
 
 <p>##任意多个位置参数</p>
 <p>*args 代表任意个位置参数</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">def ma(fir, *args):</span><br><span class="line">    print(&quot;第一个参数：&quot; + fir)</span><br><span class="line">    print(&quot;任意个位置参数：&quot; + &apos;&apos;.join(args))</span><br><span class="line">    print(&quot;任意参数是一个元组：&#123;&#125;&quot;.format(args))</span><br><span class="line">	</span><br><span class="line">ma(&apos;我&apos;,&apos;可&apos;,&apos;口&apos;,&apos;可&apos;,&apos;乐&apos;)</span><br><span class="line">第一个参数：我</span><br><span class="line">任意个位置参数：可口可乐</span><br><span class="line">任意参数是一个元组：(&apos;可&apos;, &apos;口&apos;, &apos;可&apos;, &apos;乐&apos;)</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">def ma(fir, *args):</span><br><span class="line">    print(&quot;第一个参数：&quot; + fir)</span><br><span class="line">    print(&quot;任意个位置参数：&quot; + &#x27;&#x27;.join(args))</span><br><span class="line">    print(&quot;任意参数是一个元组：&#123;&#125;&quot;.format(args))</span><br><span class="line">	</span><br><span class="line">ma(&#x27;我&#x27;,&#x27;可&#x27;,&#x27;口&#x27;,&#x27;可&#x27;,&#x27;乐&#x27;)</span><br><span class="line">第一个参数：我</span><br><span class="line">任意个位置参数：可口可乐</span><br><span class="line">任意参数是一个元组：(&#x27;可&#x27;, &#x27;口&#x27;, &#x27;可&#x27;, &#x27;乐&#x27;)</span><br></pre></td></tr></table></figure>
 
 <p>##任意个关键字参数</p>
 <p>**kwargs 代表任意个关键字参数</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">def mb(fir, **kwargs):</span><br><span class="line">    print(&quot;任意关键字参数字典：&#123;&#125;&quot;.format(kwargs))</span><br><span class="line"></span><br><span class="line">mb(1, name=&apos;林书豪&apos;, pool=2, country=&apos;美国&apos;)</span><br><span class="line">任意关键字参数字典：&#123;&apos;name&apos;: &apos;林书豪&apos;, &apos;pool&apos;: 2, &apos;country&apos;: &apos;美国&apos;&#125;</span><br></pre></td></tr></table></figure>  
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">def mb(fir, **kwargs):</span><br><span class="line">    print(&quot;任意关键字参数字典：&#123;&#125;&quot;.format(kwargs))</span><br><span class="line"></span><br><span class="line">mb(1, name=&#x27;林书豪&#x27;, pool=2, country=&#x27;美国&#x27;)</span><br><span class="line">任意关键字参数字典：&#123;&#x27;name&#x27;: &#x27;林书豪&#x27;, &#x27;pool&#x27;: 2, &#x27;country&#x27;: &#x27;美国&#x27;&#125;</span><br></pre></td></tr></table></figure>  
 	</div>
 		<footer class="article-footer clearfix">
 
@@ -127,7 +129,7 @@
 
 <div class="article-share" id="share">
 
-  <div data-url="http://www.lstop.pub/2019/10/21/比较6的python语法/" data-title="比较6的python语法 | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  <div data-url="http://www.lstop.pub/2019/10/21/%E6%AF%94%E8%BE%836%E7%9A%84python%E8%AF%AD%E6%B3%95/" data-title="比较6的python语法 | Zong&#39;s blog" data-tsina="" class="share clearfix">
   </div>
 
 </div>
