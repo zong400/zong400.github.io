@@ -4,13 +4,13 @@
 <head>
   <meta charset="UTF-8">
   
-    <title>elasticsearch reindex | Zong&#39;s blog</title>
+    <title>openwrt配置移动iptv单线复用 | Zong&#39;s blog</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
     <meta name="author" content="Zong">
     
-    <meta name="description" content="reindex顾名思义是重建index的意思，因为一些原因，之前的index参数、mapping等设置需要优化、不合理时就需要reindex。典型的原因是设置shard数量，当index增长或者业务量增长需要扩容集群，重新设置shard可以进一步优化性能。reindex基本操作比较简单：
-12345">
+    <meta name="description" content="简单记录一下配置过程以免忘记。实现效果：光猫到路由一条网线，同时承载上网和iptv业务，路由器一个网口专门分给iptv机顶盒，剩下网口接AP上网
+光猫网上找到光猫的超管破解方法，现在新光猫的超管密码都随机了，如果找不到进入光猫的方法，只能买2个网管交换机代替。我的光猫是吉比特H5-9，感谢恩山大神这">
     
     
     
@@ -76,14 +76,14 @@
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2020/09/18/elasticsearch-reindex/" title="elasticsearch reindex" itemprop="url">elasticsearch reindex</a>
+      <a href="/2024/11/06/openwrt配置移动iptv单线复用/" title="openwrt配置移动iptv单线复用" itemprop="url">openwrt配置移动iptv单线复用</a>
   </h1>
   <p class="article-author">By
     
       <a href="http://www.lstop.pub" title="Zong">Zong</a>
     </p>
   <p class="article-time">
-    <time datetime="2020-09-18T07:55:51.000Z" itemprop="datePublished">2020-09-18</time>
+    <time datetime="2024-11-06T00:51:42.000Z" itemprop="datePublished">2024-11-06</time>
     
   </p>
 </header>
@@ -93,36 +93,45 @@
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#reindex"><span class="toc-number">1.</span> <span class="toc-text">reindex</span></a></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%89%E7%8C%AB"><span class="toc-number">1.</span> <span class="toc-text">光猫</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%B7%AF%E7%94%B1%E5%99%A8"><span class="toc-number">2.</span> <span class="toc-text">路由器</span></a></li></ol>
 		</div>
 		
-		<h1 id="reindex"><a href="#reindex" class="headerlink" title="reindex"></a>reindex</h1><p>顾名思义是重建index的意思，因为一些原因，之前的index参数、mapping等设置需要优化、不合理时就需要reindex。典型的原因是设置shard数量，当index增长或者业务量增长需要扩容集群，重新设置shard可以进一步优化性能。<br>reindex基本操作比较简单：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">POST _reindex?wait_for_completion=false&amp;slices=auto&amp;refresh</span><br><span class="line">&#123;</span><br><span class="line">  &quot;source&quot;: &#123;</span><br><span class="line">    &quot;index&quot;: &quot;tk_books&quot;,</span><br><span class="line">	&quot;size&quot;: 100</span><br><span class="line">  &#125;,</span><br><span class="line">  &quot;dest&quot;: &#123;</span><br><span class="line">    &quot;index&quot;: &quot;ttkk_tk_books&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>wait_for_completion: false不等待任务完成<br>slices: 并行操作，相当于切片，设置auto是按shard数切分，也可以指定一个数<br>size: 批量操作，每批数据，每批数据5-15MB开始，逐步调整size大小可以改善性能</p>
-</blockquote>
-<p>一些优化技巧：<br>1.把dest index的冗余设置0<br>2.把dest index的refresh_interval设置-1<br>这样可以加快写入速度，完成后再改成正常。</p>
-<p>重新设置shard，需要先建dest index，设置好number_of_shard。</p>
+		<p>简单记录一下配置过程以免忘记。<br>实现效果：光猫到路由一条网线，同时承载上网和iptv业务，路由器一个网口专门分给iptv机顶盒，剩下网口接AP上网</p>
+<h1 id="光猫"><a href="#光猫" class="headerlink" title="光猫"></a>光猫</h1><p>网上找到光猫的超管破解方法，现在新光猫的超管密码都随机了，如果找不到进入光猫的方法，只能买2个网管交换机代替。<br>我的光猫是吉比特H5-9，<a target="_blank" rel="noopener" href="https://www.right.com.cn/forum/forum.php?mod=viewthread&tid=8404360&highlight=H5-9">感谢恩山大神这个帖子</a>，按着步骤能进入超管。<br>关键是打开telnet，在浏览器输入</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://192.168.1.1/usr=CMCCAdmin&amp;psw=aDm8H%MdA&amp;cmd=1&amp;telnet.gch</span><br></pre></td></tr></table></figure>
+<p>看到 TelnetSet Success！说明telnet打开了<br>telnet 192.168.1.1 使用账号 CMCCAdmin 和密码 aDm8H%MdA 登录</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">sidbg 1 DB p DevAuthInfo  #查看账号信息，关键位置打*了其实看不出什么</span><br><span class="line">sidbg 1 DB set DevAuthInfo 0 Pass aDm8H%MdA  # 把超管密码设回 aDm8H%MdA</span><br><span class="line">sidbg 1 DB save # 保存设置</span><br><span class="line"></span><br><span class="line">sidbg 1 DB p MgtServer #查看远程控制信息</span><br><span class="line">sidbg 1 DB set MgtServer 0 URL http://127.0.0.1  # 把远程服务器地址改掉</span><br><span class="line">sidbg 1 DB set MgtServer 0 Tr069Enable 0  # 关闭tr069</span><br><span class="line">sidbg 1 DB save</span><br></pre></td></tr></table></figure>
+
+<p>这时候能在网页端登录超管了，进去能看到接口设置，这里关键是看清楚上网接口vlan和iptv vlan号，然后只需要操作2步</p>
+<ul>
+<li>上网设置页面里把2个接口绑定的网口解绑</li>
+<li>绑定配置里把网口1绑定之前记下的2个vlan号，我这里上网vlan是41，iptv是48</li>
+</ul>
+<p>光猫设置步骤可以参考这个<a target="_blank" rel="noopener" href="https://www.right.com.cn/forum/thread-8342082-1-1.html">恩山大神帖子</a><br>总而言之，光猫操作关键是把原本的Internet和iptv分别固定网口和vlan，改成不绑定网口，并且2个vlan都绑定到1个网口，通常是网口1</p>
+<h1 id="路由器"><a href="#路由器" class="headerlink" title="路由器"></a>路由器</h1><p>路由器是openwrt，可以方便的设置vlan，原本路由器接口有Lan，Wan，Wan6，大致上Lan绑定eth1、eth2、eth3；wan和wan6绑定eth0。<br>然后按步骤设置：</p>
+<ul>
+<li>新增接口连接光猫，名字cat，绑定接口eth0，协议静态，ip填192.168.1.3</li>
+<li>新增接口用于上网，名字eth0_Internet, 绑定接口eth0.41，协议无</li>
+<li>把原本wan和wan6同时绑定到这个接口，设置好wan的pppoe账号密码</li>
+<li>新增接口用于iptv，名字eth0_iptv, 绑定接口eth0.48，勾选桥接加入eth2，协议dhcp，跃点30，不勾选默认网关</li>
+<li>配置Lan接口，把eth2去掉</li>
+</ul>
+<p>目的是把单线承载的2个vlan数据分开，配置完后可以试下拨号和iptv接口能不能正常工作，接着就可以正常使用了。<br>这种是最简单的单线复用设置，只能固定网口看iptv，网上还有更复杂的设置把iptv组播转单播等能把数据共享到整个网络看电视的，这种配置有空再玩一下。</p>
   
 	</div>
 		<footer class="article-footer clearfix">
 
   <div class="article-tags">
   
-  <span></span> <a href="/tags/elasticsearch/">elasticsearch</a>
+  <span></span> <a href="/tags/OpenWrt/">OpenWrt</a>
   </div>
 
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/%E8%BF%90%E7%BB%B4/">运维</a>
-</div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://www.lstop.pub/2020/09/18/elasticsearch-reindex/" data-title="elasticsearch reindex | Zong&#39;s blog" data-tsina="" class="share clearfix">
+  <div data-url="http://www.lstop.pub/2024/11/06/openwrt%E9%85%8D%E7%BD%AE%E7%A7%BB%E5%8A%A8iptv%E5%8D%95%E7%BA%BF%E5%A4%8D%E7%94%A8/" data-title="openwrt配置移动iptv单线复用 | Zong&#39;s blog" data-tsina="" class="share clearfix">
   </div>
 
 </div>
@@ -131,19 +140,11 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
- <a href="/2021/03/31/cfssl创建ssl证书/" title="cfssl创建ssl证书">
-  <strong>PREVIOUS:</strong><br/>
-  <span>
-  cfssl创建ssl证书</span>
-</a>
-</div>
-
 
 <div class="next">
-<a href="/2020/09/04/elasticsearch-template及index的优化参数/"  title="elasticsearch template及index的优化参数">
+<a href="/2024/08/12/k8s-1-29-二进制安装/"  title="k8s 1.29 二进制安装">
  <strong>NEXT:</strong><br/> 
- <span>elasticsearch template及index的优化参数
+ <span>k8s 1.29 二进制安装
 </span>
 </a>
 </div>
@@ -156,7 +157,7 @@
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#reindex"><span class="toc-number">1.</span> <span class="toc-text">reindex</span></a></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%89%E7%8C%AB"><span class="toc-number">1.</span> <span class="toc-text">光猫</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%B7%AF%E7%94%B1%E5%99%A8"><span class="toc-number">2.</span> <span class="toc-text">路由器</span></a></li></ol>
   </div>
 
 <div id="asidepart">
