@@ -104,19 +104,19 @@
 
 <p>这时候能在网页端登录超管了，进去能看到接口设置，这里关键是看清楚上网接口vlan和iptv vlan号，然后只需要操作2步</p>
 <ul>
-<li>上网设置页面里把2个接口绑定的网口解绑</li>
+<li>上网设置页面里把Internet和iptv两个接口绑定的网口解绑</li>
 <li>绑定配置里把网口1绑定之前记下的2个vlan号，我这里上网vlan是41，iptv是48</li>
 </ul>
 <p>光猫设置步骤可以参考这个<a target="_blank" rel="noopener" href="https://www.right.com.cn/forum/thread-8342082-1-1.html">恩山大神帖子</a><br>总而言之，光猫操作关键是把原本的Internet和iptv分别固定网口和vlan，改成不绑定网口，并且2个vlan都绑定到1个网口，通常是网口1</p>
-<h1 id="路由器"><a href="#路由器" class="headerlink" title="路由器"></a>路由器</h1><p>路由器是openwrt，可以方便的设置vlan，原本路由器接口有Lan，Wan，Wan6，大致上Lan绑定eth1、eth2、eth3；wan和wan6绑定eth0。<br>然后按步骤设置：</p>
+<h1 id="路由器"><a href="#路由器" class="headerlink" title="路由器"></a>路由器</h1><p>路由器是openwrt，可以方便的设置vlan，原本路由器接口有Lan，Wan，Wan6，大致上Lan绑定eth1、eth2、eth3；wan和wan6绑定eth0。<br>按步骤设置：</p>
 <ul>
-<li>新增接口连接光猫，名字cat，绑定接口eth0，协议静态，ip填192.168.1.3</li>
+<li>新增接口连接光猫，名字cat，绑定接口eth0，协议静态，ip填192.168.1.3（光猫的网段）</li>
 <li>新增接口用于上网，名字eth0_Internet, 绑定接口eth0.41，协议无</li>
-<li>把原本wan和wan6同时绑定到这个接口，设置好wan的pppoe账号密码</li>
-<li>新增接口用于iptv，名字eth0_iptv, 绑定接口eth0.48，勾选桥接加入eth2，协议dhcp，跃点30，不勾选默认网关</li>
+<li>把原本wan和wan6同时绑定到eth0_Internet这个接口，设置好wan的pppoe账号密码（这时候可以先试下拨号正不正常）</li>
+<li>新增接口用于iptv，名字eth0_iptv, 勾选桥接加入eth0.48和eth2两个接口，协议dhcp（广东移动能获取到ip），跃点30，不勾选默认网关（会扰乱默认路由导致不能上网）</li>
 <li>配置Lan接口，把eth2去掉</li>
 </ul>
-<p>目的是把单线承载的2个vlan数据分开，配置完后可以试下拨号和iptv接口能不能正常工作，接着就可以正常使用了。<br>这种是最简单的单线复用设置，只能固定网口看iptv，网上还有更复杂的设置把iptv组播转单播等能把数据共享到整个网络看电视的，这种配置有空再玩一下。</p>
+<p>目的是把单线承载的2个vlan数据分开，配置完后可以试下拨号和iptv接口能不能正常工作。<br>这种是最简单的单线复用设置，只能固定网口看iptv，网上还有更复杂的设置把iptv组播转单播等能把数据共享到整个网络看电视的，这种配置有空再玩一下。</p>
   
 	</div>
 		<footer class="article-footer clearfix">
