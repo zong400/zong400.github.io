@@ -9,8 +9,7 @@
     
     <meta name="author" content="Zong">
     
-    <meta name="description" content="最近要新装一套k8s，二进制方式可以说比较难的了，过程有点像搭积木，好处是能更加清晰了解k8s的内部组件，这次选1.29这个比较新的版本。另外众所周知的原因，下面涉及的容器尽量使用国内源或者自己tag push的版本。
-服务器规划因为是正式的环境，选用3个master，k8s需要运行etcd，kub">
+    <meta name="description" content="最近要新装一套k8s，二进制方式可以说比较难的了，过程有点像搭积木，好处是能更加清晰了解k8s的内部组件，这次选1.29这个比较新的版本。另外众所周知的原因，下面涉及的容器尽量使用国内源或者自己tag push的版本。k8s各个版本主要更新内容参考：TKE Kubernetes 大版本更新说明官方C">
     
     
     
@@ -96,7 +95,10 @@
 		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E5%99%A8%E8%A7%84%E5%88%92"><span class="toc-number">1.</span> <span class="toc-text">服务器规划</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%B9%E5%99%A8%E7%8E%AF%E5%A2%83"><span class="toc-number">2.</span> <span class="toc-text">容器环境</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#containerd"><span class="toc-number">2.1.</span> <span class="toc-text">containerd</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#crictl"><span class="toc-number">2.2.</span> <span class="toc-text">crictl</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#master%E9%83%A8%E5%88%86"><span class="toc-number">3.</span> <span class="toc-text">master部分</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#kubelet-standalone"><span class="toc-number">3.1.</span> <span class="toc-text">kubelet standalone</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AF%81%E4%B9%A6"><span class="toc-number">3.2.</span> <span class="toc-text">证书</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#etcd%E9%9B%86%E7%BE%A4"><span class="toc-number">3.3.</span> <span class="toc-text">etcd集群</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#kube-apiserver"><span class="toc-number">3.4.</span> <span class="toc-text">kube-apiserver</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#kubectl"><span class="toc-number">3.5.</span> <span class="toc-text">kubectl</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#kube-controller-manager"><span class="toc-number">3.6.</span> <span class="toc-text">kube-controller-manager</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#kube-scheduler"><span class="toc-number">3.7.</span> <span class="toc-text">kube-scheduler</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#worker%E8%8A%82%E7%82%B9%E9%83%A8%E5%88%86"><span class="toc-number">4.</span> <span class="toc-text">worker节点部分</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E5%99%A8%E4%BC%98%E5%8C%96%E5%92%8C%E5%9F%BA%E7%A1%80%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85"><span class="toc-number">4.1.</span> <span class="toc-text">服务器优化和基础软件安装</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ulimit"><span class="toc-number">4.1.1.</span> <span class="toc-text">ulimit</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#sysctl-conf"><span class="toc-number">4.1.2.</span> <span class="toc-text">sysctl.conf</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#kubelet"><span class="toc-number">4.2.</span> <span class="toc-text">kubelet</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#kube-proxy"><span class="toc-number">4.3.</span> <span class="toc-text">kube-proxy</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BD%91%E7%BB%9C%E5%92%8C%E5%9F%BA%E7%A1%80%E5%AE%B9%E5%99%A8"><span class="toc-number">5.</span> <span class="toc-text">网络和基础容器</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#calico"><span class="toc-number">5.1.</span> <span class="toc-text">calico</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#coredns"><span class="toc-number">5.2.</span> <span class="toc-text">coredns</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#local-dns-cache"><span class="toc-number">5.3.</span> <span class="toc-text">local dns cache</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#kubelet-csr-approver"><span class="toc-number">5.4.</span> <span class="toc-text">kubelet-csr-approver</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#metrics-server"><span class="toc-number">5.5.</span> <span class="toc-text">metrics server</span></a></li></ol></li></ol>
 		</div>
 		
-		<p>最近要新装一套k8s，二进制方式可以说比较难的了，过程有点像搭积木，好处是能更加清晰了解k8s的内部组件，这次选1.29这个比较新的版本。另外众所周知的原因，下面涉及的容器尽量使用国内源或者自己tag push的版本。</p>
+		<p>最近要新装一套k8s，二进制方式可以说比较难的了，过程有点像搭积木，好处是能更加清晰了解k8s的内部组件，这次选1.29这个比较新的版本。另外众所周知的原因，下面涉及的容器尽量使用国内源或者自己tag push的版本。<br>k8s各个版本主要更新内容参考：<br><a target="_blank" rel="noopener" href="https://cloud.tencent.com/document/product/457/47791">TKE Kubernetes 大版本更新说明</a><br><a target="_blank" rel="noopener" href="https://github.com/kubernetes/kubernetes/tree/master/CHANGELOG">官方Changelog</a></p>
+<blockquote>
+<p>以下的配置基本适用到1.31版本(2025.05.09更新)</p>
+</blockquote>
 <h1 id="服务器规划"><a href="#服务器规划" class="headerlink" title="服务器规划"></a>服务器规划</h1><p>因为是正式的环境，选用3个master，k8s需要运行etcd，kube-apiserver，kube-controller-manager，kube-scheduler，另外我选择使用一个standalone运行的kubelet去容器化运行这些组件，这样还要安装containerd。如果不是在公有云上部署的话可能需要haproxy和keepalive做apiserver的负载均衡。node节点使用ipvs处理service，服务器OS统一使用ubuntu 22.04升级到5.19内核。<br>服务器规划如下</p>
 <table>
 <thead>
@@ -124,12 +126,12 @@
 <tr>
 <td>node1</td>
 <td>10.1.1.4</td>
-<td>containerd,crictl,kubelet,kube-proxy,ipvs</td>
+<td>containerd,crictl,kubelet,kube-proxy(DaemonSet),ipvs</td>
 </tr>
 <tr>
 <td>node2</td>
 <td>10.1.1.5</td>
-<td>containerd,crictl,kubelet,kube-proxy,ipvs</td>
+<td>containerd,crictl,kubelet,kube-proxy(DaemonSet),ipvs</td>
 </tr>
 </tbody></table>
 <h1 id="容器环境"><a href="#容器环境" class="headerlink" title="容器环境"></a>容器环境</h1><p>这个集群使用containerd做容器runtime，还有crictl是客户端，这2个每个节点都安装</p>
@@ -263,7 +265,7 @@
 <li>–requestheader-client-ca-file 和 –proxy-client开头的证书是用于扩展api认证，–requestheader-allowed-names指定允许的证书CN，参考<a target="_blank" rel="noopener" href="https://kubernetes.io/zh-cn/docs/tasks/extend-kubernetes/configure-aggregation-layer/">官方config aggregate layer</a></li>
 <li>–kubelet-client开头的证书用于apiserver请求kubelet通信鉴权</li>
 <li>老版本apiserver可以绑个localhost:8080的insecure给本地用，这样controller和scheduler配置都方便点，不用那么多cert，现在新版本不给用了</li>
-<li>PersistentVolumeLabel 是老版本才需要的admission plugin, 用于给创建的pv加label，现在新的pv都用csi驱动，在1.31会移除，这里也不加</li>
+<li>移除了PersistentVolumeLabel 这个老版本才需要的admission plugin, 用于给创建的pv加label，现在新的pv都用csi驱动，在1.31版本会正式移除（2025.5.09更新）</li>
 </ul>
 <h2 id="kubectl"><a href="#kubectl" class="headerlink" title="kubectl"></a>kubectl</h2><p>先配置好kubectl，用于后续操作apiserver<br>把二进制kubectl放进&#x2F;usr&#x2F;local&#x2F;bin<br>使用admin.pem证书生成kubeconfig文件</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">kubectl config set-cluster kubernetes --certificate-authority=k8s-ca.pem --embed-certs=true --server=https://10.1.1.10:7443 --kubeconfig=kube.config</span><br><span class="line">kubectl config set-credentials admin --client-certificate=admin.pem --client-key=admin-key.pem --embed-certs=true --kubeconfig=kube.config</span><br><span class="line">kubectl config set-context kubernetes --cluster=kubernetes --user=admin --kubeconfig=kube.config</span><br><span class="line">kubectl config use-context kubernetes --kubeconfig=kube.config</span><br><span class="line">mv kube.config ~/.kube/config</span><br></pre></td></tr></table></figure>
