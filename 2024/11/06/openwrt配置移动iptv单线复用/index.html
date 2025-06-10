@@ -93,7 +93,7 @@
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%89%E7%8C%AB"><span class="toc-number">1.</span> <span class="toc-text">光猫</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%B7%AF%E7%94%B1%E5%99%A8"><span class="toc-number">2.</span> <span class="toc-text">路由器</span></a></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%89%E7%8C%AB"><span class="toc-number">1.</span> <span class="toc-text">光猫</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%B7%AF%E7%94%B1%E5%99%A8"><span class="toc-number">2.</span> <span class="toc-text">路由器</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#immortalwrt-24-%E5%86%85%E6%A0%B86-12"><span class="toc-number">2.1.</span> <span class="toc-text">immortalwrt 24 内核6.12</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%97%A7%E7%89%88%E5%86%85%E6%A0%B84-4"><span class="toc-number">2.2.</span> <span class="toc-text">旧版内核4.4</span></a></li></ol></li></ol>
 		</div>
 		
 		<p>简单记录一下配置过程以免忘记。<br>实现效果：光猫到路由一条网线，同时承载上网和iptv业务，路由器一个网口专门分给iptv机顶盒，剩下网口接AP上网</p>
@@ -108,7 +108,19 @@
 <li>绑定配置里把网口1绑定之前记下的2个vlan号，我这里上网vlan是41，iptv是48</li>
 </ul>
 <p>光猫设置步骤可以参考这个<a target="_blank" rel="noopener" href="https://www.right.com.cn/forum/thread-8342082-1-1.html">恩山大神帖子</a><br>总而言之，光猫操作关键是把原本的Internet和iptv分别固定网口和vlan，改成不绑定网口，并且2个vlan都绑定到1个网口，通常是网口1</p>
-<h1 id="路由器"><a href="#路由器" class="headerlink" title="路由器"></a>路由器</h1><p>路由器是openwrt，可以方便的设置vlan，原本路由器接口有Lan，Wan，Wan6，大致上Lan绑定eth1、eth2、eth3；wan和wan6绑定eth0。<br>按步骤设置：</p>
+<h1 id="路由器"><a href="#路由器" class="headerlink" title="路由器"></a>路由器</h1><blockquote>
+<p>注意:调试阶段如果pppoe拨号失败，先把网线断开再排查，不然失败重试多了光猫可能掉注册<br>如果掉注册，可以进光猫记下注册password，然后试下重置出厂再重新注册</p>
+</blockquote>
+<h2 id="immortalwrt-24-内核6-12"><a href="#immortalwrt-24-内核6-12" class="headerlink" title="immortalwrt 24 内核6.12"></a>immortalwrt 24 内核6.12</h2><p>新版openwrt的设置简单了，路由接口有wan，lan1，lan2，lan3，只需要配好wan.48和lan1桥接，光猫和wan口接通，lan1接机顶盒看电视，lan2，lan3正常上网。<br>按步骤设置：</p>
+<ul>
+<li>网络-设备，新增一个802.1q设备，网口选择wan口，vlan号48</li>
+<li>在原本的br-lan中把lan1去掉</li>
+<li>新建桥接设备br-iptv，把lan1和新建的wan.48加入</li>
+<li>新建网络接口iptv，协议不配置，设备选br-iptv，在高级中把默认路由去掉</li>
+<li>ppp用wan拨号不用变，测试一下拨号能不能成功。</li>
+</ul>
+<p><em>ps1:我还新建了一个wan.41设备，但是整个配置过程没有用到，而且用wan.41拨号失败，命令行看ip link也没有wan.41</em><br><em>ps2:iptv接口不配协议不会产生路由，所以路由优先级（老版的跃点）可以不配</em></p>
+<h2 id="旧版内核4-4"><a href="#旧版内核4-4" class="headerlink" title="旧版内核4.4"></a>旧版内核4.4</h2><p>路由器是openwrt，可以方便的设置vlan，原本路由器接口有Lan，Wan，Wan6，大致上Lan绑定eth1、eth2、eth3；wan和wan6绑定eth0。<br>按步骤设置：</p>
 <ul>
 <li>新增接口连接光猫，名字cat，绑定接口eth0，协议静态，ip填192.168.1.3（光猫的网段）</li>
 <li>新增接口用于上网，名字eth0_Internet, 绑定接口eth0.41，协议无</li>
@@ -157,7 +169,7 @@
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%89%E7%8C%AB"><span class="toc-number">1.</span> <span class="toc-text">光猫</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%B7%AF%E7%94%B1%E5%99%A8"><span class="toc-number">2.</span> <span class="toc-text">路由器</span></a></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%89%E7%8C%AB"><span class="toc-number">1.</span> <span class="toc-text">光猫</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%B7%AF%E7%94%B1%E5%99%A8"><span class="toc-number">2.</span> <span class="toc-text">路由器</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#immortalwrt-24-%E5%86%85%E6%A0%B86-12"><span class="toc-number">2.1.</span> <span class="toc-text">immortalwrt 24 内核6.12</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%97%A7%E7%89%88%E5%86%85%E6%A0%B84-4"><span class="toc-number">2.2.</span> <span class="toc-text">旧版内核4.4</span></a></li></ol></li></ol>
   </div>
 
 <div id="asidepart">
