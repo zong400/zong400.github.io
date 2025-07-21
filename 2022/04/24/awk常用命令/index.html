@@ -242,7 +242,8 @@ $10&amp;#x3D;request_time（毫秒）cdn字段详">
 <p>统计区间占比</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">awk -F, &#x27;BEGIN&#123;a=0;b=0;c=0;d=0;e=0&#125;&#123;if($2&lt;50000000)a+=$2;else if($2&gt;=50000000 &amp;&amp; $2&lt;100000000) b+=$2; else if($2&gt;=100000000 &amp;&amp; $2 &lt; 200000000) c+=$2; else if($2 &gt;= 200000000 &amp;&amp; $2 &lt;500000000)d+=$2; else e+=$2&#125;END&#123;sum=a+b+c+d+e;print a/sum,b/sum,c/sum,d/sum,e/sum&#125;&#x27;</span><br></pre></td></tr></table></figure>
 
-<h2 id="统计obs分项总占用空间和文件数"><a href="#统计obs分项总占用空间和文件数" class="headerlink" title="统计obs分项总占用空间和文件数"></a>统计obs分项总占用空间和文件数</h2><p>awk -F, ‘{split($1,a,”&#x2F;“); N[a[9]]+&#x3D;$2; C[a[9]]++} END {for(i in N){print i”,”N[i]&#x2F;1024&#x2F;1024&#x2F;1024”,”C[i]}}’|sort -t, -k2 -n -r</p>
+<h2 id="统计obs分项总占用空间和文件数"><a href="#统计obs分项总占用空间和文件数" class="headerlink" title="统计obs分项总占用空间和文件数"></a>统计obs分项总占用空间和文件数</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">awk -F, &#x27;&#123;split($1,a,&quot;/&quot;); N[a[9]]+=$2; C[a[9]]++&#125; END &#123;for(i in N)&#123;print i&quot;,&quot;N[i]/1024/1024/1024&quot;,&quot;C[i]&#125;&#125;&#x27;|sort -t, -k2 -n -r</span><br></pre></td></tr></table></figure>
+
 <blockquote>
 <p>语法知识<br>sort -r 降序， -t, 按逗号分列</p>
 </blockquote>
